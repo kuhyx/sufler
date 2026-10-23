@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
 
-/// Speed, learning vs read-through, listening, self-grading and loop mode.
+/// Speed, partner text, learning vs read-through, listening, self-grading
+/// and loop mode.
 class SettingsCard extends StatelessWidget {
   /// Creates the card.
   const new({
@@ -44,6 +45,17 @@ class SettingsCard extends StatelessWidget {
           onChanged: onSpeed,
         ),
         const SizedBox(height: AppSpacing.sm),
+        const SectionHeader('Tekst partnerów'),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Pokaż tekst partnerów'),
+          subtitle: const Text(
+            'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
+          ),
+          value: s.partnerText,
+          onChanged: (v) => onSettings(s.copyWith(partnerText: v)),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         const SectionHeader('Tekst mojej kwestii'),
         const SizedBox(height: AppSpacing.xs),
         SegmentedButton<TextVisibility>(
@@ -69,15 +81,6 @@ class SettingsCard extends StatelessWidget {
           TextVisibility.hide => 'Tekstu nie widać nawet przy ocenie.',
           TextVisibility.show => 'Pierwsze czytanie: tekst widać od razu.',
         }, style: Theme.of(context).textTheme.bodySmall),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Pokaż tekst partnerów'),
-          subtitle: const Text(
-            'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
-          ),
-          value: s.partnerText,
-          onChanged: (v) => onSettings(s.copyWith(partnerText: v)),
-        ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Oceniaj się ✓/✗'),
