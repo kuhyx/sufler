@@ -125,6 +125,38 @@ hand-written digest).
 Clips exist for every spoken line (the app decides which ones to play), so one
 pack serves any role choice. Unattributed song lines use a neutral narrator voice.
 
+Corrections and the pack (`lib/storage/line_edits.dart`): the stored script
+is the corrected one, so a correction changes `Script.fingerprint`. Every
+correction ("Popraw tekst", or ✎ during rehearsal) therefore re-stamps the
+stored pack at once instead of letting the next check refuse it: a pack
+stamped for the script before the correction keeps the clips of lines whose
+`text` and `speakers` are unchanged (same indices) and is stamped with the
+corrected fingerprint; the corrected line's clip is dropped (it says the old
+words, or in the old voice). An unstamped pack loses those clips and stays
+unstamped; a pack already stamped for another parse is left as it is (and
+stays refused). The new clip for a corrected line is an overlay in the same
+zip: `audio/<index>.ogg` replaced, `manifest.lines` updated, the fingerprint
+unchanged (it already matches). So the overlay plays, re-keys on re-parse and
+goes into the Anki export like any clip. Until it exists the line plays with
+device TTS ("głos: syntezator do czasu wygenerowania"). A corrected spoken
+line with no clip in an existing pack is retried at the next rehearsal and
+whenever the PC reports itself back online. Importing the pack zip that was
+rendered before a correction again is refused as stale, like a pack from
+before a re-parse; "Generuj głosy" renders the corrected script whole.
+
+## Assistant (PC side → app)
+
+`lib/assist/assistant.dart`: `explain(script, index, selection)` returns a
+Polish explanation of the selected words in line `index` (meaning in context
+plus 2-3 mnemonics); `renderLine(script, index)` returns one clip (Ogg/Opus,
+the same format as pack clips) for line `index` as the script has it now, or
+null when the PC cannot render it; `pcOnline` reports reachability changes.
+The app treats a thrown call as "offline" unless the PC last reported itself
+online (then it is the PC's error), waits for `pcOnline` to report `true`
+and sends again; queued questions live in memory only (an app restart drops
+them, a pending clip is found again from the pack). Without a PC side the
+app wires `OfflineAssistant` (never online, every call fails).
+
 ## Google Docs proxy (desktop wrapper → web build)
 
 `GET /api/gdoc?id=<doc-id>` on the loopback wrapper (`lib/desktop/`), because
@@ -150,7 +182,8 @@ by `test/desktop/gdoc_contract_test.dart`.
  "knowledge": {"<line-index>": [false, true]},
  "resume": {"label": "Scena 3", "start": 120, "end": 240, "position": 7,
             "mode": "range", "line": 131},
- "rolesAsked": true, "pureRuns": ["scena-3"]}
+ "rolesAsked": true, "pureRuns": ["scena-3"],
+ "notes": {"<line-index>": [{"about": "Wilku", "text": "<explanation>"}]}}
 ```
 
 - Every field is optional: prefs written by older versions load unchanged.
@@ -159,6 +192,11 @@ by `test/desktop/gdoc_contract_test.dart`.
   stored; same shape). "Only lines I missed" = lines whose last grade is ✗.
 - `pureRuns`: scene/song ids walked whole with every own line ✓ first try
   ("Czysty przebieg" badge); never cleared, omitted when empty, kept on re-parse.
+- `notes`: every answer of "Zapytaj Claude" about a line, oldest first:
+  `about` = the words asked about (a word or its sentence), `text` = the
+  answer. Omitted when empty; moved with the line on re-parse like
+  `knowledge` (a line that is gone takes its notes into `backup/`). They go on
+  the back of the line's Anki card (`<hr>`, then `<b>about</b>: text` each).
 - `resume`: the last rehearsal (line range, `mode` `range` or `missed`) and
   the cue position reached; the app offers to continue there. `line` is
   the script line of that cue (its first line, for a run) and is what
@@ -188,15 +226,18 @@ by `test/desktop/gdoc_contract_test.dart`.
 structuring change. Next to `script/<id>` the device keeps `source/<id>` (the
 imported document's bytes), `meta/<id>` (`{"parserVersion": n,
 "parseFingerprint": "<fingerprint of the raw parse>"}`) and `edits/<id>` (the
-manual corrections: `{"op": "line", "index", "speakers"?, "kind"?}` and
-`{"op": "merge", "from", "into"}`, in order).
+manual corrections: `{"op": "line", "index", "speakers"?, "kind"?,
+"text"?, "was"?}` and `{"op": "merge", "from", "into"}`, in order). A text
+correction carries the text it replaced in `was`.
 
 When a stored script's `parserVersion` is older (on open, from `source/`) or
 the same document is imported again with a different raw fingerprint, the new
 parse replaces the old one: lines are aligned old → new (longest common
-subsequence of normalised texts, then similar lines inside each gap);
-`lineSeconds`, `recordings` (re-keyed to `rec/<id>/<new index>`), `knowledge`
-and the `resume` range move to the new indices; corrections are replayed (for
+subsequence of normalised texts, then similar lines inside each gap; text
+corrections are undone through their `was`, newest first, before aligning, so
+a reworded line still meets its parsed self);
+`lineSeconds`, `recordings` (re-keyed to `rec/<id>/<new index>`), `knowledge`,
+`notes` and the `resume` range move to the new indices; corrections are replayed (for
 scripts stored before the log: merges inferred from aliases); data of lines
 that no longer exist is dropped from prefs but kept, with the old script and
 prefs, under `backup/<id>/…`. A voice pack stamped for the old parse keeps
