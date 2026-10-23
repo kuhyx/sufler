@@ -73,6 +73,8 @@ main() {
     uv sync --locked --directory "$TTS"
     log "fetching Chatterbox weights (~3.2 GB on first run; resumes)"
     python_step sufler_tts.fetch_assets weights
+    log "fetching faster-whisper large-v3-turbo (~1.6 GB on first run)"
+    python_step sufler_tts.fetch_assets whisper
     log "fetching Polish Piper voices"
     python_step sufler_tts.fetch_assets piper
     log "building synthetic voice prompts"
