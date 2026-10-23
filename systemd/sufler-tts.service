@@ -1,0 +1,24 @@
+# sufler voice service: Chatterbox Multilingual TTS on 127.0.0.1:8791.
+# Deps + weights first: scripts/install_tts.sh (it does not enable this unit).
+# Enable: ln -sf %h/src/sufler/systemd/sufler-tts.service ~/.config/systemd/user/
+#         systemctl --user daemon-reload && systemctl --user enable --now sufler-tts
+[Unit]
+Description=sufler voice service (Chatterbox TTS, loopback :8791)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/src/sufler/tts
+ExecStart=%h/src/sufler/tts/.venv/bin/python -m sufler_tts
+# Weights are fetched by install_tts.sh; never touch the network at runtime.
+Environment=HF_HUB_OFFLINE=1
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=5
+# The model lives in a child process that exits after 10 min idle; stopping
+# the unit takes that child down too.
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

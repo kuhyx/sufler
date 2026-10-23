@@ -1,0 +1,36 @@
+[project]
+name = "sufler-tts"
+version = "0.1.0"
+description = "Local Chatterbox Multilingual voice service for sufler"
+requires-python = ">=3.14"
+dependencies = [
+  "chatterbox-tts==0.1.7",
+  "numpy==2.5.4",
+  "torch==2.14.1",
+  "torchaudio==2.11.0",
+]
+
+[dependency-groups]
+dev = ["mypy==2.4.0", "pytest==9.1.1", "ruff==0.17.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py314"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "PL", "D"]
+ignore = ["D203", "D213", "D401", "PLR2004", "PLR0913", "PLR0917"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.mypy]
+strict = true
+python_version = "3.14"
+
+[tool.ruff.lint.isort]
+known-first-party = ["sufler_tts"]
