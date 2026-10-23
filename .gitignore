@@ -54,6 +54,10 @@ app.*.map.json
 *.odt
 !test/fixtures/**
 
+# Firebase identifiers, written by tool/write_firebase_config.dart (public
+# repo: they stay out of git, like tutor's).
+/lib/assist/firebase_local.dart
+
 # Agent worktrees
 /.claude/
 # Voice service (tts/): venv and tool caches; weights/audio live in ~/.local/share/sufler.

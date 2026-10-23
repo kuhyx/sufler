@@ -294,3 +294,11 @@ plain recorder (ended by "Skończyłem", never by silence) and, on desktop,
 posted the same way (2 min timeout) for its `words`; Android has no route to
 the service (it listens on the PC's loopback only), so there a run is always
 split by syllables.
+
+## Assistant: explain + render_line (voice service; RTDB relay on Android)
+
+`POST /explain` `{selection, line, before, after}` -> `{"text"}` and
+`POST /render_line` `{script, index}` -> `audio/ogg` on the voice service
+(desktop through `/api/tts/*`); Android sends the same bodies through
+`sufler/requests/{rid}` -> `sufler/results/{rid}` in RTDB. Shapes, statuses,
+relay rules and credentials: `DOCS-relay.md`. Dart: `lib/assist/`.

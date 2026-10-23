@@ -22,6 +22,9 @@ jobs:
           cache: true
 
       - run: flutter pub get
+      # The gitignored Firebase identifiers (lib/assist/firebase_local.dart):
+      # empty in CI, so the relay reports "not configured" in tests.
+      - run: dart run tool/write_firebase_config.dart --placeholder
       - run: flutter analyze
       - run: dart format --output=none --set-exit-if-changed lib bin test
       - run: flutter test --reporter=compact

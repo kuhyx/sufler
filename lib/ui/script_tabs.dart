@@ -6,7 +6,9 @@ import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/learn_card.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
+import 'package:sufler/ui/pc_session_tile.dart';
 import 'package:sufler/ui/sections_tab.dart';
+import 'package:sufler/ui/services.dart';
 import 'package:sufler/ui/settings_card.dart';
 import 'package:sufler/ui/tools_card.dart';
 
@@ -171,6 +173,8 @@ class _ScriptTabsState extends State<ScriptTabs> {
             onSpeed: w.onSpeed,
             onSettings: w.onSettings,
           ),
+          if (ServicesScope.maybeOf(context)?.pcSession case final s?)
+            PcSessionTile(session: s),
         ],
       ),
       _ => ListView(

@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
+import 'package:sufler/assist/assistant.dart';
+import 'package:sufler/assist/pc_session.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/model/role.dart';
@@ -72,6 +74,8 @@ class Services {
     required this.clips,
     required this.capture,
     this.transcribe,
+    this.assistant,
+    this.pcSession,
   });
 
   /// On-device persistence.
@@ -113,6 +117,13 @@ class Services {
   /// Speech-to-text with word times for whole-run takes (desktop voice
   /// service); null where there is none (Android).
   final Transcribe? transcribe;
+
+  /// The PC: explain a selection, re-render one line's clip (desktop:
+  /// the wrapper; Android: the Firebase relay); null in tests that skip it.
+  final Assistant? assistant;
+
+  /// The phone's sign-in for the relay; null on desktop (no sign-in).
+  final PcSession? pcSession;
 }
 
 /// Makes [Services] available below it.
@@ -126,6 +137,10 @@ class ServicesScope extends InheritedWidget {
   /// The nearest services.
   static Services of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<ServicesScope>()!.services;
+
+  /// The nearest services, or null outside a [ServicesScope].
+  static Services? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ServicesScope>()?.services;
 
   @override
   bool updateShouldNotify(ServicesScope oldWidget) =>

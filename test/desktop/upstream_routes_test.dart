@@ -65,6 +65,16 @@ void main() {
           r.response.write(jsonEncode({'jobId': 'j1', 'echo': body.length}));
         } else if (r.uri.path == '/packs/s1.zip') {
           r.response.add([1, 2, 3]);
+        } else if (r.uri.path == '/render_line') {
+          await r.drain<void>();
+          r.response.headers.contentType = ContentType('audio', 'ogg');
+          r.response.add([0x4f, 0x67, 0x67, 0x53]);
+        } else if (r.uri.path == '/explain') {
+          final body = jsonDecode(await utf8.decodeStream(r)) as Map;
+          r.response
+            ..statusCode = body['selection'] == '' ? 400 : 200
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode({'text': 'Znaczy: ${body['selection']}'}));
         } else {
           r.response.headers.contentType = ContentType.json;
           r.response.write('{"ok":true}');
@@ -97,6 +107,23 @@ void main() {
       final r = await h.post('/api/tts/render', '{"id":"s1"}');
       expect(await jsonOf(r), {'jobId': 'j1', 'echo': 11});
       expect(await bytesOf(await h.get('/api/tts/packs/s1.zip')), [1, 2, 3]);
+    });
+
+    test('render_line answers reach the app as audio/ogg bytes', () async {
+      final r = await h.post('/api/tts/render_line', '{"index":2}');
+      expect(r.statusCode, 200);
+      expect(r.headers.contentType?.mimeType, 'audio/ogg');
+      expect(await bytesOf(r), [0x4f, 0x67, 0x67, 0x53]);
+      expect(up.seen, ['POST /render_line']);
+    });
+
+    test('explain forwards the JSON both ways, statuses included', () async {
+      final ok = await h.post('/api/tts/explain', '{"selection":"wilku"}');
+      expect(ok.statusCode, 200);
+      expect(await jsonOf(ok), {'text': 'Znaczy: wilku'});
+      final bad = await h.post('/api/tts/explain', '{"selection":""}');
+      expect(bad.statusCode, 400);
+      await bad.drain<void>();
     });
   });
 

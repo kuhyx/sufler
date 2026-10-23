@@ -18,5 +18,8 @@ exceeds the 2 GiB `capped.sh` ceiling and a flutter_tester is OOM-killed
   `SUFLER_SCRIPT_PDF`; in-repo fixtures are synthetic.
 - `lib/model/` + `DOCS-contract.md` are the contract between importers,
   rehearsal, TTS and Anki export. Change both together.
+- `lib/assist/firebase_local.dart` is generated and gitignored: run
+  `dart run tool/write_firebase_config.dart` once per checkout (`--placeholder`
+  without `~/.config/crdt-sync/`), or nothing compiles. Never commit it.
 - Desktop = web build in Chrome via a loopback wrapper (see the
   `flutter-desktop-to-chrome` skill); there is deliberately no `linux/` target.

@@ -94,6 +94,27 @@ jobs:
 
       - run: flutter pub get
 
+      # The phone relay's Firebase identifiers (gitignored in this public
+      # repo). The secret is ~/.config/crdt-sync/firebase.json plus a
+      # `webClientId` key; fail closed rather than ship a relay that can
+      # never sign in.
+      - name: Write the Firebase identifiers
+        env:
+          FIREBASE_JSON: ${{ secrets.SUFLER_FIREBASE_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "$FIREBASE_JSON" ]; then
+            echo "::error::SUFLER_FIREBASE_JSON is not set; refusing to publish."
+            exit 1
+          fi
+          umask 077
+          mkdir -p "$HOME/.config/crdt-sync"
+          printf '%s' "$FIREBASE_JSON" > "$HOME/.config/crdt-sync/firebase.json"
+          dart run tool/write_firebase_config.dart
+          if grep -q "''" lib/assist/firebase_local.dart; then
+            echo "::error::an empty Firebase identifier (webClientId?)"; exit 1
+          fi
+
       - name: Build signed APK
         run: |
           flutter build apk --release \
