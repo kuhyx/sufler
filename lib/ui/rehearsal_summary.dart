@@ -26,7 +26,7 @@ class RehearsalSummary extends StatelessWidget {
       children: [
         Text('Koniec', style: Theme.of(context).textTheme.headlineSmall),
         if (reached)
-          Text('${s.cleanTarget} czyste przebiegi z rzędu. Umiesz to!'),
+          Text('Czyste przebiegi z rzędu: ${s.cleanTarget}. Umiesz to!'),
         const SizedBox(height: AppSpacing.md),
         for (final (i, p) in s.history.indexed)
           ListTile(

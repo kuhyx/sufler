@@ -94,19 +94,25 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   @override
   Widget build(BuildContext context) {
     final ctl = _ctl!;
-    return CallbackShortcuts(
-      bindings: {const SingleActivator(LogicalKeyboardKey.space): ctl.done},
-      child: Focus(
-        autofocus: true,
-        child: Scaffold(
-          appBar: AppBar(title: Text(widget.title)),
-          body: ListenableBuilder(
-            listenable: ctl,
-            builder: (context, _) => _body(ctl),
-          ),
-          bottomNavigationBar: ListenableBuilder(
-            listenable: ctl,
-            builder: (context, _) => _controls(ctl),
+    return PopScope(
+      // Silence at once on leaving, not after the exit transition.
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) ctl.pause();
+      },
+      child: CallbackShortcuts(
+        bindings: {const SingleActivator(LogicalKeyboardKey.space): ctl.done},
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            appBar: AppBar(title: Text(widget.title)),
+            body: ListenableBuilder(
+              listenable: ctl,
+              builder: (context, _) => _body(ctl),
+            ),
+            bottomNavigationBar: ListenableBuilder(
+              listenable: ctl,
+              builder: (context, _) => _controls(ctl),
+            ),
           ),
         ),
       ),

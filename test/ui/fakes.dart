@@ -15,6 +15,7 @@ import 'package:sufler/tts/render_pack.dart';
 import 'package:sufler/ui/services.dart';
 
 import '../rehearsal/fixture.dart';
+import '../storage/pack_zip_test.dart' show fixturePackZip;
 
 class FakeFiles implements FileAccess {
   PickedFile? next;
@@ -28,9 +29,10 @@ class FakeFiles implements FileAccess {
 
 class FakeRecorder implements Recorder {
   bool recording = false;
+  bool allow = true;
   Uint8List? result;
   @override
-  Future<bool> start() async => recording = true;
+  Future<bool> start() async => recording = allow;
   @override
   Future<Uint8List?> stop() async {
     recording = false;
@@ -90,13 +92,20 @@ extension StorageIo on WidgetTester {
 
   /// Scrolls [finder] into view, taps it and settles.
   Future<void> tapVisible(Finder finder) async {
-    if (finder.evaluate().isEmpty) {
-      // Lazily built list item: scroll the page's main list until it exists.
-      await scrollUntilVisible(
-        finder,
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+    // Lazily built list item: scroll the page's main list until it exists,
+    // up first (cheap when it is already above), then down.
+    for (final delta in [-300.0, 300.0]) {
+      if (finder.evaluate().isNotEmpty) break;
+      try {
+        await scrollUntilVisible(
+          finder,
+          delta,
+          maxScrolls: 20,
+          scrollable: find.byType(Scrollable).first,
+        );
+      } on Object {
+        // Not in that direction.
+      }
     }
     await ensureVisible(finder);
     await pumpAndSettle();
@@ -152,8 +161,14 @@ class TestRig {
       return Uint8List.fromList([9]);
     },
     renderAvailable: () async => renderable,
-    renderPack: (s) =>
-        Stream.fromIterable([const RenderProgress(done: 1, total: 2)]),
+    renderPack: (s) => Stream.fromIterable([
+      const RenderProgress(done: 1, total: 2),
+      RenderProgress(
+        done: 2,
+        total: 2,
+        pack: AudioPack.fromZip(fixturePackZip()),
+      ),
+    ]),
     files: files,
     recorder: recorder,
     speech: speech,
