@@ -1,0 +1,57 @@
+# FEATURES: sufler
+
+> Feature map + core-flow ground truth (skill: `e2e-ground-truth`). Keep it
+> current: a user-visible change updates its row in the same commit. "How to
+> reach it" is a path a driver can follow; "expected outcome" is something a
+> check can observe.
+
+- **Primary targets:** Android (`com.kuhy.sufler`) and desktop (Flutter web
+  build in a Chrome `--app` window, served by the loopback wrapper on
+  `127.0.0.1:8792`, `/api/tts/*` proxied to the voice service on `:8791`).
+  The flows below cover the **desktop** target.
+- **Driver:** nested Xephyr `:79` + scratch Chromium over CDP
+  (`scripts/e2e_desktop.sh`, helpers in `scripts/e2e/`). Never kuhy's `:0`,
+  never the real profile `~/.local/share/sufler/chrome-profile`.
+- **Run:** `scripts/e2e_desktop.sh build` (once per change), `up`, then
+  `F1` .. `F5` (one per call, each < 60 s, F2-F5 need F1's import), `down`.
+  After a wrapper-only rebuild: `scripts/e2e_desktop.sh wrapper`.
+- **Input:** a real play, `SUFLER_SCRIPT_PDF` (default `private/krasnale.pdf`,
+  never committed). Expected counts are computed from the stored script
+  (`scripts/e2e/oracle.py`), not hard-coded.
+- **Artefacts:** `private/e2e/F<n>/<timestamp>/` (gitignored: screenshots show
+  copyrighted text).
+
+## Feature map
+
+| feature | how to reach it | expected outcome |
+|---|---|---|
+| import a file | library -> "Importuj plik" -> pick PDF/DOCX/ODT/TXT | script screen opens; library tile `<file> · <n> kwestii`; IndexedDB `sufler/json` has `script/<sha256>` |
+| import a Google Doc | library -> "Link do Google Docs" -> paste -> "Importuj link" | as above; unshared doc shows the "not shared" message (DOCS-contract.md) |
+| delete a script | library -> tile trash "Usuń" -> confirm | tile gone, with its prefs, pack, recordings |
+| pick roles | script -> "Twoje role" chips `<name> (<spoken lines>)`, "Piosenki" chips per song | chip selected; prefs `roles` saved |
+| rehearse a section | script -> "Fragment" -> scene/song tile `kwestie a–b` | header `Przebieg 1 · kwestia 1/<cues>`; partner text shown and voiced (pack clip, else device TTS, else held silently for its reading time) |
+| own line | rehearsal reaches a line of a picked role | "Twoja kwestia" + countdown; "Gotowe" or Space advances |
+| custom / cumulative range | "Własny zakres…" / "Narastająco…" -> pick lines | rehearsal over that range |
+| rehearsal settings | "Ustawienia próby": tempo, text visibility, self-grading, loop | applied to the next rehearsal |
+| correct the text | "Narzędzia" -> "Popraw tekst" | speaker/kind/merge edits stored per script |
+| timings and recordings | "Narzędzia" -> "Czasy i nagrania" | per-line pause override / own recording |
+| Anki export | "Narzędzia" -> "Eksportuj talię Anki" (roles picked) | `<title>.apkg` download; one note per own spoken line, front = cue, back = own line |
+| generate voices | "Narzędzia" -> "Generuj głosy" (shown when `/api/tts/health` is 200) | progress bar; `/api/tts/jobs/<id>` polled; pack stored when done |
+| import a voice pack | "Narzędzia" -> "Importuj paczkę audio (.zip)" | "Głosy zapisane (<n> kwestii)" |
+
+## Core flows (desktop)
+
+| id | goal | command | last green |
+|---|---|---|---|
+| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 |
+| F2 | role picker: Piaskowy Wilk chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 |
+| F3 | Wolf + a scene: partner text shown and audio started; a partner line ends by itself; Wolf's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 |
+| F4 | Anki export downloads an .apkg whose notes == Wolf spoken lines, fronts carry the cue, backs the Wolf line | `scripts/e2e_desktop.sh F4` | 2026-10-23 |
+| F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper | `scripts/e2e_desktop.sh F5` | 2026-10-23 |
+
+On failure every flow prints `FAIL F<n> step <i>/<total>: <step> -> <why>;
+shot: <path>` and exits 1.
+
+Not covered: whether audio is audible (the probe sees `speechSynthesis.speak`
+/ `HTMLMediaElement.play` calls and their outcome, not sound), the Google
+Docs import (needs a shared doc), and Android (built and checked separately).
