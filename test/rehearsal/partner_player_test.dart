@@ -68,8 +68,10 @@ void main() {
   test('without a pack everything goes through TTS', () async {
     final speech = _Speech();
     final p = PartnerPlayer(script: script, speech: speech, clips: _Clips());
-    await p.play(script.lines[1]);
+    var held = 0;
+    await p.play(script.lines[1], onHeld: () => held++);
     expect(speech.said.single.$1, 'Dzień dobry, Wilku!');
+    expect(held, 0);
   });
 
   test('when speech fails, the partner text is held for its reading time '
@@ -83,7 +85,11 @@ void main() {
         speed: 2,
       );
       var done = false;
-      unawaited(p.play(line).then((_) => done = true));
+      var held = 0;
+      unawaited(p.play(line, onHeld: () => held++).then((_) => done = true));
+      clock.flushMicrotasks();
+      // Told at once, so the text can be shown for the whole hold.
+      expect(held, 1);
       final hold = defaultPauseSeconds(line.text, speed: 2);
       clock.elapse(Duration(milliseconds: (hold * 1000).round() - 50));
       expect(done, isFalse);

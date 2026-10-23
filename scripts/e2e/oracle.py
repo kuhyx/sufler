@@ -22,6 +22,12 @@ def is_spoken(line: Json) -> bool:
     return any(ch.isalnum() for ch in line["text"])
 
 
+def speaker_names(script: Json, line: Json) -> str:
+    """lib/ui/labels.dart `speakerNames`: names joined, "Chór" when none."""
+    names = {c["id"]: c["name"] for c in script["characters"]}
+    return ", ".join(names.get(i, i) for i in line["speakers"]) or "Chór"
+
+
 def _html(text: str) -> str:
     """lib/anki/sufler_cards.dart `_html`: escape &, <, > and break lines."""
     escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -142,6 +148,34 @@ def expected_cards(script: Json, roles: set[str]) -> list[tuple[str, str]]:
     return cards
 
 
+def steps(lines: list[Json], roles: set[str]) -> list[list[Json]]:
+    """Rehearsal steps over ``lines`` with "Piosenki i monologi w całości" on.
+
+    DOCS-contract.md `wholeRuns`: a row of own spoken lines (2+ in one song,
+    3+ outside; cut at a song start/end and a scene change) is one step; so
+    is a row of partner lines (2+ in one song with any singers, 3+ by the
+    very same speakers). Directions and headings never break a row.
+    """
+    spoken = [ln for ln in lines if is_spoken(ln)]
+
+    def key(ln: Json) -> tuple[Any, ...]:
+        mine = is_mine(ln, roles)
+        song = ln.get("songId")
+        who = None if mine or song else frozenset(ln["speakers"])
+        return (mine, song, ln.get("sceneId"), who)
+
+    out: list[list[Json]] = []
+    row: list[Json] = []
+    for ln in [*spoken, None]:
+        if row and (ln is None or key(ln) != key(row[0])):
+            need = 2 if row[0].get("songId") else 3
+            out.extend([row] if len(row) >= need else [[x] for x in row])
+            row = []
+        if ln is not None:
+            row.append(ln)
+    return out
+
+
 @dataclass(frozen=True)
 class ScenePick:
     """A scene to rehearse and where the first own line falls in it."""
@@ -151,6 +185,7 @@ class ScenePick:
     end: int
     cues: int
     partner_before_mine: int
+    mine_text: str  # first line of the first own step
 
 
 def pick_scene(script: Json, roles: set[str]) -> ScenePick:
@@ -161,12 +196,17 @@ def pick_scene(script: Json, roles: set[str]) -> ScenePick:
     best: ScenePick | None = None
     for scene in script["scenes"]:
         lines = script["lines"][scene["start"] : scene["end"] + 1]
-        cues = [ln for ln in lines if is_spoken(ln)]
-        mine = [i for i, ln in enumerate(cues) if is_mine(ln, roles)]
+        cues = steps(lines, roles)
+        mine = [i for i, step in enumerate(cues) if is_mine(step[0], roles)]
         if not mine or mine[0] == 0:
             continue
         pick = ScenePick(
-            scene["title"], scene["start"], scene["end"], len(cues), mine[0]
+            scene["title"],
+            scene["start"],
+            scene["end"],
+            len(cues),
+            mine[0],
+            cues[mine[0]][0]["text"],
         )
         if best is None or pick.partner_before_mine < best.partner_before_mine:
             best = pick

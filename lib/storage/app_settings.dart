@@ -21,6 +21,7 @@ const int settingsVersion = 2;
 ///
 /// Version 1 (no `version` key) defaulted to showing the text up front, and
 /// stored that default; loading it moves `show` to learning mode once.
+/// [partnerText] came later as an optional key (absent: off), no bump.
 @immutable
 class AppSettings {
   /// Creates settings.
@@ -31,6 +32,7 @@ class AppSettings {
     this.cleanTarget = 3,
     this.listen = false,
     this.wholeRuns = true,
+    this.partnerText = false,
     this.lastScriptId,
   });
 
@@ -49,6 +51,7 @@ class AppSettings {
       cleanTarget: json['cleanTarget'] as int? ?? 3,
       listen: json['listen'] as bool? ?? false,
       wholeRuns: json['wholeRuns'] as bool? ?? true,
+      partnerText: json['partnerText'] as bool? ?? false,
       lastScriptId: json['lastScriptId'] as String?,
     );
   }
@@ -73,6 +76,11 @@ class AppSettings {
   /// countdown, one reveal, one grade for the whole run.
   final bool wholeRuns;
 
+  /// Show partner lines as text while they play. Off by default: on stage
+  /// nobody holds the text of what the others say, so only the speaker's
+  /// name shows (the text still does when a line cannot be voiced).
+  final bool partnerText;
+
   /// The script opened last; the app starts on it.
   final String? lastScriptId;
 
@@ -88,6 +96,7 @@ class AppSettings {
     'cleanTarget': cleanTarget,
     'listen': listen,
     'wholeRuns': wholeRuns,
+    'partnerText': partnerText,
     'lastScriptId': ?lastScriptId,
   };
 
@@ -99,6 +108,7 @@ class AppSettings {
     int? cleanTarget,
     bool? listen,
     bool? wholeRuns,
+    bool? partnerText,
     String? lastScriptId,
   }) => AppSettings(
     visibility: visibility ?? this.visibility,
@@ -107,6 +117,7 @@ class AppSettings {
     cleanTarget: cleanTarget ?? this.cleanTarget,
     listen: listen ?? this.listen,
     wholeRuns: wholeRuns ?? this.wholeRuns,
+    partnerText: partnerText ?? this.partnerText,
     lastScriptId: lastScriptId ?? this.lastScriptId,
   );
 }

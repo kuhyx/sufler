@@ -104,7 +104,7 @@ def audio_log(run: Run) -> list[dict[str, Any]]:
 
 
 def f3_rehearse(run: Run) -> None:
-    """F3: the role + a scene: partner text and audio, countdown, Space advances."""
+    """F3: the role + a scene: partner name and audio, countdown, Space advances."""
     run.step(f"open the script, select only {run.role}")
     run.boot()
     script, facts = run.open_script()
@@ -114,16 +114,19 @@ def f3_rehearse(run: Run) -> None:
     run.step(f"start scene '{pick.title}' (lines {pick.start}-{pick.end})")
     run.cdp.tap(f"kwestie {pick.start}–{pick.end}")
     run.cdp.wait_for(f"kwestia 1/{pick.cues}", 10)
-    run.step("partner line shown and its audio starts")
+    run.step("partner's name shown, its audio starts; text only if unvoiced")
     first = next(
         ln for ln in script["lines"][pick.start : pick.end + 1] if oracle.is_spoken(ln)
     )
-    run.cdp.wait_for(first["text"][:40], 5)
-    run.shot("partner")
+    run.cdp.wait_for(oracle.speaker_names(script, first), 5)
     run.cdp.page.pump(2)
     log = audio_log(run)
     run.check(log, "no speechSynthesis.speak / media play within 2 s")
     run.note(f"audio: {json.dumps(log[0])}")
+    held = "error" in log[0]  # device speech failed: the text is held instead
+    shown = run.cdp.find(first["text"][:40]) is not None
+    run.check(shown == held, f"partner text shown={shown}, audio failed={held}")
+    run.shot("partner")
     k = pick.partner_before_mine
     run.step(f'"Dalej" x{k - 1} to the last partner line before the role\'s')
     skip = run.cdp.wait_for("Dalej", 5)
@@ -140,10 +143,7 @@ def f3_rehearse(run: Run) -> None:
         ) from e
     run.note(f"audio log: {json.dumps(audio_log(run)[-2:])}")
     run.step("the countdown runs; the role's own text is hidden")
-    cues = [
-        ln for ln in script["lines"][pick.start : pick.end + 1] if oracle.is_spoken(ln)
-    ]
-    mine = cues[k]["text"][:40]
+    mine = pick.mine_text[:40]
     before = run.cdp.text()
     run.cdp.page.pump(1.5)
     run.check(run.cdp.text() != before, "countdown text did not change in 1.5 s")

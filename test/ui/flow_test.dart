@@ -33,8 +33,10 @@ void main() {
     await tester.tap(find.text('Scena 1'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    // Partner line: text shown, read aloud by TTS.
-    expect(find.text('Dzień dobry, Wilku!'), findsOneWidget);
+    // Partner line: read aloud by TTS, only its speaker on screen (on
+    // stage nobody holds the partners' text).
+    expect(find.text('Błystek'), findsOneWidget);
+    expect(find.text('Dzień dobry, Wilku!'), findsNothing);
     expect(rig.speech.said, ['Dzień dobry, Wilku!']);
 
     await tester.pump(const Duration(seconds: 1));
@@ -70,7 +72,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
-    expect(find.text('No dobrze.'), findsOneWidget);
+    expect(rig.speech.said.last, 'No dobrze.');
+    expect(find.text('No dobrze.'), findsNothing);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     expect(find.text('Koniec'), findsOneWidget);

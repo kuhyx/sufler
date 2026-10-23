@@ -89,14 +89,17 @@ void main() {
     expect(find.text('$_first\nPięć sześć.\n$_last'), findsOneWidget);
     await tester.tap(find.text('Źle'));
     await tester.pump();
-    expect(find.text('Witaj, Wilku.'), findsOneWidget, reason: 'cue replayed');
+    expect(rig.speech.said, [
+      'Witaj, Wilku.',
+      'Witaj, Wilku.',
+    ], reason: 'cue replayed');
     await _speakDone(tester);
     expect(find.byKey(const Key('retry')), findsOneWidget);
     await tester.tap(find.text('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
-    expect(find.text('Brawo.'), findsOneWidget);
+    expect(rig.speech.said.last, 'Brawo.');
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('run123'));
     expect(prefs.knowledge, {

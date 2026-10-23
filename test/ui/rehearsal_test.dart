@@ -79,7 +79,8 @@ void main() {
     // Back to the partner line, then skip it.
     await tester.tap(find.byTooltip('Wstecz'));
     await tester.pump();
-    expect(find.text('Dzień dobry, Wilku!'), findsWidgets);
+    expect(find.byKey(const Key('partner-speaking')), findsOneWidget);
+    expect(find.text('Dzień dobry, Wilku!'), findsNothing);
     await tester.tap(find.byTooltip('Dalej'));
     await tester.pump();
 

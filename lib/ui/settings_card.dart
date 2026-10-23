@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
 
-/// Speed, learning vs read-through, listening, self-grading and loop mode.
+/// Speed, partner text, learning vs read-through, listening, self-grading
+/// and loop mode.
 class SettingsCard extends StatelessWidget {
   /// Creates the card.
   const new({
@@ -42,6 +43,17 @@ class SettingsCard extends StatelessWidget {
           divisions: 10,
           label: '${speed.toStringAsFixed(2)}×',
           onChanged: onSpeed,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader('Tekst partnerów'),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Pokaż tekst partnerów'),
+          subtitle: const Text(
+            'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
+          ),
+          value: s.partnerText,
+          onChanged: (v) => onSettings(s.copyWith(partnerText: v)),
         ),
         const SizedBox(height: AppSpacing.sm),
         const SectionHeader('Tekst mojej kwestii'),
