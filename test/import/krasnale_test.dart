@@ -45,11 +45,20 @@ void main() {
     expect(headed.first.title, 'Piosenka Krasnali');
     expect(headed.last.title, 'Piosenka Krasnali 2');
     for (final song in unheaded) {
-      final intro = s.lines[song.start - 1];
-      expect(intro.kind, LineKind.direction, reason: song.id);
-      expect(intro.directions.single, contains('śpiew'), reason: song.id);
+      // The intro, then possibly a leading singer tag ("R."): unspoken
+      // directions outside the section.
+      final before = s.lines.sublist(0, song.start).reversed;
+      final lead = before.takeWhile((l) => l.kind == LineKind.direction);
+      expect(
+        lead.any((l) => l.directions.any((d) => d.contains('śpiew'))),
+        isTrue,
+        reason: song.id,
+      );
       expect(song.title.length, lessThanOrEqualTo(42));
     }
+    // The duet's 3 singer tags are unspoken directions, not dropped.
+    expect(s.lines, hasLength(863));
+    expect(s.lines.where((l) => l.isSpoken), hasLength(825));
 
     final ids = s.characters.map((c) => c.id).toSet();
     expect(
@@ -70,6 +79,11 @@ void main() {
       (l) => l.kind == LineKind.dialogue && l.speakers.contains(wolf.id),
     );
     expect(blocks, hasLength(18));
+    // Plus the 21 lyrics of "Piosenka Piaskowego Wilka".
+    final sung = s.lines.where(
+      (l) => l.kind == LineKind.song && l.speakers.contains(wolf.id),
+    );
+    expect(sung, hasLength(21));
     final said = blocks.map((l) => l.text).toSet();
     expect(said, containsAll(['Zawsze to samo...', 'Uwielbiam łamigłówki']));
     // Directions removed, PDF soft wraps joined with a space.
@@ -81,7 +95,7 @@ void main() {
     );
   }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
 
-  test('Żagiewka has one dialogue line per speaker heading', () {
+  test('Żagiewka: one dialogue line per heading, plus group songs', () {
     // 86 standalone "Żagiewka" headings (cast-list bullet excluded); no
     // multi-speaker heading names her. The closing "Koniec;)" after the
     // finale is not hers.
@@ -89,14 +103,45 @@ void main() {
       (l) => l.kind == LineKind.dialogue && l.speakers.contains('zagiewka'),
     );
     expect(blocks, hasLength(86));
-    expect(
-      s.lines.where(
-        (l) => l.speakers.length > 1 && l.speakers.contains('zagiewka'),
-      ),
-      isEmpty,
+    expect(blocks.where((l) => l.speakers.length > 1), isEmpty);
+    // Sung: all 24 + 20 lyrics of both "Piosenka Krasnali" (she is in the
+    // cast-list group "1. Krasnale"), plus 6 more; 86 + 50 = 136 lines.
+    for (final song in s.songs.where((x) => x.title.contains('Krasnali'))) {
+      final lyrics = s.lines.where((l) => l.songId == song.id && l.isSpoken);
+      expect(lyrics.map((l) => l.speakers.length).toSet(), {5});
+      expect(lyrics.every((l) => l.speakers.contains('zagiewka')), isTrue);
+    }
+    final sung = s.lines.where(
+      (l) => l.kind == LineKind.song && l.speakers.contains('zagiewka'),
     );
+    expect(sung, hasLength(50));
+    final hers = s.lines.where(
+      (l) => l.isSpoken && l.speakers.contains('zagiewka'),
+    );
+    expect(hers, hasLength(136));
     expect(blocks.map((l) => l.text), contains('Achh ci celebryci....'));
     expect(s.lines.last.isSpoken, isFalse);
+  }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
+
+  test('the Róża / Lis duet follows its R. / L. / Razem tags', () {
+    // Scena 3 (pdftotext -layout): "R." 4 lyric lines, "L." 4, "Razem" 1.
+    final duet = s.songs.singleWhere(
+      (x) => s.lines[x.start - 1].directions.contains('R.'),
+    );
+    final lyrics = s.lines
+        .sublist(duet.start, duet.end + 1)
+        .where((l) => l.isSpoken)
+        .map((l) => l.speakers.join('+'));
+    expect(lyrics, [
+      ...List.filled(4, 'roza'),
+      ...List.filled(4, 'lis'),
+      'roza+lis',
+    ]);
+    final tags = s.lines
+        .sublist(duet.start - 1, duet.end + 1)
+        .where((l) => l.kind == LineKind.direction);
+    expect(tags.map((l) => l.directions.single), ['R.', 'L.', 'Razem']);
+    expect(s.songs.where((x) => x.title.length <= 5), isEmpty);
   }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
 
   test('songs are delimited by colour', () {

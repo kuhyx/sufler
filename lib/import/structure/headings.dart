@@ -66,30 +66,42 @@ List<String>? headingParts(String line, {int maxWords = 8}) {
   return words <= maxWords ? parts : null;
 }
 
+/// A cast-list group ("1. Krasnale:") and the names listed under it.
+typedef CastGroup = ({String name, List<String> members});
+
 /// The cast list after `Bohaterowie:` (or Osoby/Postacie/Obsada): bullet
-/// entries with the source-tale parenthetical dropped, "X i Y" split.
-/// Returns the names and the index of the last line consumed (-1: none).
-(List<String>, int) castList(List<String> lines) {
+/// entries with the source-tale parenthetical dropped, "X i Y" split, and
+/// the numbered groups they sit in ("1. Krasnale:", quotes dropped).
+/// Returns the names, the index of the last line consumed (-1: none) and
+/// the groups.
+(List<String>, int, List<CastGroup>) castList(List<String> lines) {
   final header = _castHeader;
   final start = lines.indexWhere((l) => header.hasMatch(squash(l)));
-  if (start < 0) return (const [], -1);
+  if (start < 0) return (const [], -1, const []);
   final names = <String>[];
+  final groups = <CastGroup>[];
   var end = start;
   final bullet = RegExp(r'^[•·▪◦●*\-–]\s*(.+)$');
+  final group = RegExp(r'^\d+[.)]\s*(.*?)\s*:?$');
   for (var i = start + 1; i < lines.length; i++) {
     final t = squash(lines[i]);
     final m = bullet.firstMatch(t);
+    final g = group.firstMatch(t);
     if (m != null) {
       final entry = m[1]!.replaceAll(_trailingParen, '');
-      names.addAll(entry.split(RegExp(r'\s*,\s*|\s+i\s+')).map(squash));
+      final found = entry.split(RegExp(r'\s*,\s*|\s+i\s+')).map(squash);
+      final kept = found.where((n) => n.isNotEmpty);
+      names.addAll(kept);
+      groups.lastOrNull?.members.addAll(kept);
       end = i;
-    } else if (t.isNotEmpty &&
-        !RegExp(r'^\d+[.)]').hasMatch(t) &&
-        !t.endsWith(':')) {
+    } else if (g != null) {
+      final name = squash(g[1]!.replaceAll(RegExp('["„“”«»]'), ''));
+      if (name.isNotEmpty) groups.add((name: name, members: []));
+    } else if (t.isNotEmpty && !t.endsWith(':')) {
       break;
     }
   }
-  return (names.where((n) => n.isNotEmpty).toList(), end);
+  return (names, end, [...groups.where((g) => g.members.isNotEmpty)]);
 }
 
 /// The play title: the first quoted line near the top, else the first line.

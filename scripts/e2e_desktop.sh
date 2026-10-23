@@ -55,7 +55,8 @@ find_browser() {
 
 build() {
     cd "$REPO_DIR"
-    capped flutter build web --release
+    # Same flags as packaging/install_arch.sh: CanvasKit bundled, not CDN.
+    capped flutter build web --release --no-web-resources-cdn
     rm -rf build/cli
     capped dart build cli -t bin/sufler_desktop.dart -o build/cli
 }

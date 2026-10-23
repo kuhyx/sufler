@@ -5,7 +5,7 @@ import 'package:sufler/model/script.dart';
 /// An open song: where lyrics go and who sings them.
 class OpenSong {
   /// Opens a song.
-  new(this.id, this.title, this.start, this.speakers);
+  new(this.id, this.title, this.start, this.speakers) : all = speakers;
 
   /// Section id.
   final String id;
@@ -16,8 +16,12 @@ class OpenSong {
   /// Index of the heading line.
   final int start;
 
-  /// Singers (the speaker block it sits in, or a heading inside it).
+  /// Singers of the next lyric (the speaker block it sits in, or a
+  /// heading or singer tag inside it).
   List<String> speakers;
+
+  /// Every singer of the song: who "Razem" / "Wszyscy" means.
+  List<String> all;
 
   /// Whether the lyrics are red: null until the first lyric line.
   bool? coloured;
@@ -108,7 +112,11 @@ class ScriptSink {
   /// Starts a song that has no heading line, at the red [lyric] about to be
   /// emitted; titled `♪ <lyric, at most 40 chars>`. False (nothing opened)
   /// when [lyric] is only stage directions.
-  bool startUnheadedSong(String lyric, List<String> speakers) {
+  bool startUnheadedSong(
+    String lyric,
+    List<String> speakers, {
+    List<String>? all,
+  }) {
     final (clean, _) = splitDirections(lyric);
     if (!hasWords(clean)) return false;
     closeSong();
@@ -117,7 +125,8 @@ class ScriptSink {
         : '${clean.substring(0, 39).trimRight()}…';
     final title = '♪ $cut';
     song = OpenSong(_ids.take(title), title, lines.length, speakers)
-      ..coloured = true;
+      ..coloured = true
+      ..all = all ?? speakers;
     return true;
   }
 

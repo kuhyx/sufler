@@ -43,6 +43,20 @@ this file together.
   line, so each lyric line is cued by the one before it.
 - `speakers` holds character ids. Multi-speaker headings ("Błystek, Koszałek,
   Pietrzyk") list every id. Empty = unattributed (chorus lyric).
+- Song singers: a title naming one character ("Piosenka Macochy") is sung by
+  that character; a title naming a cast-list group ("1. Krasnale:" →
+  "Piosenka Krasnali", "Piosenka Krasnali 2"; Polish inflections compared
+  by stem, a trailing number ignored) by every member of that group;
+  otherwise by the last speaker (or the characters a red "X i Y śpiewają"
+  intro names).
+- Singer tags inside a song or red run set the speakers of the lyrics that
+  follow, until the next tag: "Razem" / "Wszyscy" / "Chór" = every singer of
+  that song; an initial ("R.", "Ż.") = the one singer whose name starts with
+  it, looked up among the song's singers, then among the scene's speakers
+  (several or none: unattributed); joined forms ("R. i L.") combine. A tag
+  line is a `direction` with empty `text`, the tag kept in `directions`
+  (inside the song section, except a tag before its first lyric); it never
+  titles an unheaded song. Outside songs "Wszyscy" stays a speaker heading.
 - A closing marker ("Koniec", "Kurtyna") as the document's last line is a
   `direction` with empty `text`, never the last speaker's line.
 - Stage directions `( … )` are removed from `text` and kept in `directions`.
