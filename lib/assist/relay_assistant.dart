@@ -129,6 +129,9 @@ class RelayAssistant implements Assistant {
       );
     } on RtdbError catch (e) {
       throw AssistantError('Brak połączenia z bazą (${e.status ?? 'sieć'}).');
+    } on Object {
+      // A revoked or unrefreshable session (FirebaseAuthError).
+      throw const AssistantError('Sesja wygasła: Ustawienia → Połącz z PC.');
     }
     if (result == null) {
       throw const AssistantError('PC nie odpowiada — czy jest włączony?');

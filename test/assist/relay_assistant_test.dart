@@ -110,6 +110,29 @@ void main() {
     expect(db.read('sufler/requests'), isNull);
   });
 
+  test(
+    'a dead session or no network is an AssistantError, never raw',
+    () async {
+      final broken = RelayAssistant(
+        rtdb: RtdbClient(
+          databaseUrl: 'https://db.example/',
+          idToken: () async => throw StateError('refresh token revoked'),
+          httpClient: db.client,
+        ),
+        deviceId: () async => dev,
+        session: session,
+      );
+      await expectLater(
+        broken.explain(script: fixtureScript(), index: 1, selection: 'x'),
+        throwsA(isA<AssistantError>()),
+      );
+      expect(
+        await broken.renderLine(script: fixtureScript(), index: 2),
+        isNull,
+      );
+    },
+  );
+
   test('renderLine decodes audioB64; failures are null', () async {
     pcAnswers((req) {
       final body = jsonDecode(req['payload']! as String) as Map;
