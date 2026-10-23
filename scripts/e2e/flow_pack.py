@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import oracle
-from flow_steps import audio_log
+from flow_rehearse import audio_log
 
 if TYPE_CHECKING:
     from flows import Run
@@ -86,4 +86,9 @@ def f6_pack(run: Run) -> None:
         f"played {got} s, pack clip {first['index']} is {want:.2f} s",
     )
     run.note(f"media play {json.dumps(entry)}; pack clip {want:.2f} s")
+    # Voiced from the pack, so by default only who speaks is on screen.
+    hidden = run.cdp.find(first["text"][:40]) is None
+    run.check(hidden, "partner text shown while its pack clip plays")
+    run.check(run.cdp.find("mówi…"), "no 'mówi…' in place of the partner text")
+    run.note("partner text hidden, 'mówi…' shown")
     run.shot("pack-playing")

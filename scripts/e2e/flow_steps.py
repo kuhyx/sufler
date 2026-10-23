@@ -1,4 +1,5 @@
-"""Bodies of flows F1-F5; the runner and shared navigation live in flows.py."""
+"""Bodies of flows F1, F2, F4 and F5; the runner and shared navigation live
+in flows.py, F3 in flow_rehearse.py."""
 
 from __future__ import annotations
 
@@ -8,7 +9,7 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import oracle
 from cdp import CdpError
@@ -95,76 +96,6 @@ def f2_roles(run: Run) -> None:
     )
     run.step("screenshot")
     run.shot("roles")
-
-
-def audio_log(run: Run) -> list[dict[str, Any]]:
-    """The instrumented audio calls so far (instrument.js)."""
-    log = run.cdp.evaluate("window.__suflerAudio || []")
-    return log if isinstance(log, list) else []
-
-
-def f3_rehearse(run: Run) -> None:
-    """F3: the role + a scene: partner name and audio, countdown, Space advances."""
-    run.step(f"open the script, select only {run.role}")
-    run.boot()
-    script, facts = run.open_script()
-    run.select_only_role(facts)
-    run.hub("Sceny")
-    pick = oracle.pick_scene(script, run.picked_roles(script))
-    run.step(f"start scene '{pick.title}' (lines {pick.start}-{pick.end})")
-    run.cdp.tap(f"kwestie {pick.start}–{pick.end}")
-    run.cdp.wait_for(f"kwestia 1/{pick.cues}", 10)
-    run.step("partner's name shown, its audio starts; text only if unvoiced")
-    first = next(
-        ln for ln in script["lines"][pick.start : pick.end + 1] if oracle.is_spoken(ln)
-    )
-    run.cdp.wait_for(oracle.speaker_names(script, first), 5)
-    run.cdp.page.pump(2)
-    log = audio_log(run)
-    run.check(log, "no speechSynthesis.speak / media play within 2 s")
-    run.note(f"audio: {json.dumps(log[0])}")
-    held = "error" in log[0]  # device speech failed: the text is held instead
-    shown = run.cdp.find(first["text"][:40]) is not None
-    run.check(shown == held, f"partner text shown={shown}, audio failed={held}")
-    run.shot("partner")
-    k = pick.partner_before_mine
-    run.step(f'"Dalej" x{k - 1} to the last partner line before the role\'s')
-    skip = run.cdp.wait_for("Dalej", 5)
-    for _ in range(k - 1):
-        run.cdp.click(skip)
-    run.cdp.wait_for(f"kwestia {k}/{pick.cues}", 10)
-    run.step("that partner line ends by itself; the role's countdown starts")
-    try:
-        # A partner song before it is one step: all its lines play first.
-        run.cdp.wait_for("Twoja kwestia", 25 + 10 * (pick.before_lines - 1))
-    except Exception as e:
-        log = audio_log(run)
-        raise TimeoutError(
-            f"{e}; {len(log)} audio calls, last {json.dumps(log[-1:])}"
-        ) from e
-    run.note(f"audio log: {json.dumps(audio_log(run)[-2:])}")
-    run.step("the countdown runs; the role's own text is hidden")
-    mine = pick.mine_text[:40]
-    before = run.cdp.text()
-    run.cdp.page.pump(1.5)
-    run.check(run.cdp.text() != before, "countdown text did not change in 1.5 s")
-    run.check(run.cdp.find("Mów z pamięci"), "no 'Mów z pamięci…' placeholder")
-    run.check(not run.cdp.find(mine), f"own line {mine!r} shown before Space")
-    run.shot("countdown")
-    run.step("Space ends the line: its text is revealed; a grade advances")
-    at = run.header()
-    run.cdp.key_space()
-    run.cdp.wait_for("Jak poszło?", 5)
-    run.cdp.wait_for(mine, 5)
-    run.note(f"kwestia {at}: own text hidden in the countdown, shown for the grade")
-    run.shot("grade")
-    run.cdp.tap("Dobrze", 5)
-    run.cdp.page.pump(1)
-    after = run.header()
-    advanced = after is None or (at is not None and after[0] > at[0])
-    run.check(advanced, f"header {at} -> {after} after Space")
-    run.note(f"Space: kwestia {at} -> {after or 'finished'}")
-    run.shot("after-space")
 
 
 def f4_anki(run: Run) -> None:

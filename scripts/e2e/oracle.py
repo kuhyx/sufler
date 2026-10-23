@@ -176,6 +176,15 @@ def steps(lines: list[Json], roles: set[str]) -> list[list[Json]]:
     return out
 
 
+def step_label(script: Json, step: list[Json]) -> str:
+    """lib/ui/cue_view.dart ``_who``: each speaker set once (first-seen
+    order), plus `` · <song title>`` when the step is a run in a song."""
+    names = list(dict.fromkeys(speaker_names(script, ln) for ln in step))
+    song = step[0].get("songId") if len(step) > 1 else None
+    titles = [s["title"] for s in script["songs"] if s["id"] == song]
+    return " · ".join([", ".join(names), *titles])
+
+
 @dataclass(frozen=True)
 class ScenePick:
     """A scene to rehearse and where the first own line falls in it."""
@@ -186,7 +195,9 @@ class ScenePick:
     cues: int
     partner_before_mine: int
     mine_text: str  # first line of the first own step
+    mine_last: str  # last line of that step (a whole run is revealed at once)
     before_lines: int  # lines of the partner step right before it
+    first_label: str  # who says the scene's first step (step_label)
 
 
 def pick_scene(script: Json, roles: set[str]) -> ScenePick:
@@ -208,7 +219,9 @@ def pick_scene(script: Json, roles: set[str]) -> ScenePick:
             len(cues),
             mine[0],
             cues[mine[0]][0]["text"],
+            cues[mine[0]][-1]["text"],
             len(cues[mine[0] - 1]),
+            step_label(script, cues[0]),
         )
         if best is None or pick.partner_before_mine < best.partner_before_mine:
             best = pick

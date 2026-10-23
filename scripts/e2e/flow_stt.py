@@ -43,6 +43,23 @@ def _wav(pack: Path, index: int, out: Path) -> Path:
     return wav
 
 
+def _check_words(run: Run, words: object, seconds: float) -> None:
+    """DOCS-contract `words`: every word with its own times, in order,
+    inside the clip (what the desktop run split cuts a whole run by)."""
+    run.check(isinstance(words, list) and words, f"no 'words' in reply: {words}")
+    assert isinstance(words, list)
+    last = 0.0
+    for w in words:
+        ok = isinstance(w, dict) and isinstance(w.get("word"), str)
+        start, end = (w.get("start"), w.get("end")) if ok else (None, None)
+        ok = ok and isinstance(start, (int, float)) and isinstance(end, (int, float))
+        run.check(ok and last <= start <= end <= seconds + 0.1, f"word {w}")
+        last = start
+    run.note(
+        f"{len(words)} words, {words[0]['start']}-{words[-1]['end']} s of {seconds:.2f} s"
+    )
+
+
 def f7_transcribe(run: Run) -> None:
     """F7: a WAV posted like TranscribeClient comes back as a matching transcript."""
     run.step("the voice service has a recognizer (health through the wrapper)")
@@ -81,6 +98,8 @@ def f7_transcribe(run: Run) -> None:
         f"{len(text)}-char transcript, speech {got.get('speechStart')}-"
         f"{got.get('speechEnd')} s"
     )
+    seconds = (len(body) - 44) / 32000  # mono PCM16 at 16 kHz after the header
+    _check_words(run, got.get("words"), seconds)
     run.step("the transcript resembles the line's stored text")
     ratio = difflib.SequenceMatcher(
         None, _letters(text), _letters(line["text"])

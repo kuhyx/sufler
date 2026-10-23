@@ -22,7 +22,8 @@ from typing import Any
 import oracle
 from cdp import Cdp, CdpError
 from flow_pack import f6_pack
-from flow_steps import f1_import, f2_roles, f3_rehearse, f4_anki, f5_voices
+from flow_rehearse import f3_rehearse
+from flow_steps import f1_import, f2_roles, f4_anki, f5_voices
 from flow_stt import f7_transcribe
 
 Json = dict[str, Any]
@@ -170,7 +171,7 @@ class Run:
 FLOWS: dict[str, tuple[int, Callable[[Run], None]]] = {
     "F1": (6, f1_import),
     "F2": (4, f2_roles),
-    "F3": (8, f3_rehearse),
+    "F3": (7, f3_rehearse),
     "F4": (5, f4_anki),
     "F5": (4, f5_voices),
     "F6": (6, f6_pack),
