@@ -38,8 +38,10 @@ pubspec_version() {
 }
 
 build() {
-    echo "==> flutter build web --release"
-    (cd "$REPO_DIR" && flutter build web --release)
+    echo "==> flutter build web --release --no-web-resources-cdn"
+    # --no-web-resources-cdn: CanvasKit ships in the bundle, so the app
+    # starts offline (the default loads it from www.gstatic.com).
+    (cd "$REPO_DIR" && flutter build web --release --no-web-resources-cdn)
     echo "==> dart build cli (wrapper)"
     # `dart build cli`, not `dart compile exe`: sqlite3 has native build
     # hooks, which `dart compile` refuses. Emits bundle/bin + bundle/lib.
