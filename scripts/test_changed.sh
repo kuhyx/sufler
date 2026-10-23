@@ -33,9 +33,9 @@ for f in "${CHANGED[@]}"; do
 done
 
 if [[ $full -eq 0 && ${#CHANGED[@]} -eq 0 ]]; then echo "no changes vs HEAD: nothing to test"; exit 0; fi
-if [[ $full -eq 0 && ${#tests[@]} -gt 0 ]]; then flutter test --reporter=compact "${tests[@]}"; exit $?; fi
+if [[ $full -eq 0 && ${#tests[@]} -gt 0 ]]; then flutter test -j 4 --reporter=compact "${tests[@]}"; exit $?; fi
 if [[ $full -eq 0 ]] && ! printf '%s\n' "${CHANGED[@]}" | grep -q '\.dart$'; then
     echo "no dart changes: nothing to test"; exit 0
 fi
 echo "no mapped tests: running full suite"
-flutter test --reporter=compact
+flutter test -j 4 --reporter=compact

@@ -58,6 +58,30 @@ void main() {
     expect(s.lines.last.speakers, ['stary-zegar']);
   });
 
+  test('punctuation-only text is never emitted as a spoken line', () {
+    final s = _build([
+      ...cast,
+      const StyledLine('Kot Łatek'),
+      const StyledLine('...'),
+      const StyledLine('Stary Zegar'),
+      const StyledLine('(wzdycha) …'),
+      const StyledLine('– !', tint: Tint.song),
+      const StyledLine('Tik.', tint: Tint.recitation),
+    ]);
+    // A bare "..." block is dropped (it was always stripped as filler).
+    final silent = s.lines.where((l) => l.speakers.isNotEmpty).toList();
+    expect(silent.map((l) => l.kind), [
+      LineKind.direction,
+      LineKind.direction,
+      LineKind.recitation,
+    ]);
+    expect(silent.map((l) => l.text), ['', '', 'Tik.']);
+    expect(silent[0].directions, ['(wzdycha)', '…']);
+    expect(silent[1].directions, ['–!']);
+    expect(s.lines.where((l) => l.isSpoken).map((l) => l.text), ['Tik.']);
+    expect(s.songs, isEmpty);
+  });
+
   test('an unterminated /cue is a direction to the end of the block', () {
     final s = _build([
       ...cast,

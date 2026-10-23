@@ -37,7 +37,7 @@ int _rgb(double r, double g, double b) {
 /// fill colour in effect (rg/g/k/sc/scn) for each piece.
 class PdfTextExtractor {
   /// Extracts from [file].
-  PdfTextExtractor(this.file);
+  new(this.file);
 
   /// The document.
   final PdfFile file;

@@ -12,7 +12,7 @@ import 'package:sufler/ui/labels.dart';
 /// previous panel is where my just-said line appears.
 class CueView extends StatelessWidget {
   /// Creates the view.
-  const CueView({
+  const new({
     required this.script,
     required this.controller,
     required this.visibility,
@@ -57,9 +57,8 @@ class CueView extends StatelessWidget {
 
   Widget _previous(BuildContext context, Cue prev) {
     final hidden = prev.mine && visibility == TextVisibility.hide;
-    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
+    final style = Theme.of(context).textTheme.bodyMedium
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
     return Row(
       children: [
         Expanded(

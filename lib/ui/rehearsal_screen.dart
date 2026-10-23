@@ -15,7 +15,7 @@ import 'package:sufler/ui/services.dart';
 /// The rehearsal itself: partner lines aloud, a countdown for mine.
 class RehearsalScreen extends StatefulWidget {
   /// Creates the screen; the walk starts immediately.
-  const RehearsalScreen({
+  const new({
     required this.script,
     required this.cues,
     required this.title,

@@ -6,7 +6,7 @@ import 'package:meta/meta.dart';
 @immutable
 class PdfName {
   /// Creates a name.
-  const PdfName(this.name);
+  const new(this.name);
 
   /// The decoded name.
   final String name;
@@ -25,7 +25,7 @@ class PdfName {
 @immutable
 class PdfString {
   /// Creates a string.
-  const PdfString(this.bytes);
+  const new(this.bytes);
 
   /// The raw bytes.
   final Uint8List bytes;
@@ -35,7 +35,7 @@ class PdfString {
 @immutable
 class PdfRef {
   /// Creates a reference.
-  const PdfRef(this.num, this.gen);
+  const new(this.num, this.gen);
 
   /// Object number.
   final int num;
@@ -48,7 +48,7 @@ class PdfRef {
 @immutable
 class PdfOp {
   /// Creates a keyword.
-  const PdfOp(this.op);
+  const new(this.op);
 
   /// The keyword text.
   final String op;

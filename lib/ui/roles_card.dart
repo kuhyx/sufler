@@ -7,7 +7,7 @@ import 'package:sufler/rehearsal/edits.dart';
 /// Multi-select of the characters and songs the actor plays.
 class RolesCard extends StatelessWidget {
   /// Creates the card.
-  const RolesCard({
+  const new({
     required this.script,
     required this.selected,
     required this.onChanged,

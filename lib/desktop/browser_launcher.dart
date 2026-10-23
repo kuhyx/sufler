@@ -56,8 +56,10 @@ List<String> browserArgs(String home) => [
 ];
 
 /// Starts a process; [Process.start] in production.
-typedef ProcessStarter =
-    Future<Process> Function(String executable, List<String> args);
+typedef ProcessStarter = Future<Process> Function(
+  String executable,
+  List<String> args,
+);
 
 /// Launches the app window and waits for the browser process to exit.
 ///

@@ -36,7 +36,7 @@ List<StyledLine> readPdf(Uint8List bytes) {
 }
 
 class _Line {
-  _Line(TextChunk c) : y = c.y, size = c.size {
+  new(TextChunk c) : y = c.y, size = c.size {
     chunks.add(c);
   }
 

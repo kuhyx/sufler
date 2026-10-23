@@ -12,7 +12,7 @@ import 'package:sufler/ui/services.dart';
 /// to the library at once.
 class CorrectionScreen extends StatefulWidget {
   /// Opens the stored script [scriptId].
-  const CorrectionScreen({required this.scriptId, super.key});
+  const new({required this.scriptId, super.key});
 
   /// Id of the script in the library.
   final String scriptId;

@@ -21,7 +21,7 @@ import 'package:sufler/ui/tools_card.dart';
 /// One script: pick roles and a section, tune the rehearsal, tools.
 class ScriptScreen extends StatefulWidget {
   /// Opens the stored script [scriptId].
-  const ScriptScreen({required this.scriptId, super.key});
+  const new({required this.scriptId, super.key});
 
   /// Id of the script in the library.
   final String scriptId;
@@ -118,9 +118,8 @@ class _ScriptScreenState extends State<ScriptScreen> {
   }
 
   Future<void> _push(Widget screen) async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => screen));
+    await Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => screen));
     await _load();
   }
 

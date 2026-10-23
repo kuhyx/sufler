@@ -23,7 +23,7 @@ enum LineKind {
 @immutable
 class ScriptLine {
   /// Creates a line.
-  const ScriptLine({
+  const new({
     required this.index,
     required this.speakers,
     required this.text,
@@ -34,7 +34,7 @@ class ScriptLine {
   });
 
   /// Parses [json] produced by [toJson].
-  factory ScriptLine.fromJson(Json json) => ScriptLine(
+  factory fromJson(Json json) => ScriptLine(
     index: json['index']! as int,
     speakers: stringList(json['speakers']),
     text: json['text']! as String,
@@ -66,9 +66,11 @@ class ScriptLine {
   /// Stage directions stripped from [text] ("(Wzdycha)", "/.../" excluded).
   final List<String> directions;
 
-  /// Whether rehearsal reads this line aloud / expects it from the actor.
+  /// Whether rehearsal reads this line aloud / expects it from the actor:
+  /// not a direction or heading, and [text] has a letter or digit ("..."
+  /// alone is a beat, not speech, and the voice service renders no clip).
   bool get isSpoken =>
-      kind != LineKind.direction && kind != LineKind.heading && text.isNotEmpty;
+      kind != LineKind.direction && kind != LineKind.heading && hasWords(text);
 
   /// JSON form; see DOCS-contract.md.
   Json toJson() => {
@@ -93,3 +95,8 @@ class ScriptLine {
         directions: directions,
       );
 }
+
+final _wordChar = RegExp(r'[\p{L}\p{N}]', unicode: true);
+
+/// Whether [text] has at least one letter or digit, i.e. something to say.
+bool hasWords(String text) => _wordChar.hasMatch(text);

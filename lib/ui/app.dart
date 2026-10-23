@@ -6,7 +6,7 @@ import 'package:sufler/ui/services.dart';
 /// Root widget. Theming comes entirely from `design_system`.
 class SuflerApp extends StatelessWidget {
   /// Creates the app over [services].
-  const SuflerApp({required this.services, super.key});
+  const new({required this.services, super.key});
 
   /// Everything outside the UI.
   final Services services;

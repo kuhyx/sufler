@@ -11,7 +11,7 @@ import 'package:sufler/ui/services.dart';
 /// Corrections, timings, Anki export and voice packs.
 class ToolsCard extends StatefulWidget {
   /// Creates the card.
-  const ToolsCard({
+  const new({
     required this.script,
     required this.roles,
     required this.pack,

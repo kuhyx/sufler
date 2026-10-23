@@ -7,7 +7,7 @@ import 'package:sufler/import/pdf/pdf_lexer.dart';
 /// A stream object: its dictionary and still-encoded bytes.
 class PdfStream {
   /// Creates a stream.
-  PdfStream(this.dict, this.raw);
+  new(this.dict, this.raw);
 
   /// Stream dictionary.
   final PdfDict dict;
@@ -25,7 +25,7 @@ final _objHeader = RegExp(r'(\d+)\s+(\d+)\s+obj\b');
 /// updates (the last definition wins). Object streams are unpacked too.
 class PdfFile {
   /// Indexes [bytes].
-  PdfFile(this.bytes) {
+  new(this.bytes) {
     _scan();
   }
 

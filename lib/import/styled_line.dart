@@ -30,7 +30,7 @@ Tint tintOf(int? rgb) {
 @immutable
 class TextRun {
   /// Creates a run; [rgb] is 0xRRGGBB or null when unknown.
-  const TextRun(this.text, [this.rgb]);
+  const new(this.text, [this.rgb]);
 
   /// The characters.
   final String text;
@@ -43,10 +43,10 @@ class TextRun {
 @immutable
 class StyledLine {
   /// Creates a line.
-  const StyledLine(this.text, {this.tint = Tint.normal, this.wraps = false});
+  const new(this.text, {this.tint = Tint.normal, this.wraps = false});
 
   /// Builds a line from runs; the tint is the one covering most letters.
-  factory StyledLine.fromRuns(List<TextRun> runs, {bool wraps = false}) {
+  factory fromRuns(List<TextRun> runs, {bool wraps = false}) {
     final counts = <Tint, int>{};
     for (final run in runs) {
       final letters = run.text.replaceAll(RegExp(r'\s'), '').length;

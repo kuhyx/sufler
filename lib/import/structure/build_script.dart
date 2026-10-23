@@ -71,7 +71,7 @@ bool _headingShaped(String text, int maxWords) =>
     songTitle(text) == null;
 
 class _Structurer {
-  _Structurer(this.cast);
+  new(this.cast);
 
   final Cast cast;
   final ScriptSink out = ScriptSink();
@@ -199,8 +199,15 @@ class _Structurer {
         return;
       }
     }
+    final singers = _runSpeakers ?? speakers;
+    // An unheaded red passage becomes its own song section from its first
+    // lyric on, so it can be picked as a song role; `line` then routes the
+    // rest of the run through `_lyric`, which closes it on a colour change.
+    if (tint == Tint.song && out.startUnheadedSong(text, singers)) {
+      return out.emitText(LineKind.song, singers, text, songId: out.song!.id);
+    }
     final kind = tint == Tint.song ? LineKind.song : LineKind.recitation;
-    out.emitText(kind, _runSpeakers ?? speakers, text);
+    out.emitText(kind, singers, text);
   }
 
   void end() {

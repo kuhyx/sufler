@@ -7,10 +7,10 @@ import 'package:sufler/model/json.dart';
 /// A rendered voice pack: one Ogg/Opus clip per spoken line.
 /// Format: DOCS-contract.md "Audio pack".
 class AudioPack {
-  AudioPack._(this.scriptId, this.engine, this.voices, this._clips);
+  new _(this.scriptId, this.engine, this.voices, this._clips);
 
   /// Reads a `<script-id>.sufler-audio.zip`.
-  factory AudioPack.fromZip(Uint8List bytes) {
+  factory fromZip(Uint8List bytes) {
     final archive = ZipDecoder().decodeBytes(bytes);
     final manifestFile = archive.findFile('manifest.json');
     if (manifestFile == null) {

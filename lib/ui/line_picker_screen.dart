@@ -16,7 +16,7 @@ enum PickMode {
 /// Picks a [LineRange] by tapping lines; pops with the range.
 class LinePickerScreen extends StatefulWidget {
   /// Creates the picker.
-  const LinePickerScreen({required this.script, required this.mode, super.key});
+  const new({required this.script, required this.mode, super.key});
 
   /// The script.
   final Script script;

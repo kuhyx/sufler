@@ -8,7 +8,7 @@ import 'package:sufler/rehearsal/timing.dart';
 @immutable
 class Cue {
   /// Creates a cue.
-  const Cue({required this.line, required this.mine, required this.seconds});
+  const new({required this.line, required this.mine, required this.seconds});
 
   /// The script line.
   final ScriptLine line;

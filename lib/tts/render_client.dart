@@ -27,7 +27,7 @@ const Set<String> jobFailedStates = {'error', 'failed'};
 /// Talks to `<base>/api/tts/...`.
 class RenderClient {
   /// Creates a client; [base] is the app origin (`Uri.base` on web).
-  RenderClient({
+  new({
     required this.client,
     required this.base,
     this.pollInterval = const Duration(seconds: 1),

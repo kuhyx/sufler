@@ -6,7 +6,7 @@ import 'package:sufler/storage/prefs.dart';
 /// Speed, own-line visibility, self-grading and loop mode.
 class SettingsCard extends StatelessWidget {
   /// Creates the card.
-  const SettingsCard({
+  const new({
     required this.speed,
     required this.settings,
     required this.onSpeed,

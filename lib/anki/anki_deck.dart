@@ -17,7 +17,7 @@ import 'package:sufler/model/json.dart';
 @immutable
 class AnkiCard {
   /// Creates a card.
-  const AnkiCard({
+  const new({
     required this.key,
     required this.deck,
     required this.front,
@@ -25,7 +25,7 @@ class AnkiCard {
   });
 
   /// Parses [json] produced by [toJson].
-  factory AnkiCard.fromJson(Json json) => AnkiCard(
+  factory fromJson(Json json) => AnkiCard(
     key: json['key']! as String,
     deck: json['deck']! as String,
     front: json['front']! as String,
@@ -52,11 +52,7 @@ class AnkiCard {
 @immutable
 class AnkiDeck {
   /// Creates a deck.
-  const AnkiDeck({
-    required this.title,
-    required this.cards,
-    this.media = const {},
-  });
+  const new({required this.title, required this.cards, this.media = const {}});
 
   /// Root deck name; card decks are `<title>::<subdeck>` or [title] itself.
   final String title;

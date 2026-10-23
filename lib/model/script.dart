@@ -8,14 +8,10 @@ export 'package:sufler/model/script_line.dart';
 @immutable
 class Character {
   /// Creates a character.
-  const Character({
-    required this.id,
-    required this.name,
-    this.aliases = const [],
-  });
+  const new({required this.id, required this.name, this.aliases = const []});
 
   /// Parses [json] produced by [toJson].
-  factory Character.fromJson(Json json) => Character(
+  factory fromJson(Json json) => Character(
     id: json['id']! as String,
     name: json['name']! as String,
     aliases: stringList(json['aliases']),
@@ -38,7 +34,7 @@ class Character {
 @immutable
 class Section {
   /// Creates a section.
-  const Section({
+  const new({
     required this.id,
     required this.title,
     required this.start,
@@ -46,7 +42,7 @@ class Section {
   });
 
   /// Parses [json] produced by [toJson].
-  factory Section.fromJson(Json json) => Section(
+  factory fromJson(Json json) => Section(
     id: json['id']! as String,
     title: json['title']! as String,
     start: json['start']! as int,
@@ -73,7 +69,7 @@ class Section {
 @immutable
 class Script {
   /// Creates a script.
-  const Script({
+  const new({
     required this.id,
     required this.title,
     required this.source,
@@ -84,7 +80,7 @@ class Script {
   });
 
   /// Parses [json] produced by [toJson].
-  factory Script.fromJson(Json json) => Script(
+  factory fromJson(Json json) => Script(
     id: json['id']! as String,
     title: json['title']! as String,
     source: json['source']! as String,

@@ -13,7 +13,7 @@ bool _isDelim(int c) => '()<>[]{}/%'.codeUnits.contains(c);
 /// Tokenizer and object parser for PDF syntax (files and content streams).
 class PdfLexer {
   /// Lexes [bytes] from [pos].
-  PdfLexer(this.bytes, [this.pos = 0]);
+  new(this.bytes, [this.pos = 0]);
 
   /// Source bytes.
   final Uint8List bytes;

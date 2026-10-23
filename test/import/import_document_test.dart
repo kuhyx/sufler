@@ -74,6 +74,25 @@ void main() {
     expect(s.characters.map((c) => c.name), ['Lis', 'Wilk']);
   });
 
+  test('the wrapper 403 not_shared answer is the not-shared error', () async {
+    final client = MockClient(
+      (_) async => http.Response('{"error":"not_shared"}', 403),
+    );
+    await expectLater(
+      importGoogleDoc(
+        'https://docs.google.com/document/d/P/edit',
+        client: client,
+      ),
+      throwsA(
+        isA<GoogleDocException>().having(
+          (e) => e.message,
+          'message',
+          contains('anyone with the link'),
+        ),
+      ),
+    );
+  });
+
   test('private google doc gives a clear error', () async {
     final client = MockClient(
       (_) async => http.Response('<html>Sign in</html>', 200),

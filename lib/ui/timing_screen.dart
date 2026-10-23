@@ -13,7 +13,7 @@ import 'package:sufler/ui/services.dart';
 /// My lines with their pause length; tap one to override or record it.
 class TimingScreen extends StatefulWidget {
   /// Opens the stored script [scriptId].
-  const TimingScreen({required this.scriptId, super.key});
+  const new({required this.scriptId, super.key});
 
   /// Id of the script in the library.
   final String scriptId;
