@@ -43,11 +43,11 @@
 
 | id | goal | command | last green |
 |---|---|---|---|
-| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 |
-| F2 | role picker: Piaskowy Wilk chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 |
-| F3 | Wolf + a scene: partner text shown and audio started; a partner line ends by itself; Wolf's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 |
-| F4 | Anki export downloads an .apkg whose notes == Wolf spoken lines, fronts carry the cue, backs the Wolf line | `scripts/e2e_desktop.sh F4` | 2026-10-23 |
-| F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper | `scripts/e2e_desktop.sh F5` | 2026-10-23 |
+| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 @ 9d61c23 |
+| F2 | role picker: Piaskowy Wilk chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 @ 9d61c23 |
+| F3 | Wolf + a scene: partner text shown and audio started; a partner line ends by itself; Wolf's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 @ 9d61c23 |
+| F4 | Anki export downloads an .apkg whose notes == Wolf spoken lines, fronts carry the cue, backs the Wolf line | `scripts/e2e_desktop.sh F4` | 2026-10-23 @ 9d61c23 |
+| F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper | `scripts/e2e_desktop.sh F5` | 2026-10-23 @ 9d61c23 |
 
 On failure every flow prints `FAIL F<n> step <i>/<total>: <step> -> <why>;
 shot: <path>` and exits 1.
