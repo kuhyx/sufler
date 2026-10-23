@@ -81,6 +81,24 @@ void main() {
     );
   }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
 
+  test('Żagiewka has one dialogue line per speaker heading', () {
+    // 86 standalone "Żagiewka" headings (cast-list bullet excluded); no
+    // multi-speaker heading names her. The closing "Koniec;)" after the
+    // finale is not hers.
+    final blocks = s.lines.where(
+      (l) => l.kind == LineKind.dialogue && l.speakers.contains('zagiewka'),
+    );
+    expect(blocks, hasLength(86));
+    expect(
+      s.lines.where(
+        (l) => l.speakers.length > 1 && l.speakers.contains('zagiewka'),
+      ),
+      isEmpty,
+    );
+    expect(blocks.map((l) => l.text), contains('Achh ci celebryci....'));
+    expect(s.lines.last.isSpoken, isFalse);
+  }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
+
   test('songs are delimited by colour', () {
     // Every song ends on a red lyric line, not on the next black line.
     // A headed song starts on its heading, an unheaded one on its first lyric.

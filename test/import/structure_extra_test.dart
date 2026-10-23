@@ -28,6 +28,39 @@ void main() {
     expect(s.title, 'sztuka');
   });
 
+  test('an end-of-play marker after the last song is nobody\'s line', () {
+    final s = _build([
+      ...cast,
+      const StyledLine('Kot Łatek'),
+      const StyledLine('Uciekajmy!'),
+      const StyledLine('"Piosenka Finałowa"'),
+      const StyledLine('Tra la la', tint: Tint.song),
+      const StyledLine('Koniec;)'),
+    ]);
+    final end = s.lines.last;
+    expect(end.kind, LineKind.direction);
+    expect(end.speakers, isEmpty);
+    expect(end.isSpoken, isFalse);
+    expect(end.directions, ['Koniec;)']);
+    final kot = s.lines.where(
+      (l) => l.kind == LineKind.dialogue && l.speakers.contains('kot-latek'),
+    );
+    expect(kot.map((l) => l.text), ['Uciekajmy!']);
+  });
+
+  test('"Koniec!" mid-play is still the speaker\'s line', () {
+    final s = _build([
+      ...cast,
+      const StyledLine('Kot Łatek'),
+      const StyledLine('Koniec!'),
+      const StyledLine('Stary Zegar'),
+      const StyledLine('Jeszcze nie.'),
+    ]);
+    final kot = s.lines.firstWhere((l) => l.speakers.contains('kot-latek'));
+    expect(kot.kind, LineKind.dialogue);
+    expect(kot.text, 'Koniec!');
+  });
+
   test('soft-wrapped PDF lines join with a space, paragraphs with \\n', () {
     final s = _build([
       ...cast,

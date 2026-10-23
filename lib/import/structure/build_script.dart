@@ -25,7 +25,11 @@ Script buildScript(
     if (cast.resolve(name, record: false)?.name != name) cast.add(name, i);
   }
   _infer(cast, lines, castEnd + 1);
-  final s = _Structurer(cast);
+  final last = lines.lastWhere(
+    (l) => l.text.trim().isNotEmpty,
+    orElse: () => const StyledLine(''),
+  );
+  final s = _Structurer(cast)..closing = isEndMarker(last.text) ? last : null;
   final from = s.firstStructural(texts, castEnd + 1);
   lines.skip(from < 0 ? castEnd + 1 : from).forEach(s.line);
   s.end();
@@ -81,6 +85,10 @@ class _Structurer {
   List<String> _headDirections = [];
   Tint? _runTint;
   List<String>? _runSpeakers;
+
+  /// The document's last line when it is an end-of-play marker ("Koniec").
+  /// Only the last one: mid-play, "Koniec!" can be a character's line.
+  StyledLine? closing;
 
   int firstStructural(List<String> texts, int from) {
     for (var i = from; i < texts.length; i++) {
@@ -138,6 +146,16 @@ class _Structurer {
     if (isSceneHeading(text)) {
       _flush();
       out.startScene(squash(text));
+      speakers = const [];
+      _runTint = null;
+      return;
+    }
+    if (identical(l, closing)) {
+      // Otherwise it reads as one more line of the last speaker.
+      _flush();
+      out
+        ..closeSong()
+        ..emit(LineKind.direction, const [], '', directions: [text]);
       speakers = const [];
       _runTint = null;
       return;

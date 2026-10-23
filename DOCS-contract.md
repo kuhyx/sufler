@@ -43,6 +43,8 @@ this file together.
   line, so each lyric line is cued by the one before it.
 - `speakers` holds character ids. Multi-speaker headings ("Błystek, Koszałek,
   Pietrzyk") list every id. Empty = unattributed (chorus lyric).
+- A closing marker ("Koniec", "Kurtyna") as the document's last line is a
+  `direction` with empty `text`, never the last speaker's line.
 - Stage directions `( … )` are removed from `text` and kept in `directions`.
   The ellipsis pause marker `/.../` is removed from `text` and NOT kept.
 - Scene numbering is kept as written: duplicates and gaps are legal.

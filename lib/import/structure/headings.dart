@@ -14,6 +14,13 @@ final _castHeader = RegExp(
 /// Normalises whitespace.
 String squash(String s) => s.trim().replaceAll(RegExp(r'\s+'), ' ');
 
+/// Whether [line] is an end-of-play marker ("Koniec", "KONIEC.",
+/// "Koniec;)", "Kurtyna"): a closing note, never anyone's line.
+bool isEndMarker(String line) => RegExp(
+  r'^(koniec|kurtyna)[\s.!;:,)(*~-]*$',
+  caseSensitive: false,
+).hasMatch(squash(line));
+
 /// `Scena 3` (numbering as written); "Scena pogrążona w cieniu" is not one.
 bool isSceneHeading(String line) {
   final t = squash(line);
