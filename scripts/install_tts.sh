@@ -56,7 +56,7 @@ main() {
     ensure_ffmpeg
     ensure_piper
     log "syncing venv from uv.lock"
-    uv sync --frozen --directory "$TTS"
+    uv sync --locked --directory "$TTS"
     log "fetching Chatterbox weights (~3.2 GB on first run)"
     python_step sufler_tts.fetch_assets weights
     log "fetching Polish Piper voices"
