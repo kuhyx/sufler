@@ -138,6 +138,31 @@ void main() {
     });
   });
 
+  test('✗ replays the cue before through the player, then asks again', () {
+    fakeAsync((fa) {
+      final p = FakePlayer();
+      final c = _make(p, selfGrade: true)..start();
+      fa.elapse(const Duration(seconds: 2));
+      c.done();
+      expect(c.grade(ok: false), isTrue);
+      expect(c.session.phase, Phase.prompt);
+      expect(p.played, [1, 1]);
+      // Pause during the replay; resume plays it again.
+      c.pause();
+      fa.elapse(const Duration(seconds: 5));
+      c.resume();
+      expect(p.played, [1, 1, 1]);
+      fa.elapse(const Duration(seconds: 2));
+      expect(c.session.phase, Phase.mine);
+      expect(c.session.current!.line.index, 2);
+      expect(c.remaining, closeTo(3, 0.01));
+      c.done();
+      expect(c.grade(ok: true), isFalse);
+      expect(c.session.current!.line.index, 4);
+      c.dispose();
+    });
+  });
+
   test('notifies listeners on every change', () {
     fakeAsync((fa) {
       final c = _make(FakePlayer());

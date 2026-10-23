@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
+import 'package:sufler/storage/migrate.dart';
 import 'package:sufler/storage/prefs.dart';
 
 void main() {
@@ -131,5 +132,16 @@ void main() {
     expect(back.copyWith(clearResume: true).resume, isNull);
     const missed = ResumePoint(label: 'x', start: 1, end: 2, missedOnly: true);
     expect(ResumePoint.fromJson(missed.toJson()).missedOnly, isTrue);
+  });
+
+  test('pure runs: optional, round trip, kept through a re-parse', () {
+    const old = RehearsalPrefs();
+    expect(old.toJson().containsKey('pureRuns'), isFalse);
+    expect(RehearsalPrefs.fromJson(const {}).pureRuns, isEmpty);
+    final p = old.withPureRun('scena-1').withPureRun('scena-1');
+    expect(p.pureRuns, {'scena-1'});
+    expect(p.toJson()['pureRuns'], ['scena-1']);
+    expect(RehearsalPrefs.fromJson(p.toJson()).pureRuns, {'scena-1'});
+    expect(movePrefs(p, const {0: 0}, 1).prefs.pureRuns, {'scena-1'});
   });
 }

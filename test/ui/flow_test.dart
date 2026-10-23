@@ -57,10 +57,18 @@ void main() {
     await tester.pump();
     expect(find.text('Twoja kwestia'), findsOneWidget);
 
-    // Space ends my line too; ✗ marks it as not known.
+    // Space ends my line too; ✗ marks it as not known and asks it again
+    // (after the line before it) until ✓.
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
     await tester.tap(find.text('Źle'));
+    await tester.pump();
+    expect(find.text('Naprawdę.'), findsNothing);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump();
+    await tester.tap(find.text('Dobrze'));
     await tester.pump();
     expect(find.text('No dobrze.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));

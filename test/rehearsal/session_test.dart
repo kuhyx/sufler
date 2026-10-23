@@ -14,18 +14,19 @@ List<Cue> _scene1() {
   }, LineRange.section(s.scenes[0]));
 }
 
-/// Plays one whole pass, grading own lines with [grades] in order.
+/// Plays one whole pass, grading own lines with [grades] in order (a line
+/// graded ✗ is asked again and then passed: retries do not score).
 void _pass(RehearsalSession s, List<bool> grades) {
   final g = [...grades];
   while (s.phase != Phase.finished) {
     final startPass = s.pass;
     switch (s.phase) {
-      case Phase.partner:
+      case Phase.partner || Phase.prompt:
         s.partnerDone();
       case Phase.mine:
         s.finishPause();
       case Phase.grade:
-        s.grade(ok: g.removeAt(0));
+        s.grade(ok: s.retry || g.removeAt(0));
       case Phase.finished:
         break;
     }
@@ -94,16 +95,16 @@ void main() {
     expect(s.pass, 2);
   });
 
-  test('back steps to the previous cue and clears its grade', () {
+  test('back steps to the previous cue; its first grade stays', () {
     final s = RehearsalSession(_scene1(), selfGrade: true)
       ..partnerDone()
       ..finishPause()
-      ..grade(ok: false);
+      ..grade(ok: true);
     expect(s.current!.line.index, 4);
     s.back();
     expect(s.current!.line.index, 2);
     expect(s.phase, Phase.mine);
-    expect(s.results, isEmpty);
+    expect(s.results, {1: true});
     s
       ..back()
       ..back(); // stays at the first cue
