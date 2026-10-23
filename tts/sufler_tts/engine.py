@@ -6,6 +6,7 @@ through `process_engine.py`; tests use `FakeEngine` and never import torch.
 
 from __future__ import annotations
 
+from importlib.metadata import version
 from typing import Protocol
 
 import numpy as np
@@ -15,6 +16,11 @@ from sufler_tts.voices import Voice
 
 Audio = NDArray[np.float32]
 SAMPLE_RATE = 24_000
+
+
+def chatterbox_name() -> str:
+    """`chatterbox-multilingual@<ver>` from package metadata (no torch import)."""
+    return f"chatterbox-multilingual@{version('chatterbox-tts')}"
 
 
 class Engine(Protocol):

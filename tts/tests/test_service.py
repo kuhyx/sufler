@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import io
 import json
 import threading
 import time
 import urllib.error
 import urllib.request
+import zipfile
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -39,6 +41,7 @@ def _get(url: str) -> Any:
 def _post(url: str, body: object) -> Any:
     req = urllib.request.Request(url, json.dumps(body).encode(), method="POST")
     with urllib.request.urlopen(req, timeout=5) as r:
+        assert r.status == 200  # the Dart RenderClient accepts 200 only
         return json.loads(r.read())
 
 
@@ -66,8 +69,17 @@ def test_health_and_voices(base_url: str) -> None:
     assert len(voices) >= 9
 
 
-def test_render_job_and_pack(base_url: str, script_json: dict[str, Any]) -> None:
-    job_id = _post(f"{base_url}/render", {"script": script_json})["jobId"]
+def _manifest_voices(base_url: str) -> Any:
+    with urllib.request.urlopen(f"{base_url}/packs/abc123.zip", timeout=5) as r:
+        data = r.read()
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        return json.loads(z.read("manifest.json"))["voices"]
+
+
+def test_render_bare_script_like_dart_client(
+    base_url: str, script_json: dict[str, Any]
+) -> None:
+    job_id = _post(f"{base_url}/render", script_json)["jobId"]
     job = _wait(f"{base_url}/jobs/{job_id}")
     assert job == {"done": 4, "total": 4, "state": "done"}
     with urllib.request.urlopen(f"{base_url}/packs/abc123.zip", timeout=5) as r:
@@ -75,10 +87,31 @@ def test_render_job_and_pack(base_url: str, script_json: dict[str, Any]) -> None
         assert "abc123.sufler-audio.zip" in r.headers["Content-Disposition"]
 
 
+def test_voice_overrides_via_query(base_url: str, script_json: dict[str, Any]) -> None:
+    url = f"{base_url}/render?voices=krolowa:narrator,blystek:f4"
+    _wait(f"{base_url}/jobs/{_post(url, script_json)['jobId']}")
+    voices = _manifest_voices(base_url)
+    assert (voices["krolowa"], voices["blystek"]) == ("narrator", "f4")
+
+
+def test_wrapped_body_still_accepted(
+    base_url: str, script_json: dict[str, Any]
+) -> None:
+    body = {"script": script_json, "voices": {"krolowa": "m1"}}
+    _wait(f"{base_url}/jobs/{_post(f'{base_url}/render', body)['jobId']}")
+    assert _manifest_voices(base_url)["krolowa"] == "m1"
+
+
 def test_bad_requests(base_url: str, script_json: dict[str, Any]) -> None:
-    for body in ({"script": {"id": 1}}, {"script": script_json, "voices": {"x": "?"}}):
+    cases = [
+        ("", {"id": 1, "lines": []}),
+        ("", {"script": script_json, "voices": {"x": "?"}}),
+        ("?voices=krolowa:nope", script_json),
+        ("?voices=krolowa", script_json),
+    ]
+    for query, body in cases:
         with pytest.raises(urllib.error.HTTPError) as err:
-            _post(f"{base_url}/render", body)
+            _post(f"{base_url}/render{query}", body)
         assert err.value.code == 400
     for path in ("/jobs/nope", "/packs/nope.zip", "/packs/..%2Fx.zip", "/x"):
         with pytest.raises(urllib.error.HTTPError) as err:

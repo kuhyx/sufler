@@ -40,15 +40,17 @@ class Voice:
 
 
 BANK: tuple[Voice, ...] = (
-    Voice("f1", "Alt ciepły", "female", "piper-gosia", -1.0, 0.5, 0.5),
-    Voice("f2", "Mezzosopran", "female", "default", 0.0, 0.5, 0.5),
-    Voice("f3", "Sopran jasny", "female", "piper-gosia", 3.0, 0.6, 0.4),
-    Voice("f4", "Sopran wysoki", "female", "default", 4.0, 0.7, 0.4),
-    Voice("m1", "Bas", "male", "piper-darkman", -3.0, 0.4, 0.5),
-    Voice("m2", "Baryton", "male", "piper-darkman", 0.0, 0.5, 0.5),
-    Voice("m3", "Tenor", "male", "piper-mc_speech", 1.0, 0.5, 0.5),
-    Voice("m4", "Tenor wysoki", "male", "piper-mc_speech", 4.0, 0.6, 0.4),
-    Voice(NARRATOR, "Narrator", "neutral", "default", -4.0, 0.3, 0.5),
+    # A pitch ladder ~2.6 semitones apart, 80-270 Hz. Base F0s measured
+    # pre-DSP: darkman ~112, mc_speech ~117, default ~150, gosia ~205 Hz.
+    Voice("m1", "Bas", "male", "piper-darkman", -5.8),
+    Voice("m2", "Baryton", "male", "piper-darkman", -3.2),
+    Voice("m3", "Tenor", "male", "piper-mc_speech", -1.3),
+    Voice("m4", "Tenor jasny", "male", "piper-mc_speech", 1.4),
+    Voice(NARRATOR, "Narrator", "neutral", "default", 0.0),
+    Voice("f1", "Alt", "female", "piper-gosia", -3.0),
+    Voice("f2", "Mezzosopran", "female", "piper-gosia", -0.5),
+    Voice("f3", "Sopran", "female", "piper-gosia", 2.3),
+    Voice("f4", "Sopran wysoki", "female", "piper-gosia", 4.9),
 )
 _BY_ID = {v.id: v for v in BANK}
 

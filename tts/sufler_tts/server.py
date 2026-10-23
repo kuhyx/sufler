@@ -2,7 +2,7 @@
 
 GET  /health            {ok, engine, gpu}
 GET  /voices            [{id, label, gender}]
-POST /render            {script, voices?} -> 202 {jobId}
+POST /render[?voices=c:v,...]  bare Script JSON -> {jobId}
 GET  /jobs/<id>         {done, total, state[, error]}
 GET  /packs/<id>.zip    the audio pack (DOCS-contract.md)
 """
@@ -17,6 +17,7 @@ from collections.abc import Callable
 from functools import cache
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs
 
 from sufler_tts.jobs import JobRunner
 from sufler_tts.pack import pack_name
@@ -42,6 +43,29 @@ def gpu_name() -> str | None:
         timeout=10,
     )
     return out.stdout.strip().splitlines()[0] if out.returncode == 0 else None
+
+
+def parse_render_request(body: object, query: str) -> tuple[object, object]:
+    """(script, voice overrides) from a POST /render.
+
+    The app sends the bare `Script.toJson()` (lib/tts/render_client.dart);
+    overrides ride in `?voices=<charId>:<voiceId>,...`. A wrapped
+    `{"script": ..., "voices": {...}}` body is accepted too.
+    """
+    if not isinstance(body, dict):
+        raise ValueError("body must be a Script object")
+    wrapped = "script" in body
+    script = body["script"] if wrapped else body
+    voices = body.get("voices") or {} if wrapped else {}
+    if not isinstance(voices, dict):
+        raise ValueError("'voices' must map character ids to voice ids")
+    for value in parse_qs(query).get("voices", []):
+        for item in filter(None, value.split(",")):
+            char_id, sep, voice_id = item.partition(":")
+            if not sep or not char_id or not voice_id:
+                raise ValueError("voices must be <characterId>:<voiceId>,...")
+            voices[char_id] = voice_id
+    return script, voices
 
 
 def _handler(
@@ -84,7 +108,8 @@ def _handler(
                 self._not_found()
 
         def do_POST(self) -> None:
-            if self.path != "/render":
+            path, _, query = self.path.partition("?")
+            if path != "/render":
                 self._not_found()
                 return
             length = int(self.headers.get("Content-Length") or 0)
@@ -92,14 +117,15 @@ def _handler(
                 self._json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "too big"})
                 return
             try:
-                body = json.loads(self.rfile.read(length))
-                if not isinstance(body, dict):
-                    raise ValueError("body must be an object")
-                job = runner.submit(body.get("script"), body.get("voices") or {})
+                script, voices = parse_render_request(
+                    json.loads(self.rfile.read(length)), query
+                )
+                job = runner.submit(script, voices)
             except ValueError as exc:  # JSONDecodeError is a ValueError
                 self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
                 return
-            self._json(HTTPStatus.ACCEPTED, {"jobId": job.id})
+            # 200, not 202: the Dart RenderClient accepts exactly 200.
+            self._json(HTTPStatus.OK, {"jobId": job.id})
 
     return Handler
 
