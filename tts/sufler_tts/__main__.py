@@ -11,9 +11,12 @@ from sufler_tts.cache import ClipCache
 from sufler_tts.engine import chatterbox_name
 from sufler_tts.jobs import JobRunner
 from sufler_tts.process_engine import ProcessEngine
+from sufler_tts.process_stt import ProcessTranscriber
 from sufler_tts.server import PORT, make_server
+from sufler_tts.transcribe import whisper_name
 
 ENGINE_FACTORY = "sufler_tts.chatterbox_engine:ChatterboxEngine"
+STT_FACTORY = "sufler_tts.whisper_engine:WhisperTranscriber"
 
 
 def _exit(signum: int, frame: FrameType | None) -> None:
@@ -25,7 +28,8 @@ def main() -> None:
     """Serve until SIGTERM; the engine child is stopped on the way out."""
     engine = ProcessEngine(ENGINE_FACTORY, chatterbox_name())
     runner = JobRunner(engine, ClipCache(), DATA / "packs")
-    server = make_server(runner)
+    stt = ProcessTranscriber(STT_FACTORY, whisper_name())
+    server = make_server(runner, transcriber=stt)
     signal.signal(signal.SIGTERM, _exit)
     print(f"sufler-tts on http://127.0.0.1:{PORT} ({engine.name})", flush=True)
     try:
@@ -33,6 +37,7 @@ def main() -> None:
     finally:
         server.server_close()
         engine.close()
+        stt.close()
 
 
 if __name__ == "__main__":

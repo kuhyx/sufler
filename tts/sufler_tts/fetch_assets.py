@@ -1,6 +1,7 @@
 """Fetch model weights and build the synthetic voice prompts (idempotent).
 
     python -m sufler_tts.fetch_assets weights [FILE ...]
+    python -m sufler_tts.fetch_assets whisper [FILE ...]
     python -m sufler_tts.fetch_assets piper [VOICE ...]
     python -m sufler_tts.fetch_assets prompts
 
@@ -25,6 +26,9 @@ from sufler_tts.assets import (
     PIPER_MODELS,
     PIPER_PREFIX,
     PROMPTS,
+    WHISPER_DIR,
+    WHISPER_REPO,
+    WHISPER_REVISION,
     prompt_path,
 )
 from sufler_tts.assets import WEIGHTS as WEIGHTS_DIR
@@ -44,6 +48,20 @@ WEIGHTS = {
     "conds.pt": "6552d70568833628ba019c6b03459e77fe71ca197d5c560cef9411bee9d87f4e",
     "Cangjie5_TC.json": (
         "7073fd9de919443ae88e0bd2449917a65fe54898a4413ed1edcc4b67f28bce8c"
+    ),
+}
+# faster-whisper large-v3-turbo files at WHISPER_REVISION (sha256 of the bytes).
+WHISPER = {
+    "model.bin": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
+    "config.json": "b0253ea6c0d3bea6b1e19e91a02acfd3b53f4467362efcb5a3e6b16c9b3a9b7e",
+    "preprocessor_config.json": (
+        "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711"
+    ),
+    "tokenizer.json": (
+        "297b13372ac43916285644fb9687add3cc62ee2a1adb60da3dc25cc94c1871fd"
+    ),
+    "vocabulary.json": (
+        "c69260f2ab26d659b7c398f9a2b2b48ed0df16c3b47d7326782fd9cba71690c1"
     ),
 }
 PIPER_REVISION = "5041a7a49ae5b3a0f30e6837769eb03fdbb231bd"
@@ -86,6 +104,15 @@ def fetch_weights(files: list[str]) -> None:
             print(dest)
 
 
+def fetch_whisper(files: list[str]) -> None:
+    """Download the Whisper large-v3-turbo CT2 model into `assets.WHISPER_DIR`."""
+    base = f"{HF}/{WHISPER_REPO}/resolve/{WHISPER_REVISION}"
+    for name in files or list(WHISPER):
+        dest = WHISPER_DIR / name
+        if download.fetch(f"{base}/{name}", dest, WHISPER[name]):
+            print(dest)
+
+
 def _piper_files(voice: str) -> list[tuple[str, Path, str]]:
     stem = f"pl_PL-{voice}-{PIPER_QUALITY[voice]}"
     url = f"{PIPER_URL}/{voice}/{PIPER_QUALITY[voice]}/{stem}"
@@ -122,14 +149,17 @@ def build_prompts() -> None:
 def main(argv: list[str] | None = None) -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("what", choices=["weights", "piper", "prompts"])
+    parser.add_argument("what", choices=["weights", "whisper", "piper", "prompts"])
     parser.add_argument("names", nargs="*")
     args = parser.parse_args(argv)
-    known = {"weights": WEIGHTS, "piper": PIPER_QUALITY}.get(args.what, {})
+    sets = {"weights": WEIGHTS, "whisper": WHISPER, "piper": PIPER_QUALITY}
+    known = sets.get(args.what, {})
     if unknown := [n for n in args.names if n not in known]:
         parser.error(f"unknown {args.what}: {', '.join(unknown)}")
     if args.what == "weights":
         fetch_weights(args.names)
+    elif args.what == "whisper":
+        fetch_whisper(args.names)
     elif args.what == "piper":
         fetch_piper(args.names)
     else:

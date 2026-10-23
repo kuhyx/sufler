@@ -63,6 +63,7 @@ def test_health_and_voices(base_url: str) -> None:
         "ok": True,
         "engine": "fake@1",
         "gpu": "Fake GPU",
+        "stt": None,
     }
     voices = _get(f"{base_url}/voices")
     assert {"id", "label", "gender"} <= set(voices[0])

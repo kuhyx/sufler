@@ -1,10 +1,11 @@
 """Loopback-only HTTP API (stdlib: no web framework to pin and keep fresh).
 
-GET  /health            {ok, engine, gpu}
+GET  /health            {ok, engine, gpu, stt}
 GET  /voices            [{id, label, gender}]
 POST /render[?voices=c:v,...]  bare Script JSON -> {jobId}
 GET  /jobs/<id>         {done, total, state[, error]}
 GET  /packs/<id>.zip    the audio pack (DOCS-contract.md)
+POST /transcribe[?lang=pl]  audio bytes -> transcript (DOCS-contract.md)
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from urllib.parse import parse_qs
 
 from sufler_tts.jobs import JobRunner
 from sufler_tts.pack import pack_name
+from sufler_tts.transcribe import Transcriber, decode_audio
 from sufler_tts.voices import BANK
 
 HOST = "127.0.0.1"
@@ -28,6 +30,7 @@ PORT = 8791
 MAX_BODY = 32 * 1024 * 1024
 _JOB = re.compile(r"/jobs/([0-9a-f]{32})")
 _PACK = re.compile(r"/packs/([^/]+)\.zip")
+_LANG = re.compile(r"[a-z]{2,3}")
 
 
 @cache
@@ -68,8 +71,18 @@ def parse_render_request(body: object, query: str) -> tuple[object, object]:
     return script, voices
 
 
+def parse_language(query: str) -> str:
+    """The `lang` query value (default `pl`); a 2-3 letter ISO 639 code."""
+    lang = (parse_qs(query).get("lang") or ["pl"])[-1].lower()
+    if not _LANG.fullmatch(lang):
+        raise ValueError("lang must be a 2-3 letter language code")
+    return lang
+
+
 def _handler(
-    runner: JobRunner, gpu: Callable[[], str | None]
+    runner: JobRunner,
+    gpu: Callable[[], str | None],
+    transcriber: Transcriber | None,
 ) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:
@@ -89,7 +102,12 @@ def _handler(
         def do_GET(self) -> None:
             path = self.path.split("?", 1)[0]
             if path == "/health":
-                body = {"ok": True, "engine": runner.engine.name, "gpu": gpu()}
+                body = {
+                    "ok": True,
+                    "engine": runner.engine.name,
+                    "gpu": gpu(),
+                    "stt": transcriber.name if transcriber else None,
+                }
                 self._json(HTTPStatus.OK, body)
             elif path == "/voices":
                 self._json(HTTPStatus.OK, [v.public() for v in BANK])
@@ -107,14 +125,34 @@ def _handler(
             else:
                 self._not_found()
 
+        def _transcribe(self, body: bytes, query: str) -> None:
+            if transcriber is None:
+                self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "no STT"})
+                return
+            try:
+                lang = parse_language(query)
+                audio = decode_audio(body)
+            except ValueError as exc:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+                return
+            try:
+                result = transcriber.transcribe(audio, lang)
+            except RuntimeError as exc:  # model load / decode failure
+                self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+                return
+            self._json(HTTPStatus.OK, result.public())
+
         def do_POST(self) -> None:
             path, _, query = self.path.partition("?")
-            if path != "/render":
+            if path not in {"/render", "/transcribe"}:
                 self._not_found()
                 return
             length = int(self.headers.get("Content-Length") or 0)
             if length > MAX_BODY:
                 self._json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "too big"})
+                return
+            if path == "/transcribe":
+                self._transcribe(self.rfile.read(length), query)
                 return
             try:
                 script, voices = parse_render_request(
@@ -134,8 +172,9 @@ def make_server(
     runner: JobRunner,
     port: int = PORT,
     gpu: Callable[[], str | None] = gpu_name,
+    transcriber: Transcriber | None = None,
 ) -> ThreadingHTTPServer:
     """A server bound to 127.0.0.1 only; call `serve_forever()` on it."""
-    server = ThreadingHTTPServer((HOST, port), _handler(runner, gpu))
+    server = ThreadingHTTPServer((HOST, port), _handler(runner, gpu, transcriber))
     server.daemon_threads = True
     return server

@@ -22,6 +22,11 @@ PIPER_PREFIX = "piper-"
 CHATTERBOX_REPO = "ResembleAI/chatterbox"
 CHATTERBOX_REVISION = "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
 WEIGHTS = DATA / "chatterbox" / CHATTERBOX_REVISION
+# faster-whisper large-v3-turbo (CTranslate2, fp16, MIT) for POST /transcribe.
+# The repo moved from mobiuslabsgmbh/ to dropbox-dash/; same files and weights.
+WHISPER_REPO = "dropbox-dash/faster-whisper-large-v3-turbo"
+WHISPER_REVISION = "0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf"
+WHISPER_DIR = DATA / "whisper" / WHISPER_REVISION
 
 
 def prompt_path(base: str) -> Path | None:
