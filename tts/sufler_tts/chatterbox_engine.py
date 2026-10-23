@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import logging
 
 import numpy as np
 import torch
@@ -13,6 +14,13 @@ from sufler_tts.engine import SAMPLE_RATE, Audio, chatterbox_name
 from sufler_tts.voices import Voice
 
 LANGUAGE = "pl"
+# Some very short texts ("Co?", "R.") make T3 emit zero speech tokens and S3Gen
+# then fails on an empty max(). A leading dash fixed every such case measured
+# on the real model; silence of this length is the last resort.
+EMPTY_SPEECH = 0.3
+_EMPTY_MARK = "non-zero size"
+_RETRY_PREFIX = "\u2013 "
+log = logging.getLogger(__name__)
 
 
 class ChatterboxEngine:
@@ -50,8 +58,23 @@ class ChatterboxEngine:
         self.model.conds = self._conds[voice.base]
 
     def synthesize(self, text: str, voice: Voice, seed: int) -> Audio:
-        """One generation, seeded so a re-render reproduces the clip."""
+        """One generation, seeded so a re-render reproduces the clip.
+
+        Empty-speech failures retry once with a leading dash, then return
+        `EMPTY_SPEECH` s of silence (logged); every other error propagates.
+        """
         self._use_base(voice)
+        for attempt in (text, _RETRY_PREFIX + text):
+            try:
+                return self._generate(attempt, voice, seed)
+            except IndexError as exc:
+                if _EMPTY_MARK not in str(exc):
+                    raise
+                log.warning("no speech tokens for %r", attempt)
+        log.warning("silence for %r", text)
+        return np.zeros(round(EMPTY_SPEECH * SAMPLE_RATE), dtype=np.float32)
+
+    def _generate(self, text: str, voice: Voice, seed: int) -> Audio:
         torch.manual_seed(seed)
         wav = self.model.generate(
             text,
