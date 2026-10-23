@@ -71,10 +71,22 @@ class WrapperServer {
       } else {
         await _handle(request);
       }
-    } on Exception catch (e) {
-      sendJsonError(request.response, HttpStatus.internalServerError, '$e');
+    } on Object catch (e) {
+      // Requests run unawaited, so anything escaping here is an uncaught
+      // async error, which kills the wrapper under the open window. A proxy
+      // that fails mid-body has already sent its headers, so the error
+      // write itself can throw; then the only option is dropping the reply.
+      try {
+        sendJsonError(request.response, HttpStatus.internalServerError, '$e');
+      } on Object {
+        // Headers already sent.
+      }
     }
-    await request.response.close();
+    try {
+      await request.response.close();
+    } on Object {
+      // The client or upstream went away; nothing left to tell anyone.
+    }
   }
 
   /// A write sent by some other site's page: any website open in the browser

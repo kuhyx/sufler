@@ -88,6 +88,25 @@ void main() {
     });
   });
 
+  test('an upstream dying mid-body does not take the wrapper down', () async {
+    up = await FakeUpstream.start((r) async {
+      final socket = await r.response.detachSocket(writeHeaders: false);
+      socket.write(
+        'HTTP/1.1 200 OK\r\ncontent-type: application/zip\r\n'
+        'content-length: 1000\r\n\r\nPK',
+      );
+      await socket.flush();
+      socket.destroy();
+    });
+    h = await Harness.start(tts: up.base);
+    try {
+      await bytesOf(await h.get('/api/tts/packs/s1.zip'));
+    } on IOException {
+      // The truncated body may surface either way; only survival matters.
+    }
+    expect(await jsonOf(await h.get('/api/health')), {'app': 'sufler'});
+  });
+
   test('tts down is a 503 with a JSON error', () async {
     up = await FakeUpstream.start((_) async {});
     final dead = up.base;
