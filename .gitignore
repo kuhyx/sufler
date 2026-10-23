@@ -53,3 +53,10 @@ app.*.map.json
 *.docx
 *.odt
 !test/fixtures/**
+
+# Voice service (tts/): venv and tool caches; weights/audio live in ~/.local/share/sufler.
+/tts/.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
