@@ -66,6 +66,21 @@ void main() {
     expect(jsonEncode(back.toJson()), text);
   });
 
+  test('text with no letters or digits is never spoken', () {
+    ScriptLine line(String text) => ScriptLine(
+      index: 0,
+      speakers: const ['lis'],
+      text: text,
+      kind: LineKind.dialogue,
+    );
+    for (final text in ['', '...', '…', '(…)', ' – ! ', '/.../']) {
+      expect(line(text).isSpoken, isFalse, reason: text);
+    }
+    for (final text in ['Tak.', '7', 'Żółć…', '...a']) {
+      expect(line(text).isSpoken, isTrue, reason: text);
+    }
+  });
+
   test('roles select lines by speaker or by song, never headings', () {
     final lines = _sample().lines;
     final wolf = {Role.character('wilk')};

@@ -137,7 +137,12 @@ void main() {
   });
 
   test('song by heading without colour runs to the next heading', () {
-    expect(s.songs.map((x) => x.title), ['Piosenka Zegara', 'Piosenka Nocy']);
+    // The red "Sowa i Nietoperz" run has no heading: its own ♪ section.
+    expect(s.songs.map((x) => x.title), [
+      'Piosenka Zegara',
+      'Piosenka Nocy',
+      '♪ Lecimy w ciemność',
+    ]);
     final night = s.lines.where((l) => l.songId == 'piosenka-nocy').toList();
     expect(night.map((l) => l.kind), [
       LineKind.heading,

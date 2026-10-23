@@ -27,6 +27,15 @@ this file together.
 ```
 
 - `lines[i].index == i`. Section `start`/`end` are inclusive line indices.
+- A song headed `Piosenka …` starts on its `heading` line. A red passage with
+  no such heading is still a song: its section starts on its first lyric
+  line, is titled `♪ <that lyric, cut to 40 chars with …>`, and every lyric
+  carries its `songId`. A red "X śpiewa piosenkę" intro before it stays a
+  `direction` outside the section.
+- A line is spoken (`isSpoken`) only when it is not a `direction`/`heading`
+  and its `text` has a letter or digit. Importers never emit text without
+  one: such a line becomes a `direction` with empty `text`, its leftover
+  punctuation kept in `directions` (or dropped, for bare `...`).
 - `kind`: `dialogue` | `song` (red text / under a song heading) | `recitation`
   (blue text) | `direction` (stage direction on its own) | `heading`.
 - A speech block (speaker heading + text until the next heading) is ONE

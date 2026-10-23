@@ -60,8 +60,9 @@ class ScriptSink {
     ),
   );
 
-  /// Emits [text] as one line of [kind]; directions are split off and a
-  /// line with nothing left becomes a direction.
+  /// Emits [text] as one line of [kind]; directions are split off. A line
+  /// with no letter or digit left ("", "...", "– !") becomes a direction
+  /// with empty text, its leftover punctuation kept as a direction.
   void emitText(
     LineKind kind,
     List<String> speakers,
@@ -70,12 +71,17 @@ class ScriptSink {
     String? songId,
   }) {
     final (clean, found) = splitDirections(text);
-    final directions = [...extraDirections, ...found];
-    if (clean.isEmpty && directions.isEmpty) return;
+    final words = hasWords(clean);
+    final directions = [
+      ...extraDirections,
+      ...found,
+      if (!words && clean.isNotEmpty) clean,
+    ];
+    if (!words && directions.isEmpty) return;
     emit(
-      clean.isEmpty ? LineKind.direction : kind,
+      words ? kind : LineKind.direction,
       speakers,
-      clean,
+      words ? clean : '',
       directions: directions,
       songId: songId,
     );
@@ -97,6 +103,22 @@ class ScriptSink {
     final s = OpenSong(_ids.take(title), title, lines.length, speakers);
     emit(LineKind.heading, const [], title, songId: s.id);
     song = s;
+  }
+
+  /// Starts a song that has no heading line, at the red [lyric] about to be
+  /// emitted; titled `♪ <lyric, at most 40 chars>`. False (nothing opened)
+  /// when [lyric] is only stage directions.
+  bool startUnheadedSong(String lyric, List<String> speakers) {
+    final (clean, _) = splitDirections(lyric);
+    if (!hasWords(clean)) return false;
+    closeSong();
+    final cut = clean.length <= 40
+        ? clean
+        : '${clean.substring(0, 39).trimRight()}…';
+    final title = '♪ $cut';
+    song = OpenSong(_ids.take(title), title, lines.length, speakers)
+      ..coloured = true;
+    return true;
   }
 
   /// Ends the open song at its last line.
