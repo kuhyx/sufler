@@ -20,7 +20,7 @@ void main() {
           r.response.headers.contentType = ContentType.html;
           r.response.write('<html>Sign in</html>');
         } else if (r.uri.path.contains('gone')) {
-          r.response.statusCode = 404;
+          r.response.statusCode = 500;
         } else {
           r.response.add([80, 75, 3, 4]);
         }
@@ -46,7 +46,7 @@ void main() {
     test('a login page means the doc is not shared', () async {
       final r = await h.get('/api/gdoc?id=private1');
       expect(r.statusCode, 403);
-      expect(await jsonOf(r), contains('error'));
+      expect(await jsonOf(r), {'error': 'not_shared'});
     });
 
     test('an upstream error is a 502', () async {

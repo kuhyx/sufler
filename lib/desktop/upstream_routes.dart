@@ -22,6 +22,13 @@ final ContentType docxType = ContentType(
 /// reshape the upstream path.
 final RegExp _docId = RegExp(r'^[A-Za-z0-9_-]{1,200}$');
 
+/// The `/api/gdoc` error for a document that is not shared as "anyone with
+/// the link" (DOCS-contract.md).
+const notShared = 'not_shared';
+
+/// Upstream statuses that mean the document is private or missing.
+const _private = {401, 403, 404};
+
 /// Proxies to [googleBase] and [ttsBase] with one shared [HttpClient].
 class UpstreamRoutes {
   /// Creates the routes.
@@ -57,21 +64,21 @@ class UpstreamRoutes {
     } on IOException catch (e) {
       return sendJsonError(request.response, 502, 'Google Docs: $e');
     }
+    // Google says "not yours to read" three ways (401/403/404), and a
+    // private doc may also redirect to a sign-in page that arrives as 200
+    // HTML. All four become the one answer the importer keys on.
+    final isHtml = upstream.headers.contentType?.mimeType == 'text/html';
+    if (_private.contains(upstream.statusCode) ||
+        (upstream.statusCode == 200 && isHtml)) {
+      await upstream.drain<void>();
+      return sendJsonError(request.response, 403, notShared);
+    }
     if (upstream.statusCode != 200) {
       await upstream.drain<void>();
       return sendJsonError(
         request.response,
         502,
         'Google Docs answered ${upstream.statusCode}',
-      );
-    }
-    // A private doc redirects to a sign-in page, which arrives as 200 HTML.
-    if (upstream.headers.contentType?.mimeType == 'text/html') {
-      await upstream.drain<void>();
-      return sendJsonError(
-        request.response,
-        403,
-        'document is not shared as "anyone with the link"',
       );
     }
     request.response.headers.contentType = docxType;

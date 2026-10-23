@@ -60,6 +60,23 @@ audio/<line-index>.ogg   one clip per spoken line, Opus in Ogg, mono 24 kHz
 Clips exist for every spoken line (the app decides which ones to play), so one
 pack serves any role choice. Unattributed song lines use a neutral narrator voice.
 
+## Google Docs proxy (desktop wrapper → web build)
+
+`GET /api/gdoc?id=<doc-id>` on the loopback wrapper (`lib/desktop/`), because
+Google sends no CORS headers. Android fetches Google's export directly.
+
+| Status | Body | Meaning |
+|---|---|---|
+| 200 | the `.docx` bytes | document exported |
+| 400 | `{"error": "invalid document id"}` | id is not `[A-Za-z0-9_-]{1,200}` |
+| 403 | `{"error": "not_shared"}` | Google answered 401/403/404, or a 200 HTML sign-in page: not shared as "anyone with the link", or gone |
+| 502 | `{"error": "<reason>"}` | any other upstream status, or Google unreachable |
+
+The importer (`lib/import/google_doc.dart`) shows the "not shared" message for
+403 (and for Google's own 401/404 or a non-zip 200 on Android), and
+`Download failed: HTTP <status> (<error>)` for anything else. Pinned end to end
+by `test/desktop/gdoc_contract_test.dart`.
+
 ## Rehearsal prefs (per script, stored on device)
 
 ```json
