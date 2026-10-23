@@ -25,6 +25,13 @@ typedef ApkgExporter = Future<Uint8List> Function(
   AudioPack? audio,
 });
 
+/// Finds a kept copy of document [fileName] whose content hash is [id]
+/// (the file picker's cache on Android); null when there is none.
+typedef CopyFinder = Future<Uint8List?> Function({
+  required String fileName,
+  required String id,
+});
+
 /// A file the user picked.
 typedef PickedFile = ({String name, Uint8List bytes});
 
@@ -58,6 +65,7 @@ class Services {
     required this.renderAvailable,
     required this.renderPack,
     required this.files,
+    required this.findPickedCopy,
     required this.recorder,
     required this.speech,
     required this.clips,
@@ -84,6 +92,9 @@ class Services {
 
   /// File dialogs.
   final FileAccess files;
+
+  /// Earlier picked documents still on the device.
+  final CopyFinder findPickedCopy;
 
   /// Microphone.
   final Recorder recorder;

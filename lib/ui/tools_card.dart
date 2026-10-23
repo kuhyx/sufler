@@ -21,6 +21,7 @@ class ToolsCard extends StatefulWidget {
     required this.onPack,
     required this.onCorrect,
     required this.onTimings,
+    this.onRefreshParse,
     super.key,
   });
 
@@ -44,6 +45,9 @@ class ToolsCard extends StatefulWidget {
 
   /// Open the timings screen.
   final VoidCallback onTimings;
+
+  /// Pick the document to refresh an old parse; null hides the item.
+  final VoidCallback? onRefreshParse;
 
   @override
   State<ToolsCard> createState() => _ToolsCardState();
@@ -124,6 +128,16 @@ class _ToolsCardState extends State<ToolsCard> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionHeader('Narzędzia'),
+        if (widget.onRefreshParse case final refresh?)
+          ListTile(
+            leading: const Icon(Icons.refresh),
+            title: const Text('Odśwież parsowanie: wskaż plik'),
+            subtitle: const Text(
+              'skrypt ma starszą wersję parsowania; czasy, nagrania i oceny '
+              'zostaną',
+            ),
+            onTap: refresh,
+          ),
         ListTile(
           leading: const Icon(Icons.edit_note),
           title: const Text('Popraw tekst'),

@@ -9,6 +9,7 @@ import 'package:sufler/tts/render_pack.dart';
 import 'package:sufler/ui/app.dart';
 import 'package:sufler/ui/platform/audio_clips.dart';
 import 'package:sufler/ui/platform/mic_recorder.dart';
+import 'package:sufler/ui/platform/picked_copies.dart';
 import 'package:sufler/ui/platform/platform_files.dart';
 import 'package:sufler/ui/platform/speech_capture.dart';
 import 'package:sufler/ui/platform/tts_speech.dart';
@@ -27,6 +28,7 @@ Future<void> main() async {
         renderAvailable: renderAvailable,
         renderPack: renderPack,
         files: PlatformFiles(),
+        findPickedCopy: findPickedCopy,
         recorder: MicRecorder(),
         speech: TtsSpeech(),
         clips: AudioClips(),

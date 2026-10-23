@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/audio/pack_check.dart';
 import 'package:sufler/model/role.dart';
@@ -16,7 +17,9 @@ import 'hub.dart';
 
 Uint8List _wav() => pcmToWav(Uint8List(3200), sampleRate: 16000);
 
-Future<TestRig> _seedOld(WidgetTester tester, String db) async {
+/// A script stored before parse versions (no meta, no document), with
+/// recordings on lines 7 and 8 and a timing on line 4.
+Future<TestRig> seedOldParse(WidgetTester tester, String db) async {
   final rig = TestRig(db: db);
   final lib = rig.library;
   await tester.io(() => lib.saveScript(fixtureScript()));
@@ -40,11 +43,11 @@ void main() {
     tester,
   ) async {
     tester.usePhone();
-    final rig = await _seedOld(tester, 'reimport');
+    final rig = await seedOldParse(tester, 'reimport');
     await tester.pumpWidget(SuflerApp(services: rig.services));
     await tester.pumpAndSettle();
-    // Stored before versions: only a re-import can refresh it.
-    expect(find.text(reimportHint), findsOneWidget);
+    // Stored before versions, no document anywhere: no nag on open.
+    expect(find.byType(SnackBar), findsNothing);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -73,7 +76,7 @@ void main() {
     tester,
   ) async {
     tester.usePhone();
-    final rig = await _seedOld(tester, 'upgrade');
+    final rig = await seedOldParse(tester, 'upgrade');
     await tester.io(
       () => rig.library.saveSource('abc123', Uint8List.fromList([1])),
     );

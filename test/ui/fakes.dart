@@ -146,6 +146,10 @@ class TestRig {
   final capture = FakeCapture();
   final imported = <String>[];
   final exported = <Set<Role>>[];
+
+  /// What the picker cache holds for any lookup; every lookup's file name.
+  Uint8List? pickedCopy;
+  final copyLookups = <String>[];
   Script script = fixtureScript();
 
   Services get services => Services(
@@ -174,6 +178,10 @@ class TestRig {
       ),
     ]),
     files: files,
+    findPickedCopy: ({required fileName, required id}) async {
+      copyLookups.add(fileName);
+      return pickedCopy;
+    },
     recorder: recorder,
     speech: speech,
     clips: clips,

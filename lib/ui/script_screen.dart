@@ -40,6 +40,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
   bool _canRender = false;
   bool _loaded = false;
   bool _packWarned = false;
+  bool _needsSource = false;
 
   Services get _svc => ServicesScope.of(context);
   String get _id => widget.scriptId;
@@ -79,6 +80,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
         : checkPack(script, stored);
     final pack = checked?.pack;
     final canRender = await _svc.renderAvailable();
+    final needsSource = await needsSourceFile(_svc, _id);
     if (!mounted) return;
     if (pack == null && checked != null && !_packWarned) {
       _packWarned = true;
@@ -90,6 +92,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       _settings = settings;
       _pack = pack;
       _canRender = canRender;
+      _needsSource = needsSource;
     });
   }
 
@@ -179,6 +182,18 @@ class _ScriptScreenState extends State<ScriptScreen> {
     await _start(range, 'Kwestie ${range.start}–${range.end}');
   }
 
+  Future<void> _refreshParse() async {
+    try {
+      final note = await refreshFromFile(_svc, _id);
+      if (note == null) return;
+      await _load();
+      if (mounted) showToast(context, note);
+    } on Object catch (e) {
+      final why = e is FormatException ? e.message : '$e';
+      if (mounted) showError(context, 'Nie odświeżono parsowania: $why');
+    }
+  }
+
   Future<void> _push(Widget screen) async {
     await Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => screen));
@@ -215,6 +230,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       onPack: (p) => setState(() => _pack = p),
       onCorrect: () => _push(CorrectionScreen(scriptId: script.id)),
       onTimings: () => _push(TimingScreen(scriptId: script.id)),
+      onRefreshParse: _needsSource ? _refreshParse : null,
     );
   }
 }

@@ -32,6 +32,7 @@ class ScriptTabs extends StatefulWidget {
     required this.onPack,
     required this.onCorrect,
     required this.onTimings,
+    this.onRefreshParse,
     super.key,
   });
 
@@ -82,6 +83,9 @@ class ScriptTabs extends StatefulWidget {
 
   /// Open timings.
   final VoidCallback onTimings;
+
+  /// Pick the document to refresh an old parse; null: nothing to refresh.
+  final VoidCallback? onRefreshParse;
 
   @override
   State<ScriptTabs> createState() => _ScriptTabsState();
@@ -180,6 +184,7 @@ class _ScriptTabsState extends State<ScriptTabs> {
             onPack: w.onPack,
             onCorrect: w.onCorrect,
             onTimings: w.onTimings,
+            onRefreshParse: w.onRefreshParse,
           ),
         ],
       ),

@@ -6,12 +6,6 @@ import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/services.dart';
 
-/// Shown on opening a script stored before parse versions were kept: it
-/// has no document to re-read, so only a re-import can refresh it.
-const String reimportHint =
-    'Ten skrypt ma starszą wersję parsowania: zaimportuj plik ponownie, '
-    'a czasy, nagrania i oceny przejdą do nowych kwestii.';
-
 /// One line for the user, e.g. "Zaktualizowano parsowanie: 2 kwestie
 /// przeniesione, 0 utraconych", plus what else changed.
 String parseSummary(ParseUpdate u) {
@@ -68,21 +62,46 @@ Future<String?> storeImport(
   return parseSummary(await lib.replaceParse(existing, fresh));
 }
 
-/// On opening script [id]: re-parses its kept document when this app's
-/// parser is newer than the one that made it. Returns the summary (or the
-/// re-import hint for scripts with no kept document), null when current.
+/// On opening script [id]: re-parses its document when this app's parser
+/// is newer than the one that made it. The document is the kept one or,
+/// for scripts stored before documents were kept, the copy the file picker
+/// left on the device. Returns the summary, null when nothing changed
+/// (no document anywhere: the old parse stays, Narzędzia offers a pick).
 Future<String?> refreshStaleParse(Services svc, String id) async {
   final lib = svc.library;
   final meta = await lib.loadMeta(id);
   if (meta.version >= parserVersion) return null;
-  final source = await lib.loadSource(id);
   final script = await lib.loadScript(id);
   if (script == null) return null;
-  if (source == null) return meta.fingerprint == null ? reimportHint : null;
-  final fresh = await svc.importDocument(
-    fileName: script.source,
-    bytes: source,
-  );
+  final kept = await lib.loadSource(id);
+  final bytes =
+      kept ?? await svc.findPickedCopy(fileName: script.source, id: id);
+  if (bytes == null) return null;
+  final fresh = await svc.importDocument(fileName: script.source, bytes: bytes);
   if (fresh.id != id) return null; // a different document: leave it
-  return await storeImport(svc, fresh);
+  return await storeImport(svc, fresh, bytes: kept == null ? bytes : null);
+}
+
+/// Whether script [id] has an old parse and no document to re-read.
+Future<bool> needsSourceFile(Services svc, String id) async {
+  final lib = svc.library;
+  final meta = await lib.loadMeta(id);
+  return meta.version < parserVersion && await lib.loadSource(id) == null;
+}
+
+/// "Odśwież parsowanie": the user picks script [id]'s document, which is
+/// re-parsed and kept. Null when cancelled; throws [FormatException] for
+/// another document.
+Future<String?> refreshFromFile(Services svc, String id) async {
+  final file = await svc.files.pick(['pdf', 'docx', 'odt', 'txt']);
+  if (file == null) return null;
+  final fresh = await svc.importDocument(
+    fileName: file.name,
+    bytes: file.bytes,
+  );
+  if (fresh.id != id) {
+    throw const FormatException('To inny plik niż ten skrypt');
+  }
+  return await storeImport(svc, fresh, bytes: file.bytes) ??
+      'Parsowanie jest aktualne';
 }

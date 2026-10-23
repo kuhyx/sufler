@@ -185,8 +185,11 @@ prefs, under `backup/<id>/…`. A voice pack stamped for the old parse keeps
 only the clips of lines whose text and speakers are unchanged, re-keyed and
 re-stamped; an unstamped pack is dropped. Aligned spoken lines whose speakers
 or kind now differ are counted in the summary. The app shows one line, e.g. "Zaktualizowano
-parsowanie: 2 kwestie przeniesione, 0 utraconych". A script stored before
-versions without its document asks for a re-import.
+parsowanie: 2 kwestie przeniesione, 0 utraconych". A script stored without
+its document is re-parsed on open from the copy file_picker left in the
+Android cache (`<cacheDir>/file_picker/<ms>/<source>` whose sha256 is the
+id), which is then kept as `source/<id>`; with no such copy the old parse
+stays, silently, and "Narzędzia" offers "Odśwież parsowanie: wskaż plik".
 
 ## App settings (device-wide, not per script)
 
