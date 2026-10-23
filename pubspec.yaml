@@ -52,7 +52,7 @@ flutter:
           weight: 500
         - asset: fonts/Roboto-Bold.ttf
           weight: 700
-    - family: Noto Sans Symbols
+    - family: SuflerSymbols
       fonts:
         - asset: fonts/NotoSansSymbols-Music.ttf
 

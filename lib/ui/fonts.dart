@@ -9,8 +9,9 @@ import 'package:flutter/material.dart';
 const bundledFont = 'Roboto';
 
 /// Fallback for glyphs Roboto lacks ("♪" in unheaded song titles); without
-/// it the web engine fetches a Noto font for them.
-const symbolFont = 'Noto Sans Symbols';
+/// it the web engine fetches a Noto font for them. Its own family name, so
+/// it never shadows the full "Noto Sans Symbols" the engine may download.
+const symbolFont = 'SuflerSymbols';
 
 /// [theme] with every text style on the bundled fonts.
 ThemeData withBundledFonts(ThemeData theme) => theme.copyWith(
