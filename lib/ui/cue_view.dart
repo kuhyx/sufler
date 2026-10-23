@@ -78,10 +78,11 @@ class CueView extends StatelessWidget {
             heard: controller.heard,
             suggestion: controller.suggestion,
             onGrade: onGrade,
-            trailing: hasRecording(cue.line.index) ? _playButton(cue) : null,
+            trailing: _recorded(cue) ? _playButton(cue) : null,
           ),
         },
-        if (cue.mine) ...[
+        // A run's pause is the sum of its lines': set per line instead.
+        if (cue.mine && cue.following.isEmpty) ...[
           const SizedBox(height: AppSpacing.md),
           PauseControl(
             length: cue.seconds,
@@ -93,7 +94,23 @@ class CueView extends StatelessWidget {
     );
   }
 
-  Widget _previous(BuildContext context, Cue prev) {
+  /// One own line with a recording (a run's slices play from "Czasy").
+  bool _recorded(Cue cue) =>
+      cue.following.isEmpty && hasRecording(cue.line.index);
+
+  /// Who says [cue]: every speaker of a run, and the song's title.
+  String _who(Cue cue) {
+    final names = {for (final l in cue.lines) speakerNames(script, l)};
+    final song = cue.following.isEmpty ? null : cue.line.songId;
+    final title = [
+      for (final s in script.songs)
+        if (s.id == song) s.title,
+    ];
+    return [names.join(', '), ...title].join(' · ');
+  }
+
+  Widget _previous(BuildContext context, Cue whole) {
+    final prev = lastLineOf(whole);
     final hidden = prev.mine && visibility == TextVisibility.hide;
     final style = Theme.of(context).textTheme.bodyMedium
         ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
@@ -105,7 +122,7 @@ class CueView extends StatelessWidget {
             style: style,
           ),
         ),
-        if (prev.mine && hasRecording(prev.line.index)) _playButton(prev),
+        if (prev.mine && _recorded(prev)) _playButton(prev),
       ],
     );
   }
@@ -127,15 +144,15 @@ class CueView extends StatelessWidget {
   Widget _partner(BuildContext context, Cue cue, {bool hide = false}) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _label(context, speakerNames(script, cue.line)),
+      _label(context, _who(cue)),
       const SizedBox(height: AppSpacing.sm),
       _text(
         context,
         hide && visibility == TextVisibility.hide
             ? '(twoja kwestia)'
-            : cue.line.text,
+            : cue.text,
       ),
-      for (final d in cue.line.directions)
+      for (final d in cue.lines.expand((l) => l.directions))
         Text(d, style: const TextStyle(fontStyle: FontStyle.italic)),
     ],
   );
@@ -158,7 +175,7 @@ class CueView extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         if (visibility == TextVisibility.show)
-          _text(context, cue.line.text)
+          _text(context, cue.text)
         else
           _text(
             context,

@@ -35,6 +35,15 @@ class Segment:
 
 
 @dataclass(frozen=True)
+class Word:
+    """One recognised word, in seconds from the clip start."""
+
+    start: float
+    end: float
+    word: str
+
+
+@dataclass(frozen=True)
 class Transcript:
     """Result of one transcription (the JSON body of POST /transcribe)."""
 
@@ -43,6 +52,7 @@ class Transcript:
     speech_start: float | None
     speech_end: float | None
     engine: str
+    words: list[Word] = field(default_factory=list)
 
     def public(self) -> dict[str, Any]:
         """The wire shape from DOCS-contract.md (null bounds when no speech)."""
@@ -50,6 +60,9 @@ class Transcript:
             "text": self.text,
             "segments": [
                 {"start": s.start, "end": s.end, "text": s.text} for s in self.segments
+            ],
+            "words": [
+                {"start": w.start, "end": w.end, "word": w.word} for w in self.words
             ],
             "speechStart": self.speech_start,
             "speechEnd": self.speech_end,
@@ -122,7 +135,9 @@ class FakeTranscriber:
         start, end = loud[0] / STT_RATE, (loud[-1] + 1) / STT_RATE
         text = f"fake {language}"
         segment = Segment(round(start, 2), round(end, 2), text)
-        return Transcript(text, [segment], segment.start, segment.end, self.name)
+        mid = round((start + end) / 2, 2)
+        words = [Word(segment.start, mid, "fake"), Word(mid, segment.end, language)]
+        return Transcript(text, [segment], segment.start, segment.end, self.name, words)
 
     def close(self) -> None:
         """Count closes."""

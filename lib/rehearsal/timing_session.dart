@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/capture.dart';
+import 'package:sufler/rehearsal/run_take.dart';
 import 'package:sufler/rehearsal/similarity.dart';
+
+part 'timing_run.dart';
 
 /// What the timing walk is doing.
 enum TakeState {
@@ -15,6 +18,12 @@ enum TakeState {
 
   /// No usable take: the actor says the line and taps "Skończyłem".
   manual,
+
+  /// Recording a whole run nonstop ("Nagraj w całości") until a tap.
+  run,
+
+  /// The run's take is cut; some lines have a recording: replace them?
+  overwrite,
 
   /// Walk over (all lines timed, stopped, or the mic failed).
   done,
@@ -45,6 +54,7 @@ class TimingSession extends ChangeNotifier {
     required this.save,
     required this.saveTime,
     this.clock = DateTime.now,
+    this.whole,
     bool manual = false,
   }) : _manualAll = manual;
 
@@ -62,6 +72,13 @@ class TimingSession extends ChangeNotifier {
 
   /// Wall clock; a line's time runs from when it is shown.
   final DateTime Function() clock;
+
+  /// Whole-run takes (see [WholeRun]); null: not offered.
+  final WholeRuns? whole;
+
+  /// The latest whole-run take (asked for by [WholeRun.recordRun]).
+  RunTake? runTake;
+  bool _wantRun = false;
 
   /// Whether every line is timed by tapping, without the mic.
   bool get manualAll => _manualAll;
@@ -113,6 +130,10 @@ class TimingSession extends ChangeNotifier {
       problem = null;
       final take = _manualAll ? null : await _listen();
       if (_stopped) break;
+      if (_wantRun) {
+        await _whole();
+        continue;
+      }
       if (take == null || _empty(take)) {
         // A cancel from [setManual] is not a mic failure.
         if (!_manualAll) problem = 'Nie słyszę mikrofonu';
@@ -190,6 +211,7 @@ class TimingSession extends ChangeNotifier {
 
   /// "Skończyłem": the actor finished the line in [TakeState.manual].
   void finished() {
+    if (state == TakeState.run) return runTake?.finish();
     final shown = _tapShown;
     if (shown != null && clock().difference(shown) < tapGuard) return;
     _complete(_tap);
@@ -211,6 +233,7 @@ class TimingSession extends ChangeNotifier {
   /// Ends the walk; the line being listened to is not saved.
   Future<void> stop() async {
     _stopped = true;
+    runTake?.cancel();
     _decision?.complete(false);
     _complete(_tap);
     await capture.cancel();

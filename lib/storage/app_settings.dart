@@ -30,6 +30,7 @@ class AppSettings {
     this.loop = false,
     this.cleanTarget = 3,
     this.listen = false,
+    this.wholeRuns = true,
     this.lastScriptId,
   });
 
@@ -47,6 +48,7 @@ class AppSettings {
       loop: json['loop'] as bool? ?? false,
       cleanTarget: json['cleanTarget'] as int? ?? 3,
       listen: json['listen'] as bool? ?? false,
+      wholeRuns: json['wholeRuns'] as bool? ?? true,
       lastScriptId: json['lastScriptId'] as String?,
     );
   }
@@ -67,6 +69,10 @@ class AppSettings {
   /// line when they stop and suggests the grade from what was heard.
   final bool listen;
 
+  /// Say a song or a run of own lines (`runs.dart`) in one go: one
+  /// countdown, one reveal, one grade for the whole run.
+  final bool wholeRuns;
+
   /// The script opened last; the app starts on it.
   final String? lastScriptId;
 
@@ -81,6 +87,7 @@ class AppSettings {
     'loop': loop,
     'cleanTarget': cleanTarget,
     'listen': listen,
+    'wholeRuns': wholeRuns,
     'lastScriptId': ?lastScriptId,
   };
 
@@ -91,6 +98,7 @@ class AppSettings {
     bool? loop,
     int? cleanTarget,
     bool? listen,
+    bool? wholeRuns,
     String? lastScriptId,
   }) => AppSettings(
     visibility: visibility ?? this.visibility,
@@ -98,6 +106,7 @@ class AppSettings {
     loop: loop ?? this.loop,
     cleanTarget: cleanTarget ?? this.cleanTarget,
     listen: listen ?? this.listen,
+    wholeRuns: wholeRuns ?? this.wholeRuns,
     lastScriptId: lastScriptId ?? this.lastScriptId,
   );
 }

@@ -8,9 +8,6 @@ import 'package:record/record.dart';
 import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/rehearsal/capture.dart';
 
-/// Turns a take's WAV into a transcript (null: none available).
-typedef Transcribe = Future<Transcript?> Function(Uint8List wav);
-
 /// Streams PCM16 mono from the mic, ends the take when [VadTake] hears
 /// the end of speech, then optionally asks [transcribe] what was said.
 class VadCapture implements SpeechCapture {

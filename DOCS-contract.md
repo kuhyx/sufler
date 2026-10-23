@@ -166,6 +166,14 @@ by `test/desktop/gdoc_contract_test.dart`.
   czasy" without audio is a `lineSeconds` entry; a measured take with audio
   is stored as the recording (speech only, so its length + 1 s is the pause)
   and drops that line's `lineSeconds`.
+- A whole run recorded in one take ("Nagraj w całości") is stored as one
+  recording PER LINE: the take cut at each line's first and last heard word
+  (desktop, `words` below) or by syllable shares of its voiced part
+  (Android, or an older service without `words`). Same keys and shape as
+  any recording; lines that already had one keep it unless the user picks
+  "Nadpisz".
+- A run learnt as one unit (setting `wholeRuns`) stores its one
+  first-attempt grade in `knowledge` for every line of the run.
 - Pause precedence: `lineSeconds` > recording (+ 1 s) > estimate > formula.
   The estimate (median seconds per syllable over the recordings, needs >= 3,
   `lib/rehearsal/pace.dart`) is derived on the fly and never stored.
@@ -201,8 +209,20 @@ stays, silently, and "Narzędzia" offers "Odśwież parsowanie: wskaż plik".
 
 ```json
 {"version": 2, "visibility": "revealAfter", "selfGrade": false, "loop": false,
- "cleanTarget": 3, "listen": false, "lastScriptId": "<script id>"}
+ "cleanTarget": 3, "listen": false, "wholeRuns": true,
+ "lastScriptId": "<script id>"}
 ```
+
+`wholeRuns` (missing = `true`): runs are one rehearsal step
+(`lib/rehearsal/runs.dart`). An own run is a row of the actor's spoken
+lines with no partner spoken line between them (directions and headings do
+not break it), cut where a song starts or ends and at a scene change: 2+
+lines inside a song, 3+ outside. It is said, revealed and graded once (one
+countdown = the sum of its lines' pauses; never listened to, so pauses in
+it do not end it). A partner run is a row of partner lines with no own line
+between them: 2+ inside one song (any singers) or 3+ by the very same
+speakers; its lines play back to back as one step. A ✗ replays only the
+last line of the step before.
 
 `visibility`: `revealAfter` (learning: hidden while said, then shown and
 graded), `hide`, `show` (read-through). Settings without `version` (v1) stored
@@ -221,6 +241,7 @@ language code, default `pl`.
 ```json
 {"text": "Piaskowe wilki nie jedzą krasnali.",
  "segments": [{"start": 0.31, "end": 2.40, "text": "Piaskowe wilki nie jedzą krasnali."}],
+ "words": [{"start": 0.31, "end": 0.78, "word": "Piaskowe"}, …],
  "speechStart": 0.31, "speechEnd": 2.40,
  "engine": "faster-whisper@1.2.1/large-v3-turbo"}
 ```
@@ -228,7 +249,12 @@ language code, default `pl`.
 - Times are seconds from the start of the uploaded clip. `speechStart` /
   `speechEnd` are the first word's start and the last word's end (tighter than
   the segment times); VAD drops leading and trailing silence first.
-- No speech found: `200` with `"text": ""`, `"segments": []`, and
+- `words`: every recognised word with its own times (Whisper's word
+  timestamps; the word trimmed, punctuation kept). The app cuts a whole
+  sung or spoken run into its lines by them; no key (older service) means
+  no word times.
+- No speech found: `200` with `"text": ""`, `"segments": []`, `"words": []`,
+  and
   `"speechStart"` / `"speechEnd"` both `null`.
 - `text` is Whisper's own casing and punctuation; compare it normalised
   (lower-case, punctuation dropped), not byte for byte.
@@ -257,4 +283,8 @@ uses the system recognizer (`speech_to_text`, `pl_PL`) instead; after an
 error meaning it cannot work there (network, server, language, audio,
 permission) that run falls back to the recorder with VAD only (no
 transcript). A take neither path heard is timed by a tap in the walk
-(`lineSeconds`, never a recording).
+(`lineSeconds`, never a recording). A whole-run take is recorded with the
+plain recorder (ended by "Skończyłem", never by silence) and, on desktop,
+posted the same way (2 min timeout) for its `words`; Android has no route to
+the service (it listens on the PC's loopback only), so there a run is always
+split by syllables.

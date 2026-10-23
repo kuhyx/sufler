@@ -4,9 +4,12 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/rehearsal/run_take.dart';
+import 'package:sufler/rehearsal/runs.dart';
 import 'package:sufler/rehearsal/timing_session.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/services.dart';
+import 'package:sufler/ui/timing_run_view.dart';
 
 /// "Nagraj czasy": reads my [lines] one after another, hands-free. Each
 /// line's pause becomes how long I took to say it (+1 s), with the
@@ -17,6 +20,7 @@ class TimingSessionScreen extends StatefulWidget {
     required this.scriptId,
     required this.title,
     required this.lines,
+    this.runs = const [],
     super.key,
   });
 
@@ -28,6 +32,9 @@ class TimingSessionScreen extends StatefulWidget {
 
   /// My lines to time, in order.
   final List<ScriptLine> lines;
+
+  /// My runs (`findRuns`): each offered as one take, "Nagraj w całości".
+  final List<LineRun> runs;
 
   @override
   State<TimingSessionScreen> createState() => _TimingSessionScreenState();
@@ -54,6 +61,17 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
       saveTime: (line, pause) => svc.library.updatePrefs(
         widget.scriptId,
         (p) => p.copyWith(lineSeconds: {...p.lineSeconds, line.index: pause}),
+      ),
+      whole: WholeRuns(
+        runs: widget.runs,
+        mic: RunMic(
+          start: svc.recorder.start,
+          stop: svc.recorder.stop,
+          transcribe: svc.transcribe,
+        ),
+        hasRecording: (line) async =>
+            (await svc.library.loadPrefs(widget.scriptId)).recordings
+                .containsKey(line.index),
       ),
     );
     unawaited(session.run());
@@ -121,7 +139,9 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         onChanged: (on) => s.setManual(on: on),
       ),
       const SizedBox(height: AppSpacing.md),
-      if (s.state == TakeState.manual)
+      if (s.state case TakeState.run || TakeState.overwrite)
+        ...runViews(context, s)
+      else if (s.state == TakeState.manual)
         ..._manual(theme, s)
       else ...[
         Text('Przeczytaj na głos:', style: theme.bodySmall),
@@ -137,8 +157,11 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         ),
         const SizedBox(height: AppSpacing.sm),
       ],
-      if (s.state == TakeState.listening)
+      if (s.state == TakeState.listening) ...[
         const Text('Słucham… gdy skończysz mówić, przejdę dalej.'),
+        ?runOffer(s),
+      ],
+      if (s.runNote != null) Text(s.runNote!, style: theme.bodySmall),
       if (saved != null) Text(saved, style: theme.bodySmall),
       if (s.state == TakeState.skipped) ..._skipped(s),
       const SizedBox(height: AppSpacing.lg),

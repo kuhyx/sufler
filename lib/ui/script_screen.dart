@@ -8,6 +8,7 @@ import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/pace.dart';
 import 'package:sufler/rehearsal/range.dart';
+import 'package:sufler/rehearsal/runs.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/correction_screen.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
@@ -130,6 +131,9 @@ class _ScriptScreenState extends State<ScriptScreen> {
       recordingSeconds: recorded,
       pace: secondsPerSyllable(script, recorded),
     );
+    if (_settings.wholeRuns) {
+      cues = mergeRuns(cues, rehearsalRuns(script, _prefs.roles));
+    }
     if (missedOnly) cues = onlyMissed(cues, _prefs.missed);
     if (!mounted) return;
     if (cues.isEmpty) {
@@ -169,8 +173,16 @@ class _ScriptScreenState extends State<ScriptScreen> {
 
   void _record(LineRange range, String label) {
     final lines = ownLines(_script!, _prefs, range);
+    final runs = findRuns(_script!, _prefs.roles);
     unawaited(
-      _push(TimingSessionScreen(scriptId: _id, title: label, lines: lines)),
+      _push(
+        TimingSessionScreen(
+          scriptId: _id,
+          title: label,
+          lines: lines,
+          runs: runs,
+        ),
+      ),
     );
   }
 

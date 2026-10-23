@@ -91,8 +91,9 @@ class RehearsalSession {
   int purePasses = 0;
 
   /// The cue replayed before a line graded ✗: the one before it, even if it
-  /// is mine (as in "only lines I missed"); null when there is none.
-  Cue? get prompt => position > 0 ? cues[position - 1] : null;
+  /// is mine (as in "only lines I missed"), only its last line when it is a
+  /// run; null when there is none.
+  Cue? get prompt => position > 0 ? lastLineOf(cues[position - 1]) : null;
 
   /// The cue being played or said; null when finished.
   Cue? get current => phase == Phase.finished ? null : cues[position];

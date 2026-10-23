@@ -69,10 +69,18 @@ def _post(url: str, body: bytes) -> tuple[int, Any]:
 def test_response_shape(url: str, tmp_path: Path) -> None:
     status, body = _post(f"{url}/transcribe?lang=pl", _clip(tmp_path, "wav"))
     assert status == 200
-    assert set(body) == {"text", "segments", "speechStart", "speechEnd", "engine"}
+    assert set(body) == {
+        "text", "segments", "words", "speechStart", "speechEnd", "engine"
+    }  # fmt: skip
     assert body["engine"] == "fake-stt@1"
     assert body["text"] == "fake pl"
     assert set(body["segments"][0]) == {"start", "end", "text"}
+    # word times (what the app cuts a whole song or monologue by)
+    words = body["words"]
+    assert [w["word"] for w in words] == ["fake", "pl"]
+    assert set(words[0]) == {"start", "end", "word"}
+    assert words[0]["start"] == body["speechStart"]
+    assert words[-1]["end"] == body["speechEnd"]
     assert body["speechStart"] == pytest.approx(0.5, abs=0.05)
     assert body["speechEnd"] == pytest.approx(1.5, abs=0.05)
 
@@ -103,6 +111,7 @@ def test_silence_has_no_speech_bounds(url: str, tmp_path: Path) -> None:
     assert status == 200
     assert body["text"] == ""
     assert body["segments"] == []
+    assert body["words"] == []
     assert body["speechStart"] is None
     assert body["speechEnd"] is None
 

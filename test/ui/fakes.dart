@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idb_shim/idb_client_memory.dart';
 import 'package:sufler/audio/audio_pack.dart';
+import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
@@ -144,6 +145,9 @@ class TestRig {
   final speech = FakeSpeech();
   final clips = FakeClips();
   final capture = FakeCapture();
+
+  /// The desktop recognizer for whole-run takes; null: none (Android).
+  Transcribe? transcribe;
   final imported = <String>[];
   final exported = <Set<Role>>[];
 
@@ -186,5 +190,6 @@ class TestRig {
     speech: speech,
     clips: clips,
     capture: capture,
+    transcribe: transcribe,
   );
 }

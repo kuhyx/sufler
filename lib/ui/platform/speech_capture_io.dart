@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/rehearsal/capture.dart';
 import 'package:sufler/rehearsal/recognizer_take.dart';
 import 'package:sufler/ui/platform/vad_capture.dart';
@@ -14,6 +15,10 @@ import 'package:sufler/ui/platform/vad_capture.dart';
 /// Android: the system recognizer (pl_PL) when it works, else the
 /// recorder with VAD only. One of them owns the mic per listen.
 SpeechCapture openSpeechCapture() => SttCapture();
+
+/// No speech-to-text with word times on Android: the voice service only
+/// listens on the PC's loopback, so whole runs are split by syllables.
+Transcribe? openTranscriber() => null;
 
 /// The Android recognizer as a [SpeechCapture]; see [RecognizerTake].
 class SttCapture implements SpeechCapture {

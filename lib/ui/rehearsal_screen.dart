@@ -123,11 +123,17 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
 
   void _grade(bool ok) {
     final ctl = _ctl!;
-    final index = ctl.session.current?.line.index;
-    if (index == null || ctl.session.phase != Phase.grade) return;
+    final cue = ctl.session.current;
+    if (cue == null || ctl.session.phase != Phase.grade) return;
     // Only the first attempt is knowledge; a ✗ is asked again until ✓.
+    // A run's grade is every one of its lines'.
     if (!ctl.grade(ok: ok)) return;
-    unawaited(_svc.library.updatePrefs(_id, (p) => p.graded(index, ok: ok)));
+    unawaited(
+      _svc.library.updatePrefs(
+        _id,
+        (p) => cue.lines.fold(p, (q, l) => q.graded(l.index, ok: ok)),
+      ),
+    );
   }
 
   void _confirmSuggestion() {

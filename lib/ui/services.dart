@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:sufler/audio/audio_pack.dart';
+import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/capture.dart';
@@ -70,6 +71,7 @@ class Services {
     required this.speech,
     required this.clips,
     required this.capture,
+    this.transcribe,
   });
 
   /// On-device persistence.
@@ -107,6 +109,10 @@ class Services {
 
   /// The microphone as a line listener (timing walk, listening rehearsal).
   final SpeechCapture capture;
+
+  /// Speech-to-text with word times for whole-run takes (desktop voice
+  /// service); null where there is none (Android).
+  final Transcribe? transcribe;
 }
 
 /// Makes [Services] available below it.

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/pace.dart';
+import 'package:sufler/rehearsal/runs.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/labels.dart';
@@ -78,6 +79,7 @@ class _TimingScreenState extends State<TimingScreen> {
           scriptId: widget.scriptId,
           title: 'wszystkie',
           lines: lines,
+          runs: findRuns(_script!, _prefs.roles),
         ),
       ),
     );

@@ -87,6 +87,17 @@ class SettingsCard extends StatelessWidget {
           onChanged: (v) => onSettings(s.copyWith(listen: v)),
         ),
         SwitchListTile(
+          key: const Key('whole-runs'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Piosenki i monologi w całości'),
+          subtitle: const Text(
+            'piosenkę lub ≥ 3 kwestie z rzędu mówisz naraz i oceniasz raz; '
+            'cudze piosenki grają jako jeden krok',
+          ),
+          value: s.wholeRuns,
+          onChanged: (v) => onSettings(s.copyWith(wholeRuns: v)),
+        ),
+        SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Powtarzaj do skutku'),
           subtitle: const Text('aż do N czystych przebiegów z rzędu'),

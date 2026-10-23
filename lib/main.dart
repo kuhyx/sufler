@@ -33,6 +33,7 @@ Future<void> main() async {
         speech: TtsSpeech(),
         clips: AudioClips(),
         capture: openSpeechCapture(),
+        transcribe: openTranscriber(),
       ),
     ),
   );

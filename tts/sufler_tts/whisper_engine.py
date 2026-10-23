@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sufler_tts.assets import WHISPER_DIR
 from sufler_tts.engine import Audio
-from sufler_tts.transcribe import Segment, Transcript, whisper_name
+from sufler_tts.transcribe import Segment, Transcript, Word, whisper_name
 
 BEAM_SIZE = 2
 # Silero VAD (bundled with faster-whisper) drops silence before decoding,
@@ -57,6 +57,9 @@ class WhisperTranscriber:
     def transcribe(self, audio: Audio, language: str) -> Transcript:
         """Transcribe 16 kHz mono samples; bounds come from word timestamps.
 
+        The words themselves go out too: the app cuts a whole sung or spoken
+        run into its lines by them.
+
         Segment times are coarse (whole decoding windows); the first word's
         start and the last word's end track the voice far more tightly, and
         they are what the app uses to cut a line.
@@ -71,6 +74,7 @@ class WhisperTranscriber:
             condition_on_previous_text=False,
         )
         out: list[Segment] = []
+        words: list[Word] = []
         starts: list[float] = []
         ends: list[float] = []
         for seg in segments:
@@ -81,12 +85,16 @@ class WhisperTranscriber:
             if seg.words:
                 starts.append(seg.words[0].start)
                 ends.append(seg.words[-1].end)
+                words.extend(
+                    Word(round(w.start, 2), round(w.end, 2), w.word.strip())
+                    for w in seg.words
+                )
         if not out:
             return Transcript("", [], None, None, self.name)
         text = " ".join(s.text for s in out)
         start = round(starts[0] if starts else out[0].start, 2)
         end = round(ends[-1] if ends else out[-1].end, 2)
-        return Transcript(text, out, start, end, self.name)
+        return Transcript(text, out, start, end, self.name, words)
 
     def close(self) -> None:
         """Drop the model; the process exit then frees the CUDA context."""

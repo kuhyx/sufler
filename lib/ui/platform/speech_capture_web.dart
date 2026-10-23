@@ -11,3 +11,10 @@ SpeechCapture openSpeechCapture() {
   final client = TranscribeClient(client: http.Client(), base: Uri.base);
   return VadCapture(transcribe: client.transcribe);
 }
+
+/// The voice service for whole-run takes (a song can be minutes long).
+Transcribe openTranscriber() => TranscribeClient(
+  client: http.Client(),
+  base: Uri.base,
+  timeout: const Duration(minutes: 2),
+).transcribe;

@@ -84,15 +84,18 @@ class RehearsalController extends ChangeNotifier {
     _timer?.cancel();
     final cue = session.current;
     if (cue != null && session.phase == Phase.partner) {
-      unawaited(_playPartner(cue.line, ++_generation));
+      unawaited(_playPartner(cue.lines, ++_generation));
     } else if (session.phase == Phase.prompt) {
-      unawaited(_playPartner(session.prompt!.line, ++_generation));
+      unawaited(_playPartner(session.prompt!.lines, ++_generation));
     } else if (cue != null && session.phase == Phase.mine) {
       _remainingMs = (cue.seconds * 1000).round();
       heard = null;
       suggestion = null;
       _runCountdown();
-      if (capture != null) unawaited(_listen(cue.line, _generation));
+      // A run is said nonstop: only "Gotowe" or the countdown ends it.
+      if (capture != null && cue.following.isEmpty) {
+        unawaited(_listen(cue.line, _generation));
+      }
     }
     _notify();
   }
@@ -125,13 +128,16 @@ class RehearsalController extends ChangeNotifier {
     return next;
   }
 
-  Future<void> _playPartner(ScriptLine line, int gen) async {
-    try {
-      await player.play(line);
-    } on Object catch (e) {
-      debugPrint('partner line ${line.index} failed: $e');
+  /// Plays [lines] back to back (a partner run is one step).
+  Future<void> _playPartner(List<ScriptLine> lines, int gen) async {
+    for (final line in lines) {
+      try {
+        await player.play(line);
+      } on Object catch (e) {
+        debugPrint('partner line ${line.index} failed: $e');
+      }
+      if (gen != _generation || paused || _disposed) return;
     }
-    if (gen != _generation || paused || _disposed) return;
     session.partnerDone();
     _enter();
   }

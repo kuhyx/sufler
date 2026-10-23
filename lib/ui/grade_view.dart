@@ -63,10 +63,7 @@ class GradeView extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
-                hidden ? '…' : cue.line.text,
-                style: theme.headlineSmall,
-              ),
+              child: Text(hidden ? '…' : cue.text, style: theme.headlineSmall),
             ),
             ?trailing,
           ],
