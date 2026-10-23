@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import sys
 import urllib.error
 import urllib.request
 from email.message import Message
@@ -148,3 +149,12 @@ def test_device_id_is_persisted(tmp_path: Path) -> None:
     first = setup.device_id(tmp_path)
     assert setup.device_id(tmp_path) == first
     assert (tmp_path / "device_id").read_text().strip() == first
+
+
+def test_missing_crdt_sync_means_http_only(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(sys.modules, "crdt_sync", None)  # an un-synced venv
+    caplog.set_level(logging.WARNING)
+    assert setup.start(NullAssist(), env={}) is None
+    assert "crdt-sync not installed" in caplog.text

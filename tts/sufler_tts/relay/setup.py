@@ -16,17 +16,7 @@ import threading
 import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Final
-
-from crdt_sync import (
-    ConfigError,
-    FileCredentialStore,
-    FirebaseAuthError,
-    FirebaseConfig,
-    FirebaseTokenProvider,
-    credential_store_for,
-    load_device_identity,
-)
+from typing import Any, Final
 
 from sufler_tts.assets import DATA
 from sufler_tts.relay.rtdb import Rtdb, RtdbError
@@ -40,14 +30,30 @@ class RelaySetupError(RuntimeError):
     """The relay cannot start: no config or no signed-in session."""
 
 
+def _crdt_sync() -> Any:
+    """The crdt_sync module, imported late.
+
+    A venv not yet `uv sync`ed must still serve HTTP: an import error at
+    startup would take transcribe and render down with the relay.
+    """
+    try:
+        import crdt_sync  # noqa: PLC0415
+    except ImportError:
+        raise RelaySetupError(
+            "crdt-sync not installed: cd ~/src/sufler/tts && uv sync --locked"
+        ) from None
+    return crdt_sync
+
+
 def connect(config: Path | None = None, auth: Path | None = None) -> Rtdb:
     """Sufler's RTDB client, signed in as the `sufler` app."""
+    cs = _crdt_sync()
     try:
-        cfg = FirebaseConfig.load(config)
-    except ConfigError as err:
+        cfg = cs.FirebaseConfig.load(config)
+    except cs.ConfigError as err:
         raise RelaySetupError(f"no crdt-sync firebase config: {err}") from None
-    store = FileCredentialStore(auth) if auth else credential_store_for(APP)
-    provider = FirebaseTokenProvider(cfg.api_key, store)
+    store = cs.FileCredentialStore(auth) if auth else cs.credential_store_for(APP)
+    provider = cs.FirebaseTokenProvider(cfg.api_key, store)
     if not provider.has_session():
         raise RelaySetupError(
             "no signed-in session in ~/.config/sufler/firebase_auth.json; seed "
@@ -58,7 +64,7 @@ def connect(config: Path | None = None, auth: Path | None = None) -> Rtdb:
     def token() -> str:
         try:
             return str(provider.id_token())
-        except FirebaseAuthError as err:
+        except cs.FirebaseAuthError as err:
             raise RtdbError(f"firebase auth failed: {err}") from None
 
     return Rtdb(cfg.database_url, token)
@@ -66,7 +72,8 @@ def connect(config: Path | None = None, auth: Path | None = None) -> Rtdb:
 
 def device_id(data_dir: Path = DATA) -> str:
     """The PC's persisted uuid4 (`<data>/device_id`, the crdt_sync format)."""
-    return str(load_device_identity(data_dir / "device_id").device_id)
+    identity = _crdt_sync().load_device_identity(data_dir / "device_id")
+    return str(identity.device_id)
 
 
 def _every(stop: threading.Event, seconds: float, step: Callable[[], object]) -> None:
@@ -84,6 +91,7 @@ def _listen(stop: threading.Event, relay: Relay, db: Rtdb) -> None:
         try:
             relay.on_events(db.stream("requests"))
             backoff = 1.0
+            stop.wait(1.0)  # a server closing at once must not spin
         except RtdbError as err:
             _logger.warning("relay stream: %s (retry in %.0f s)", err, backoff)
             stop.wait(backoff)
