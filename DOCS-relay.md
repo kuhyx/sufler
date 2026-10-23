@@ -94,14 +94,19 @@ sufler/clients/{dev}    {"seen": <server ms>}   (the phone's server-clock probe)
 - PC: `~/.config/crdt-sync/firebase.json` (URL, API key) plus sufler's own
   session `~/.config/sufler/firebase_auth.json`, seeded ONCE, interactively:
   `cd ~/src/utils/crdt-sync && python3 -m tool.seed_session --client-id ...
-  --client-secret ... --app sufler` (tutor's `relay/config.py` pattern).
+  --client-secret ... --app sufler` (tutor's `relay/config.py` pattern;
+  `--app` takes only names in that repo's `tool/_seeded_apps.py`
+  `DEFAULT_APPS`, so `sufler` must be added there first).
   No config or no session: the service logs `relay off: <why> (HTTP only)`
   and serves HTTP as before. `SUFLER_RELAY=0` turns the relay off.
   The device id is `~/.local/share/sufler/device_id` (crdt_sync format).
 - Phone: Ustawienia próby -> "Połącz z PC" (also offered on the first
   request): Google sign-in with the project's Web client id as audience,
   the expected-uid guard, the refresh token in the Android keystore
-  (`flutter_secure_storage`), as tutor's app does. Needs the Android OAuth
+  (`flutter_secure_storage`), as tutor's app does. Through
+  `google_sign_in_android` + the platform interface, never the
+  `google_sign_in` app package: its web plugin loads Google's script at
+  startup, and the desktop build starts offline. Needs the Android OAuth
   client for `com.kuhy.sufler` + the release SHA-1:
   `scripts/register_oauth_client.sh` (no Google API exists for it).
   The device id is a uuid4 in the app's store (`device/id`).

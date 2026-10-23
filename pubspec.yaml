@@ -27,7 +27,11 @@ dependencies:
     sdk: flutter
   flutter_secure_storage: 11.2.0
   flutter_tts: 4.2.5
-  google_sign_in: 7.2.0
+  # Android sign-in only, via the platform interface: the google_sign_in app
+  # package would register google_sign_in_web, which loads Google's script at
+  # startup and breaks the desktop build's offline start.
+  google_sign_in_android: 7.2.18
+  google_sign_in_platform_interface: 3.1.0
   http: 1.6.0
   idb_shim: 2.10.1+1
   meta: 1.19.0
