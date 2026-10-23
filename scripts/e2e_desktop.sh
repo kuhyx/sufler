@@ -5,7 +5,7 @@
 #   scripts/e2e_desktop.sh build      # flutter build web + dart build cli
 #   scripts/e2e_desktop.sh up         # Xephyr :79, wrapper :8792, scratch browser
 #   scripts/e2e_desktop.sh wrapper    # restart only the wrapper (after a rebuild)
-#   scripts/e2e_desktop.sh F1 .. F5   # one flow per call (each < 60 s)
+#   scripts/e2e_desktop.sh F1 .. F6   # one flow per call (each < 60 s)
 #   scripts/e2e_desktop.sh down       # stop all three units
 #
 # Long-lived processes run as transient `systemd-run --user` units: anything
@@ -15,7 +15,8 @@
 # text) go to private/e2e/, which is gitignored.
 #
 # Env: SUFLER_SCRIPT_PDF (default private/krasnale.pdf), E2E_ROLE (character
-# id kuhy plays, default zagiewka; piaskowy-wilk also kept green), SUFLER_BROWSER
+# id kuhy plays, default zagiewka; piaskowy-wilk also kept green),
+# SUFLER_AUDIO_PACK (F6; default: the PDF path with .sufler-audio.zip), SUFLER_BROWSER
 # (default: first of chromium / google-chrome-stable), E2E_DISPLAY (:79).
 # Needs: Xephyr (xorg-server-xephyr), python3 websocket-client, sqlite (python).
 
@@ -116,7 +117,8 @@ down() {
 flow() {
     local pdf="${SUFLER_SCRIPT_PDF:-$REPO_DIR/private/krasnale.pdf}"
     python3 "$REPO_DIR/scripts/e2e/flows.py" "$1" --port "$CDP_PORT" \
-        --out "$E2E_DIR" --pdf "$pdf" --display "$DISPLAY_NUM" --role "${E2E_ROLE:-zagiewka}"
+        --out "$E2E_DIR" --pdf "$pdf" --display "$DISPLAY_NUM" --role "${E2E_ROLE:-zagiewka}" \
+        --pack "${SUFLER_AUDIO_PACK:-${pdf%.*}.sufler-audio.zip}"
 }
 
 main() {
@@ -125,8 +127,8 @@ main() {
         up) up ;;
         wrapper) start_wrapper ;;
         down) down ;;
-        F[1-5]) flow "$1" ;;
-        *) die "usage: $0 build|up|wrapper|F1..F5|down" ;;
+        F[1-6]) flow "$1" ;;
+        *) die "usage: $0 build|up|wrapper|F1..F6|down" ;;
     esac
 }
 

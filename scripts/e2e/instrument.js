@@ -1,7 +1,8 @@
 // Injected before the app boots (Page.addScriptToEvaluateOnNewDocument) so
 // the E2E driver can see audio start: wraps speechSynthesis.speak (flutter_tts
 // on web) and HTMLMediaElement.play (audioplayers on web) and logs each call
-// and its outcome into window.__suflerAudio. Observes only; never alters.
+// and its outcome (for media, the clip's duration) into window.__suflerAudio.
+// Observes only; never alters.
 (() => {
   const log = (window.__suflerAudio = []);
   const now = () => Math.round(performance.now());
@@ -26,7 +27,8 @@
     const entry = { kind: 'media', t: now(), src: String(this.src).slice(0, 40) };
     log.push(entry);
     const p = play.call(this);
-    p.then(() => { entry.playing = now(); }, (e) => { entry.error = String(e); });
+    p.then(() => { entry.playing = now(); entry.duration = this.duration; },
+      (e) => { entry.error = String(e); });
     this.addEventListener('ended', () => { entry.ended = now(); }, { once: true });
     return p;
   };

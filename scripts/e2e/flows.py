@@ -1,4 +1,4 @@
-"""Core desktop flows F1-F5 (DOCS-features.md), one per invocation.
+"""Core desktop flows F1-F6 (DOCS-features.md), one per invocation.
 
 Usage (normally via scripts/e2e_desktop.sh F<n>, after `up`):
     flows.py F<n> --port 9479 --out private/e2e --pdf private/krasnale.pdf
@@ -21,6 +21,7 @@ from typing import Any
 
 import oracle
 from cdp import Cdp, CdpError
+from flow_pack import f6_pack
 from flow_steps import f1_import, f2_roles, f3_rehearse, f4_anki, f5_voices
 
 Json = dict[str, Any]
@@ -41,6 +42,7 @@ class Run:
         self.index, self.what = 0, ""
         self.display = ":79"
         self.role = "zagiewka"
+        self.pack = Path()
         self.evidence: list[str] = []
 
     def step(self, what: str) -> None:
@@ -120,6 +122,7 @@ FLOWS: dict[str, tuple[int, Callable[[Run], None]]] = {
     "F3": (8, f3_rehearse),
     "F4": (5, f4_anki),
     "F5": (4, f5_voices),
+    "F6": (6, f6_pack),
 }
 
 
@@ -132,12 +135,14 @@ def main() -> int:
     ap.add_argument("--pdf", type=Path, required=True)
     ap.add_argument("--display", default=":79")
     ap.add_argument("--role", default="zagiewka", help="character id to play")
+    ap.add_argument("--pack", type=Path, help="voice pack zip (F6)")
     args = ap.parse_args()
     total, body = FLOWS[args.flow]
     cdp = Cdp(args.port)
     run = Run(args.flow, cdp, args.out.resolve(), args.pdf.resolve(), total)
     run.display = args.display
     run.role = args.role
+    run.pack = (args.pack or args.pdf.with_suffix(".sufler-audio.zip")).resolve()
     try:
         body(run)
     except (FlowError, CdpError, TimeoutError) as e:

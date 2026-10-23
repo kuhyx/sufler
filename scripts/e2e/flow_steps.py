@@ -5,11 +5,13 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import time
 import urllib.request
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import oracle
+from cdp import CdpError
 
 if TYPE_CHECKING:
     from flows import Run
@@ -86,7 +88,8 @@ def f2_roles(run: Run) -> None:
     run.shot("roles")
 
 
-def _audio(run: Run) -> list[dict[str, Any]]:
+def audio_log(run: Run) -> list[dict[str, Any]]:
+    """The instrumented audio calls so far (instrument.js)."""
     log = run.cdp.evaluate("window.__suflerAudio || []")
     return log if isinstance(log, list) else []
 
@@ -108,7 +111,7 @@ def f3_rehearse(run: Run) -> None:
     run.cdp.wait_for(first["text"][:40], 5)
     run.shot("partner")
     run.cdp.page.pump(2)
-    log = _audio(run)
+    log = audio_log(run)
     run.check(log, "no speechSynthesis.speak / media play within 2 s")
     run.note(f"audio: {json.dumps(log[0])}")
     k = pick.partner_before_mine
@@ -121,11 +124,11 @@ def f3_rehearse(run: Run) -> None:
     try:
         run.cdp.wait_for("Twoja kwestia", 25)
     except Exception as e:
-        log = _audio(run)
+        log = audio_log(run)
         raise TimeoutError(
             f"{e}; {len(log)} audio calls, last {json.dumps(log[-1:])}"
         ) from e
-    run.note(f"audio log: {json.dumps(_audio(run)[-2:])}")
+    run.note(f"audio log: {json.dumps(audio_log(run)[-2:])}")
     run.step("the countdown runs")
     before = run.cdp.text()
     run.cdp.page.pump(1.5)
@@ -220,3 +223,11 @@ def f5_voices(run: Run) -> None:
     run.check({"done", "total"} <= job.keys(), f"job reply {job}")
     run.note(f"progress: {job.get('state')} {job['done']}/{job['total']}")
     run.shot("voices-progress")
+    # Not a check: only a warm clip cache finishes in time. Shows that an
+    # unchanged script comes back from the cache instead of the GPU.
+    start = time.monotonic()
+    try:
+        saved = run.cdp.wait_for("Głosy zapisane (", 25)["text"]
+        run.note(f"'{saved}' after {time.monotonic() - start:.1f} s")
+    except CdpError:
+        run.note("pack not stored within 25 s (clips still rendering)")
