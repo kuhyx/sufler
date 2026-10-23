@@ -76,6 +76,7 @@ class RehearsalPrefs {
     this.knowledge = const {},
     this.resume,
     this.rolesAsked = false,
+    this.pureRuns = const {},
   });
 
   /// Parses [json] produced by [toJson].
@@ -97,6 +98,7 @@ class RehearsalPrefs {
       resume: resume == null ? null : ResumePoint.fromJson(resume),
       // Prefs saved before the roles screen existed: ask only if none set.
       rolesAsked: json['rolesAsked'] as bool? ?? false,
+      pureRuns: stringList(json['pureRuns']).toSet(),
     );
   }
 
@@ -112,7 +114,8 @@ class RehearsalPrefs {
   /// Line index -> storage key of the actor's own recording.
   final Map<int, String> recordings;
 
-  /// Line index -> self-grades, oldest first (true = knew it).
+  /// Line index -> first-attempt self-grades (one per pass), oldest first
+  /// (true = knew it). Retries after a ✗ are not recorded.
   final Map<int, List<bool>> knowledge;
 
   /// Where the last rehearsal stopped.
@@ -121,7 +124,15 @@ class RehearsalPrefs {
   /// Whether the roles screen was already shown once for this script.
   final bool rolesAsked;
 
-  /// Lines whose latest grade is ✗.
+  /// Ids of scenes/songs once rehearsed whole with every own line ✓ on
+  /// the first try ("czysty przebieg").
+  final Set<String> pureRuns;
+
+  /// Copy with section [id] marked as purely run.
+  RehearsalPrefs withPureRun(String id) =>
+      copyWith(pureRuns: {...pureRuns, id});
+
+  /// Lines whose latest first-attempt grade is ✗.
   Set<int> get missed => {
     for (final e in knowledge.entries)
       if (e.value.isNotEmpty && !e.value.last) e.key,
@@ -150,6 +161,8 @@ class RehearsalPrefs {
     'knowledge': {for (final e in knowledge.entries) '${e.key}': e.value},
     'resume': ?resume?.toJson(),
     'rolesAsked': rolesAsked,
+    // Only when set, so prefs without pure runs keep their old shape.
+    if (pureRuns.isNotEmpty) 'pureRuns': [...pureRuns],
   };
 
   /// Copy with some fields replaced; [clearResume] drops [resume].
@@ -162,6 +175,7 @@ class RehearsalPrefs {
     ResumePoint? resume,
     bool clearResume = false,
     bool? rolesAsked,
+    Set<String>? pureRuns,
   }) => RehearsalPrefs(
     roles: roles ?? this.roles,
     speed: speed ?? this.speed,
@@ -170,5 +184,6 @@ class RehearsalPrefs {
     knowledge: knowledge ?? this.knowledge,
     resume: clearResume ? null : resume ?? this.resume,
     rolesAsked: rolesAsked ?? this.rolesAsked,
+    pureRuns: pureRuns ?? this.pureRuns,
   );
 }

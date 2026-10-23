@@ -38,10 +38,13 @@ void main() {
     await tester.tap(find.text('Źle'));
     await tester.pump();
     expect(find.text('Naprawdę.'), findsNothing);
+    // Asked again after the cue; the ✓ retry does not count as known.
+    await _speakDone(tester);
     await tester.tap(find.text('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
+    expect(_header(tester), contains('kwestia 3/4'));
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.missed, {2});

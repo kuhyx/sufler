@@ -11,7 +11,8 @@ import 'package:sufler/ui/pause_control.dart';
 
 /// The current cue (partner line, my countdown, or my self-grade), with the
 /// previous line above it for context. My own text stays hidden while I
-/// say it unless the read-through mode shows it.
+/// say it unless the read-through mode shows it. After a ✗ the line is
+/// hidden again and its prompt (the cue before it) replayed.
 class CueView extends StatelessWidget {
   /// Creates the view.
   const new({
@@ -50,14 +51,26 @@ class CueView extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = controller.session;
     final cue = s.current!;
-    final prev = s.position > 0 ? s.cues[s.position - 1] : null;
+    final prompt = s.phase == Phase.prompt ? s.prompt : null;
+    final prev = s.position > 0 && prompt == null
+        ? s.cues[s.position - 1]
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (prev != null) _previous(context, prev),
         const SizedBox(height: AppSpacing.lg),
+        if (s.retry) ...[
+          Text(
+            'Jeszcze raz — aż będzie dobrze',
+            key: const Key('retry'),
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         switch (s.phase) {
           Phase.partner => _partner(context, cue),
+          Phase.prompt => _partner(context, prompt!, hide: prompt.mine),
           Phase.mine => _mine(context, cue),
           _ => GradeView(
             cue: cue,
@@ -105,12 +118,19 @@ class CueView extends StatelessWidget {
   Widget _text(BuildContext context, String text) =>
       Text(text, style: Theme.of(context).textTheme.headlineSmall);
 
-  Widget _partner(BuildContext context, Cue cue) => Column(
+  /// A partner line, or a replayed prompt ([hide]: it is mine, shown only
+  /// when the visibility allows).
+  Widget _partner(BuildContext context, Cue cue, {bool hide = false}) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _label(context, speakerNames(script, cue.line)),
       const SizedBox(height: AppSpacing.sm),
-      _text(context, cue.line.text),
+      _text(
+        context,
+        hide && visibility == TextVisibility.hide
+            ? '(twoja kwestia)'
+            : cue.line.text,
+      ),
       for (final d in cue.line.directions)
         Text(d, style: const TextStyle(fontStyle: FontStyle.italic)),
     ],

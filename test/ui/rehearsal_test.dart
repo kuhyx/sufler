@@ -56,6 +56,14 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Źle'));
     await tester.pump();
+    // The prompt (my line before, hidden) is replayed; ✓ on the retry
+    // does not lift the score.
+    expect(find.text('(twoja kwestia)'), findsOneWidget);
+    await _speakDone(tester);
+    await tester.tap(find.text('Gotowe'));
+    await tester.pump();
+    await tester.tap(find.text('Dobrze'));
+    await tester.pump();
     await _speakDone(tester);
     expect(_header(tester).data, contains('Przebieg 2'));
     expect(_header(tester).data, contains('ostatni wynik 1/2'));

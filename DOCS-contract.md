@@ -150,12 +150,15 @@ by `test/desktop/gdoc_contract_test.dart`.
  "knowledge": {"<line-index>": [false, true]},
  "resume": {"label": "Scena 3", "start": 120, "end": 240, "position": 7,
             "mode": "range"},
- "rolesAsked": true}
+ "rolesAsked": true, "pureRuns": ["scena-3"]}
 ```
 
 - Every field is optional: prefs written by older versions load unchanged.
-- `knowledge`: the actor's ✓ (`true`) / ✗ grades per line, oldest first, the
-  last 20 kept. "Only lines I missed" = lines whose last grade is ✗.
+- `knowledge`: ✓ (`true`) / ✗ per line, oldest first, last 20 kept: only the
+  FIRST attempt of each pass (a ✗ is asked again until ✓; retries are not
+  stored; same shape). "Only lines I missed" = lines whose last grade is ✗.
+- `pureRuns`: scene/song ids walked whole with every own line ✓ first try
+  ("Czysty przebieg" badge); never cleared, omitted when empty, kept on re-parse.
 - `resume`: the last rehearsal (line range, `mode` `range` or `missed`) and
   the cue position reached; the app offers to continue there.
 - `rolesAsked`: the roles screen was shown once for this script.

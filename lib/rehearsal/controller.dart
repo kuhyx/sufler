@@ -85,6 +85,8 @@ class RehearsalController extends ChangeNotifier {
     final cue = session.current;
     if (cue != null && session.phase == Phase.partner) {
       unawaited(_playPartner(cue.line, ++_generation));
+    } else if (session.phase == Phase.prompt) {
+      unawaited(_playPartner(session.prompt!.line, ++_generation));
     } else if (cue != null && session.phase == Phase.mine) {
       _remainingMs = (cue.seconds * 1000).round();
       heard = null;
@@ -156,10 +158,12 @@ class RehearsalController extends ChangeNotifier {
     _enter();
   }
 
-  /// Self-grade of the line just said.
-  void grade({required bool ok}) {
-    session.grade(ok: ok);
+  /// Self-grade of the line just said; ✗ replays the prompt and asks the
+  /// line again. Returns whether it was the line's first attempt.
+  bool grade({required bool ok}) {
+    final first = session.grade(ok: ok);
     _enter();
+    return first;
   }
 
   /// Jump to the next cue.
@@ -186,11 +190,11 @@ class RehearsalController extends ChangeNotifier {
     _notify();
   }
 
-  /// Continue: replay the partner line, or resume the countdown.
+  /// Continue: replay the partner line (or prompt), or resume the countdown.
   void resume() {
     if (!paused) return;
     paused = false;
-    if (session.phase == Phase.partner) {
+    if (session.phase case Phase.partner || Phase.prompt) {
       _enter();
     } else if (session.phase == Phase.mine) {
       _runCountdown();

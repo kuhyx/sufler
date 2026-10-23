@@ -11,6 +11,8 @@ import 'package:sufler/rehearsal/partner_player.dart';
 import 'package:sufler/rehearsal/session.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/cue_view.dart';
+import 'package:sufler/ui/pure_run.dart';
+import 'package:sufler/ui/rehearsal_controls.dart';
 import 'package:sufler/ui/rehearsal_summary.dart';
 import 'package:sufler/ui/services.dart';
 
@@ -61,6 +63,7 @@ class RehearsalScreen extends StatefulWidget {
 class _RehearsalScreenState extends State<RehearsalScreen> {
   RehearsalController? _ctl;
   int _saved = -1;
+  int _pure = 0;
 
   Services get _svc => ServicesScope.of(context);
   String get _id => widget.script.id;
@@ -88,8 +91,20 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
       ),
       capture: s.listen ? svc.capture : null,
     )..start();
-    _ctl!.addListener(_savePosition);
+    _ctl!
+      ..addListener(_savePosition)
+      ..addListener(_savePure);
     _savePosition();
+  }
+
+  /// Marks the scene/song walked once a pass had every line ✓ first try.
+  void _savePure() {
+    final n = _ctl!.session.purePasses;
+    if (n == _pure) return;
+    _pure = n;
+    final section = pureRunSection(widget.script, widget.resume);
+    if (section == null) return;
+    unawaited(_svc.library.updatePrefs(_id, (p) => p.withPureRun(section.id)));
   }
 
   /// Keeps the resume point at the cue reached (the start once finished).
@@ -110,7 +125,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     final ctl = _ctl!;
     final index = ctl.session.current?.line.index;
     if (index == null || ctl.session.phase != Phase.grade) return;
-    ctl.grade(ok: ok);
+    // Only the first attempt is knowledge; a ✗ is asked again until ✓.
+    if (!ctl.grade(ok: ok)) return;
     unawaited(_svc.library.updatePrefs(_id, (p) => p.graded(index, ok: ok)));
   }
 
@@ -133,7 +149,9 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
 
   @override
   void dispose() {
-    _ctl?.removeListener(_savePosition);
+    _ctl
+      ?..removeListener(_savePosition)
+      ..removeListener(_savePure);
     _ctl?.dispose();
     super.dispose();
   }
@@ -168,7 +186,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
             ),
             bottomNavigationBar: ListenableBuilder(
               listenable: ctl,
-              builder: (context, _) => _controls(ctl),
+              builder: (context, _) => RehearsalControls(controller: ctl),
             ),
           ),
         ),
@@ -212,35 +230,6 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     return Text(
       parts.join(' · '),
       style: Theme.of(context).textTheme.bodySmall,
-    );
-  }
-
-  Widget _controls(RehearsalController ctl) {
-    final over = ctl.session.phase == Phase.finished;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton(
-              tooltip: 'Wstecz',
-              icon: const Icon(Icons.skip_previous),
-              onPressed: ctl.back,
-            ),
-            IconButton.filledTonal(
-              tooltip: ctl.paused ? 'Wznów' : 'Pauza',
-              icon: Icon(ctl.paused ? Icons.play_arrow : Icons.pause),
-              onPressed: over ? null : (ctl.paused ? ctl.resume : ctl.pause),
-            ),
-            IconButton(
-              tooltip: 'Dalej',
-              icon: const Icon(Icons.skip_next),
-              onPressed: over ? null : ctl.skip,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

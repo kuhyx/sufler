@@ -66,6 +66,7 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
       knowledge: move(p.knowledge),
       resume: resume,
       rolesAsked: p.rolesAsked,
+      pureRuns: p.pureRuns,
     ),
     moved: moved,
     lost: lost,

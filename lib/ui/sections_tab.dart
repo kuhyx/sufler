@@ -4,6 +4,7 @@ import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/range.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/pure_run.dart';
 import 'package:sufler/ui/song_preview.dart';
 
 /// Starts something over a range, titled with the label.
@@ -66,7 +67,7 @@ class SectionsTab extends StatelessWidget {
     ];
     return ListTile(
       leading: Icon(icon),
-      title: Text(s.title),
+      title: SectionTitle(section: s, pure: prefs.pureRuns.contains(s.id)),
       subtitle: Text(parts.join(' · ')),
       onTap: () => onStart(range, s.title),
       trailing: Row(
