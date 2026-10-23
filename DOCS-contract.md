@@ -244,4 +244,8 @@ App side (`lib/audio/transcribe_client.dart`): the desktop build posts each
 "Nagraj czasy" / listening take as WAV to `/api/tts/transcribe?lang=pl` and
 prefers `speechStart`/`speechEnd` over its own VAD; any status but 200 (404
 older service, 503 no STT) or a network error means "no transcript". Android
-uses the on-device recognizer (`speech_to_text`, `pl_PL`) instead.
+uses the system recognizer (`speech_to_text`, `pl_PL`) instead; after an
+error meaning it cannot work there (network, server, language, audio,
+permission) that run falls back to the recorder with VAD only (no
+transcript). A take neither path heard is timed by a tap in the walk
+(`lineSeconds`, never a recording).
