@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,9 +24,14 @@ class RehearsalScreen extends StatefulWidget {
     required this.settings,
     required this.speed,
     required this.recordings,
+    required this.resume,
     this.pack,
     super.key,
   });
+
+  /// What is rehearsed and where to start; the reached position is saved
+  /// back so the next start continues here.
+  final ResumePoint resume;
 
   /// The script.
   final Script script;
@@ -53,6 +60,10 @@ class RehearsalScreen extends StatefulWidget {
 
 class _RehearsalScreenState extends State<RehearsalScreen> {
   RehearsalController? _ctl;
+  int _saved = -1;
+
+  Services get _svc => ServicesScope.of(context);
+  String get _id => widget.script.id;
 
   @override
   void didChangeDependencies() {
@@ -63,9 +74,10 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     _ctl = RehearsalController(
       RehearsalSession(
         widget.cues,
-        selfGrade: s.selfGrade,
+        selfGrade: s.grades,
         loop: s.loop,
         cleanTarget: s.cleanTarget,
+        startAt: widget.resume.position,
       ),
       PartnerPlayer(
         script: widget.script,
@@ -74,11 +86,54 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         pack: widget.pack,
         speed: widget.speed,
       ),
+      capture: s.listen ? svc.capture : null,
     )..start();
+    _ctl!.addListener(_savePosition);
+    _savePosition();
+  }
+
+  /// Keeps the resume point at the cue reached (the start once finished).
+  void _savePosition() {
+    final s = _ctl!.session;
+    final at = s.phase == Phase.finished ? 0 : s.position;
+    if (at == _saved) return;
+    _saved = at;
+    unawaited(
+      _svc.library.updatePrefs(
+        _id,
+        (p) => p.copyWith(resume: widget.resume.at(at)),
+      ),
+    );
+  }
+
+  void _grade(bool ok) {
+    final ctl = _ctl!;
+    final index = ctl.session.current?.line.index;
+    if (index == null || ctl.session.phase != Phase.grade) return;
+    ctl.grade(ok: ok);
+    unawaited(_svc.library.updatePrefs(_id, (p) => p.graded(index, ok: ok)));
+  }
+
+  void _confirmSuggestion() {
+    final s = _ctl!.suggestion;
+    if (s != null) _grade(s);
+  }
+
+  void _adjust(double delta) {
+    final ctl = _ctl!;
+    final index = ctl.session.current!.line.index;
+    final next = ctl.adjustPause(delta);
+    unawaited(
+      _svc.library.updatePrefs(
+        _id,
+        (p) => p.copyWith(lineSeconds: {...p.lineSeconds, index: next}),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _ctl?.removeListener(_savePosition);
     _ctl?.dispose();
     super.dispose();
   }
@@ -86,9 +141,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   Future<void> _playRecording(int index) async {
     final key = widget.recordings[index];
     if (key == null) return;
-    final svc = ServicesScope.of(context);
-    final wav = await svc.library.loadRecording(key);
-    if (wav != null) await svc.clips.play(wav, 'audio/wav');
+    final wav = await _svc.library.loadRecording(key);
+    if (wav != null) await _svc.clips.play(wav, 'audio/wav');
   }
 
   @override
@@ -100,7 +154,10 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         if (didPop) ctl.pause();
       },
       child: CallbackShortcuts(
-        bindings: {const SingleActivator(LogicalKeyboardKey.space): ctl.done},
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.space): ctl.done,
+          const SingleActivator(LogicalKeyboardKey.enter): _confirmSuggestion,
+        },
         child: Focus(
           autofocus: true,
           child: Scaffold(
@@ -129,6 +186,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
             visibility: widget.settings.visibility,
             hasRecording: widget.recordings.containsKey,
             onPlayRecording: _playRecording,
+            onGrade: _grade,
+            onAdjust: _adjust,
           );
     return Center(
       child: ConstrainedBox(

@@ -15,6 +15,7 @@ void main() {
     final rig = await openHub(
       tester,
       'anki',
+      tab: 'Narzędzia',
       roles: {const Role.character(wolf)},
     );
     await tester.tapVisible(find.text('Eksportuj talię Anki'));
@@ -25,7 +26,7 @@ void main() {
   });
 
   testWidgets('Anki export without roles asks for one', (tester) async {
-    final rig = await openHub(tester, 'anki-none');
+    final rig = await openHub(tester, 'anki-none', tab: 'Narzędzia');
     await tester.tapVisible(find.text('Eksportuj talię Anki'));
     expect(rig.exported, isEmpty);
     expect(find.text('Wybierz co najmniej jedną rolę'), findsOneWidget);
@@ -37,6 +38,7 @@ void main() {
     final rig = await openHub(
       tester,
       'pack',
+      tab: 'Narzędzia',
       roles: {const Role.character(wolf)},
     );
     expect(find.text('Generuj głosy'), findsNothing);
@@ -45,6 +47,7 @@ void main() {
     expect(find.text('Paczka: test@1, 2 kwestii.'), findsOneWidget);
     expect(await tester.io(() => rig.library.loadPack('abc123')), isNotNull);
 
+    await openTab(tester, 'Sceny');
     await tester.tapVisible(find.text('Scena 1'));
     await tester.pump(const Duration(milliseconds: 500));
     expect(rig.clips.played, ['audio/ogg']); // line 1 has a clip
@@ -52,7 +55,7 @@ void main() {
   });
 
   testWidgets('a pack for another script is rejected', (tester) async {
-    final rig = await openHub(tester, 'pack-bad');
+    final rig = await openHub(tester, 'pack-bad', tab: 'Narzędzia');
     rig.script = fixtureScript();
     rig.files.next = (name: 'x.zip', bytes: Uint8List.fromList([1, 2]));
     await tester.tapVisible(find.text('Importuj paczkę audio (.zip)'));
@@ -63,7 +66,12 @@ void main() {
   testWidgets('generate voices streams progress and stores the pack', (
     tester,
   ) async {
-    final rig = await openHub(tester, 'render', renderable: true);
+    final rig = await openHub(
+      tester,
+      'render',
+      tab: 'Narzędzia',
+      renderable: true,
+    );
     await tester.tapVisible(find.text('Generuj głosy'));
     expect(find.text('Paczka: test@1, 2 kwestii.'), findsOneWidget);
     final stored = await tester.io(() => rig.library.loadPack('abc123'));
@@ -71,7 +79,7 @@ void main() {
   });
 
   testWidgets('cancelled pick does nothing', (tester) async {
-    final rig = await openHub(tester, 'pick-cancel');
+    final rig = await openHub(tester, 'pick-cancel', tab: 'Narzędzia');
     await tester.tapVisible(find.text('Importuj paczkę audio (.zip)'));
     expect(find.textContaining('Brak paczki'), findsOneWidget);
     expect(rig.files.saved, isEmpty);

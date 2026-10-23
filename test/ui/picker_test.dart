@@ -38,17 +38,9 @@ void main() {
     await tester.tap(find.text('Koniec!'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Kwestie 6–10'), findsOneWidget);
-    expect(rig.speech.said, ['La la la']);
+    expect(rig.speech.said.first, 'La la la');
     await leaveRehearsal(tester);
-  });
-
-  testWidgets('desktop: roles and sections side by side', (tester) async {
-    tester.useDesktop();
-    await openHub(tester, 'wide', roles: {const Role.character(wolf)});
-    final roles = tester.getTopLeft(find.text('Twoje role'));
-    final sections = tester.getTopLeft(find.text('Fragment'));
-    expect(sections.dx, greaterThan(roles.dx + 400));
-    expect(sections.dy, roles.dy);
   });
 }

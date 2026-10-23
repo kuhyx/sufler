@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
+import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/app.dart';
 
@@ -13,26 +15,48 @@ Future<void> leaveRehearsal(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// Seeds the fixture script (+ prefs/settings), opens the app and the
-/// script's hub screen.
+/// Switches the script hub to tab [label] ("Sceny", "Piosenki",
+/// "Ustawienia próby", "Narzędzia").
+Future<void> openTab(WidgetTester tester, String label) async {
+  final rail = find.descendant(
+    of: find.byType(NavigationRail),
+    matching: find.text(label),
+  );
+  final bar = find.descendant(
+    of: find.byType(NavigationBar),
+    matching: find.text(label),
+  );
+  await tester.tap(rail.evaluate().isNotEmpty ? rail : bar);
+  await tester.pumpAndSettle();
+}
+
+/// Seeds the fixture script (+ prefs/settings) and starts the app, which
+/// opens the only script straight away (the roles screen counts as already
+/// shown); optionally switches to [tab].
 Future<TestRig> openHub(
   WidgetTester tester,
   String db, {
   Set<Role> roles = const {},
   AppSettings settings = const AppSettings(),
   bool renderable = false,
+  String? tab,
+  Script? script,
   Future<void> Function(TestRig rig)? seed,
 }) async {
   final rig = TestRig(db: db, renderable: renderable);
+  if (script != null) rig.script = script;
   await tester.io(() => rig.library.saveScript(rig.script));
   await tester.io(
-    () => rig.library.savePrefs(rig.script.id, RehearsalPrefs(roles: roles)),
+    () => rig.library.savePrefs(
+      rig.script.id,
+      RehearsalPrefs(roles: roles, rolesAsked: true),
+    ),
   );
   await tester.io(() => rig.library.saveSettings(settings));
   if (seed != null) await tester.io(() => seed(rig));
   await tester.pumpWidget(SuflerApp(services: rig.services));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Krasnale testowe'));
-  await tester.pumpAndSettle();
+  expect(find.text('Moje role'), findsOneWidget, reason: 'hub not opened');
+  if (tab != null) await openTab(tester, tab);
   return rig;
 }

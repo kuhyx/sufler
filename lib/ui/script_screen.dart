@@ -8,17 +8,17 @@ import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/range.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/correction_screen.dart';
-import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
 import 'package:sufler/ui/rehearsal_screen.dart';
-import 'package:sufler/ui/roles_card.dart';
-import 'package:sufler/ui/sections_card.dart';
+import 'package:sufler/ui/roles_screen.dart';
+import 'package:sufler/ui/script_tabs.dart';
+import 'package:sufler/ui/sections_tab.dart';
 import 'package:sufler/ui/services.dart';
-import 'package:sufler/ui/settings_card.dart';
 import 'package:sufler/ui/timing_screen.dart';
-import 'package:sufler/ui/tools_card.dart';
+import 'package:sufler/ui/timing_session_screen.dart';
 
-/// One script: pick roles and a section, tune the rehearsal, tools.
+/// One script: learn (scenes, songs), rehearsal settings and tools as
+/// tabs; roles on their own screen ("Moje role").
 class ScriptScreen extends StatefulWidget {
   /// Opens the stored script [scriptId].
   const new({required this.scriptId, super.key});
@@ -39,22 +39,31 @@ class _ScriptScreenState extends State<ScriptScreen> {
   bool _loaded = false;
 
   Services get _svc => ServicesScope.of(context);
+  String get _id => widget.scriptId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_loaded) {
-      _loaded = true;
-      unawaited(_load());
-    }
+    if (_loaded) return;
+    _loaded = true;
+    unawaited(_firstLoad());
+  }
+
+  Future<void> _firstLoad() async {
+    await _load();
+    await _svc.library.rememberScript(_id);
+    // First visit with no roles: show the roles screen once.
+    if (!mounted || _prefs.roles.isNotEmpty || _prefs.rolesAsked) return;
+    await _svc.library.updatePrefs(_id, (p) => p.copyWith(rolesAsked: true));
+    await _push(RolesScreen(scriptId: _id));
   }
 
   Future<void> _load() async {
     final lib = _svc.library;
-    final script = await lib.loadScript(widget.scriptId);
-    final prefs = await lib.loadPrefs(widget.scriptId);
+    final script = await lib.loadScript(_id);
+    final prefs = await lib.loadPrefs(_id);
     final settings = await lib.loadSettings();
-    final pack = await lib.loadPack(widget.scriptId);
+    final pack = await lib.loadPack(_id);
     final canRender = await _svc.renderAvailable();
     if (!mounted) return;
     setState(() {
@@ -66,9 +75,11 @@ class _ScriptScreenState extends State<ScriptScreen> {
     });
   }
 
-  Future<void> _savePrefs(RehearsalPrefs p) async {
-    setState(() => _prefs = p);
-    await _svc.library.savePrefs(widget.scriptId, p);
+  Future<void> _savePrefs(
+    RehearsalPrefs Function(RehearsalPrefs) change,
+  ) async {
+    final next = await _svc.library.updatePrefs(_id, change);
+    if (mounted) setState(() => _prefs = next);
   }
 
   Future<void> _saveSettings(AppSettings s) async {
@@ -76,14 +87,19 @@ class _ScriptScreenState extends State<ScriptScreen> {
     await _svc.library.saveSettings(s);
   }
 
-  Future<void> _start(LineRange range, String label) async {
+  Future<void> _start(
+    LineRange range,
+    String label, {
+    bool missedOnly = false,
+    int startAt = 0,
+  }) async {
     final script = _script!;
     if (_prefs.roles.isEmpty) {
       showError(context, 'Wybierz co najmniej jedną rolę');
       return;
     }
     final recorded = await _svc.library.recordingSeconds(_prefs);
-    final cues = buildCues(
+    var cues = buildCues(
       script,
       _prefs.roles,
       range,
@@ -91,19 +107,47 @@ class _ScriptScreenState extends State<ScriptScreen> {
       overrides: _prefs.lineSeconds,
       recordingSeconds: recorded,
     );
+    if (missedOnly) cues = onlyMissed(cues, _prefs.missed);
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => RehearsalScreen(
-          script: script,
-          cues: cues,
-          title: label,
-          settings: _settings,
-          speed: _prefs.speed,
-          pack: _pack,
-          recordings: _prefs.recordings,
-        ),
+    if (cues.isEmpty) {
+      showError(context, 'Nie ma tu kwestii do powtórki');
+      return;
+    }
+    final resume = ResumePoint(
+      label: label,
+      start: range.start,
+      end: range.end,
+      position: startAt.clamp(0, cues.length - 1),
+      missedOnly: missedOnly,
+    );
+    // The rehearsal screen saves [resume] (and every position reached).
+    await _push(
+      RehearsalScreen(
+        script: script,
+        cues: cues,
+        title: label,
+        settings: _settings,
+        speed: _prefs.speed,
+        pack: _pack,
+        recordings: _prefs.recordings,
+        resume: resume,
       ),
+    );
+  }
+
+  void _resume(ResumePoint r) => unawaited(
+    _start(
+      LineRange(r.start, r.end),
+      r.label,
+      missedOnly: r.missedOnly,
+      startAt: r.position,
+    ),
+  );
+
+  void _record(LineRange range, String label) {
+    final lines = ownLines(_script!, _prefs, range);
+    unawaited(
+      _push(TimingSessionScreen(scriptId: _id, title: label, lines: lines)),
     );
   }
 
@@ -132,53 +176,27 @@ class _ScriptScreenState extends State<ScriptScreen> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    final left = <Widget>[
-      RolesCard(
-        script: script,
-        selected: _prefs.roles,
-        onChanged: (r) => _savePrefs(_prefs.copyWith(roles: r)),
-      ),
-      SettingsCard(
-        speed: _prefs.speed,
-        settings: _settings,
-        onSpeed: (s) => _savePrefs(_prefs.copyWith(speed: s)),
-        onSettings: _saveSettings,
-      ),
-      ToolsCard(
-        script: script,
-        roles: _prefs.roles,
-        pack: _pack,
-        canRender: _canRender,
-        onPack: (p) => setState(() => _pack = p),
-        onCorrect: () => _push(CorrectionScreen(scriptId: script.id)),
-        onTimings: () => _push(TimingScreen(scriptId: script.id)),
-      ),
-    ];
-    final sections = SectionsCard(
+    return ScriptTabs(
       script: script,
+      prefs: _prefs,
+      settings: _settings,
+      pack: _pack,
+      canRender: _canRender,
+      onRoles: () => _push(RolesScreen(scriptId: _id)),
       onStart: _start,
-      onPick: _pick,
-    );
-    return Scaffold(
-      appBar: AppBar(title: Text(script.title)),
-      body: LayoutBuilder(
-        builder: (context, box) => box.maxWidth >= wideLayout
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _column(left)),
-                  Expanded(child: _column([sections])),
-                ],
-              )
-            : _column([left.first, sections, ...left.skip(1)]),
+      onMissed: () => _start(
+        LineRange(0, script.lines.length - 1),
+        'Tylko nieumiane',
+        missedOnly: true,
       ),
+      onResume: _resume,
+      onRecord: _record,
+      onPick: _pick,
+      onSpeed: (s) => _savePrefs((p) => p.copyWith(speed: s)),
+      onSettings: _saveSettings,
+      onPack: (p) => setState(() => _pack = p),
+      onCorrect: () => _push(CorrectionScreen(scriptId: script.id)),
+      onTimings: () => _push(TimingScreen(scriptId: script.id)),
     );
   }
-
-  Widget _column(List<Widget> children) => ListView(
-    padding: const EdgeInsets.all(AppSpacing.md),
-    children: [
-      for (final c in children) ...[c, const SizedBox(height: AppSpacing.lg)],
-    ],
-  );
 }

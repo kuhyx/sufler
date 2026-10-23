@@ -5,11 +5,13 @@ import 'package:sufler/rehearsal/controller.dart';
 import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/session.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/grade_view.dart';
 import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/pause_control.dart';
 
 /// The current cue (partner line, my countdown, or my self-grade), with the
-/// previous line above it for context. In "reveal after pause" mode the
-/// previous panel is where my just-said line appears.
+/// previous line above it for context. My own text stays hidden while I
+/// say it unless the read-through mode shows it.
 class CueView extends StatelessWidget {
   /// Creates the view.
   const new({
@@ -18,6 +20,8 @@ class CueView extends StatelessWidget {
     required this.visibility,
     required this.hasRecording,
     required this.onPlayRecording,
+    required this.onGrade,
+    required this.onAdjust,
     super.key,
   });
 
@@ -36,6 +40,12 @@ class CueView extends StatelessWidget {
   /// Play the own recording of a line.
   final void Function(int index) onPlayRecording;
 
+  /// The actor's grade of the line just said.
+  final ValueChanged<bool> onGrade;
+
+  /// −/+ on the current own line's pause.
+  final ValueChanged<double> onAdjust;
+
   @override
   Widget build(BuildContext context) {
     final s = controller.session;
@@ -49,8 +59,19 @@ class CueView extends StatelessWidget {
         switch (s.phase) {
           Phase.partner => _partner(context, cue),
           Phase.mine => _mine(context, cue),
-          _ => _grade(context, cue),
+          _ => GradeView(
+            cue: cue,
+            visibility: visibility,
+            heard: controller.heard,
+            suggestion: controller.suggestion,
+            onGrade: onGrade,
+            trailing: hasRecording(cue.line.index) ? _playButton(cue) : null,
+          ),
         },
+        if (cue.mine) ...[
+          const SizedBox(height: AppSpacing.md),
+          PauseControl(length: cue.seconds, onAdjust: onAdjust),
+        ],
       ],
     );
   }
@@ -97,6 +118,7 @@ class CueView extends StatelessWidget {
 
   Widget _mine(BuildContext context, Cue cue) {
     final left = controller.remaining;
+    final listening = controller.capture != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -114,7 +136,10 @@ class CueView extends StatelessWidget {
         if (visibility == TextVisibility.show)
           _text(context, cue.line.text)
         else
-          _text(context, '…'),
+          _text(
+            context,
+            listening ? 'Mów z pamięci… słucham' : 'Mów z pamięci…',
+          ),
         const SizedBox(height: AppSpacing.lg),
         FilledButton.icon(
           onPressed: controller.done,
@@ -129,43 +154,4 @@ class CueView extends StatelessWidget {
       ],
     );
   }
-
-  Widget _grade(BuildContext context, Cue cue) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _label(context, 'Jak poszło?'),
-      const SizedBox(height: AppSpacing.sm),
-      Row(
-        children: [
-          Expanded(
-            child: _text(
-              context,
-              visibility == TextVisibility.hide ? '…' : cue.line.text,
-            ),
-          ),
-          if (hasRecording(cue.line.index)) _playButton(cue),
-        ],
-      ),
-      const SizedBox(height: AppSpacing.lg),
-      Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => controller.grade(ok: false),
-              icon: const Icon(Icons.close),
-              label: const Text('Źle'),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: FilledButton.icon(
-              onPressed: () => controller.grade(ok: true),
-              icon: const Icon(Icons.check),
-              label: const Text('Dobrze'),
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
 }

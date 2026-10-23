@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/ui/import_panel.dart';
 import 'package:sufler/ui/script_screen.dart';
 import 'package:sufler/ui/services.dart';
 
-/// Imported scripts, plus import from a file or a Google Docs link.
+/// Imported scripts. On start it opens the last used script straight away
+/// (back from it lands here); importing is the "+" action.
 class LibraryScreen extends StatefulWidget {
   /// Creates the screen.
   const new({super.key});
@@ -16,22 +18,24 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  final _url = TextEditingController();
   List<Script>? _scripts;
   bool _busy = false;
+  bool _started = false;
 
   Services get _services => ServicesScope.of(context);
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_scripts == null) unawaited(_reload());
+    if (_started) return;
+    _started = true;
+    unawaited(_start());
   }
 
-  @override
-  void dispose() {
-    _url.dispose();
-    super.dispose();
+  Future<void> _start() async {
+    final id = await _services.library.startScriptId();
+    await _reload();
+    if (id != null && mounted) await _open(id);
   }
 
   Future<void> _reload() async {
@@ -55,22 +59,47 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _importFile() => _import(() async {
-    final file = await _services.files.pick(['pdf', 'docx', 'odt', 'txt']);
-    if (file == null) return null;
-    return await _services.importDocument(
-      fileName: file.name,
-      bytes: file.bytes,
-    );
-  });
+  void _importFile() => unawaited(
+    _import(() async {
+      final file = await _services.files.pick(['pdf', 'docx', 'odt', 'txt']);
+      if (file == null) return null;
+      return await _services.importDocument(
+        fileName: file.name,
+        bytes: file.bytes,
+      );
+    }),
+  );
 
-  Future<void> _importLink() {
-    final url = _url.text.trim();
-    if (url.isEmpty) return Future.value();
-    return _import(() => _services.importGoogleDoc(url));
-  }
+  void _importLink(String url) =>
+      unawaited(_import(() => _services.importGoogleDoc(url)));
+
+  Future<void> _openImport() => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheet) => Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md + MediaQuery.viewInsetsOf(sheet).bottom,
+      ),
+      child: ImportPanel(
+        busy: false,
+        onFile: () {
+          Navigator.of(sheet).pop();
+          _importFile();
+        },
+        onLink: (url) {
+          Navigator.of(sheet).pop();
+          _importLink(url);
+        },
+      ),
+    ),
+  );
 
   Future<void> _open(String id) async {
+    await _services.library.rememberScript(id);
+    if (!mounted) return;
     await Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => ScriptScreen(scriptId: id)));
@@ -94,25 +123,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     final scripts = _scripts;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sufler')),
+      appBar: AppBar(
+        title: const Text('Sufler'),
+        actions: [
+          if (scripts != null && scripts.isNotEmpty)
+            IconButton(
+              tooltip: 'Importuj',
+              icon: const Icon(Icons.add),
+              onPressed: _busy ? null : _openImport,
+            ),
+        ],
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: kProseMaxWidth),
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              _importPanel(),
-              const SizedBox(height: AppSpacing.lg),
               const SectionHeader('Twoje skrypty'),
+              if (_busy) const LinearProgressIndicator(),
               if (scripts == null)
                 const Center(child: CircularProgressIndicator())
-              else if (scripts.isEmpty)
+              else if (scripts.isEmpty) ...[
                 const EmptyState(
                   icon: Icons.theater_comedy_outlined,
                   title: 'Brak skryptów',
                   message: 'Zaimportuj sztukę z pliku albo z Google Docs.',
-                )
-              else
+                ),
+                ImportPanel(
+                  busy: _busy,
+                  onFile: _importFile,
+                  onLink: _importLink,
+                ),
+              ] else
                 for (final s in scripts) _tile(s),
             ],
           ),
@@ -132,38 +175,5 @@ class _LibraryScreenState extends State<LibraryScreen> {
       icon: const Icon(Icons.delete_outline),
       onPressed: () => _delete(s),
     ),
-  );
-
-  Widget _importPanel() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      FilledButton.icon(
-        onPressed: _busy ? null : _importFile,
-        icon: const Icon(Icons.upload_file),
-        label: const Text('Importuj plik'),
-      ),
-      const SizedBox(height: AppSpacing.xs),
-      Text(
-        'PDF, DOCX, ODT lub TXT',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: AppSpacing.md),
-      TextField(
-        key: const Key('gdoc-url'),
-        controller: _url,
-        decoration: const InputDecoration(
-          labelText: 'Link do Google Docs',
-          hintText: 'https://docs.google.com/document/d/…',
-        ),
-        onSubmitted: (_) => _importLink(),
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      OutlinedButton.icon(
-        onPressed: _busy ? null : _importLink,
-        icon: const Icon(Icons.link),
-        label: const Text('Importuj link'),
-      ),
-      if (_busy) const LinearProgressIndicator(),
-    ],
   );
 }

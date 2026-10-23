@@ -11,7 +11,12 @@ import 'hub.dart';
 
 Future<TestRig> _openTimings(WidgetTester tester, String db) async {
   tester.usePhone();
-  final rig = await openHub(tester, db, roles: {const Role.character(wolf)});
+  final rig = await openHub(
+    tester,
+    db,
+    roles: {const Role.character(wolf)},
+    tab: 'Narzędzia',
+  );
   await tester.tapVisible(find.text('Czasy i nagrania'));
   return rig;
 }
@@ -56,7 +61,8 @@ void main() {
     await tester.tap(find.text('Zatrzymaj nagrywanie'));
     await tester.pumpAndSettle();
     expect(find.text('Pauza 2,5 s · z nagrania'), findsOneWidget);
-    expect(find.byIcon(Icons.mic), findsOneWidget);
+    // The recorded line's mic, besides the "Nagraj czasy" button.
+    expect(find.byIcon(Icons.mic), findsNWidgets(2));
 
     await tester.tap(find.text('Naprawdę.'));
     await tester.pumpAndSettle();

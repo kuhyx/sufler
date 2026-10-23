@@ -49,5 +49,10 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
+        <!-- speech_to_text: Android 11+ must declare it looks up the
+             on-device speech recognizer (timing walk, listening rehearsal). -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
     </queries>
 </manifest>

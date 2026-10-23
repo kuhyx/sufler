@@ -14,6 +14,7 @@ import 'package:sufler/storage/library.dart';
 import 'package:sufler/tts/render_pack.dart';
 import 'package:sufler/ui/services.dart';
 
+import '../rehearsal/fake_capture.dart';
 import '../rehearsal/fixture.dart';
 import '../storage/pack_zip_test.dart' show fixturePackZip;
 
@@ -142,6 +143,7 @@ class TestRig {
   final recorder = FakeRecorder();
   final speech = FakeSpeech();
   final clips = FakeClips();
+  final capture = FakeCapture();
   final imported = <String>[];
   final exported = <Set<Role>>[];
   Script script = fixtureScript();
@@ -173,5 +175,6 @@ class TestRig {
     recorder: recorder,
     speech: speech,
     clips: clips,
+    capture: capture,
   );
 }

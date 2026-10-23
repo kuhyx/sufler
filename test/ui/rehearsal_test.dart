@@ -93,28 +93,4 @@ void main() {
     expect(_header(tester).data, startsWith('Przebieg 1'));
     await leaveRehearsal(tester);
   });
-
-  testWidgets('reveal after pause shows my line once it is said', (
-    tester,
-  ) async {
-    tester.usePhone();
-    await openHub(
-      tester,
-      'reveal',
-      roles: {const Role.character(wolf)},
-      settings: const AppSettings(visibility: TextVisibility.revealAfter),
-    );
-    await tester.tapVisible(find.text('Scena 1'));
-    await _speakDone(tester);
-    expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsNothing);
-    await tester.tap(find.text('Gotowe'));
-    await tester.pump();
-    expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsOneWidget);
-    // The countdown runs out by itself too.
-    await tester.pump(const Duration(seconds: 3));
-    await tester.pump();
-    expect(find.text('Naprawdę.'), findsOneWidget);
-    expect(find.text('No dobrze.'), findsOneWidget);
-    await leaveRehearsal(tester);
-  });
 }

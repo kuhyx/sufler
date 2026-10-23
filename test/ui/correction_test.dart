@@ -7,6 +7,7 @@ import 'package:sufler/ui/app.dart';
 
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
+import 'hub.dart';
 
 Future<TestRig> _openCorrection(WidgetTester tester, String db) async {
   final rig = TestRig(db: db);
@@ -14,13 +15,12 @@ Future<TestRig> _openCorrection(WidgetTester tester, String db) async {
   await tester.io(
     () => rig.library.savePrefs(
       rig.script.id,
-      RehearsalPrefs(roles: {const Role.character(elf)}),
+      RehearsalPrefs(roles: {const Role.character(elf)}, rolesAsked: true),
     ),
   );
   await tester.pumpWidget(SuflerApp(services: rig.services));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Krasnale testowe'));
-  await tester.pumpAndSettle();
+  await openTab(tester, 'Narzędzia');
   await tester.tapVisible(find.text('Popraw tekst'));
   return rig;
 }
@@ -50,14 +50,11 @@ void main() {
     final prefs = await tester.io(() => rig.library.loadPrefs(rig.script.id));
     expect(prefs.roles, {const Role.character(wolf)});
 
-    // The hub shows the merged cast after returning.
+    // "Moje role" shows the merged cast after returning.
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Piaskowy Wilk (6)'),
-      -200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.tap(find.text('Moje role'));
+    await tester.pumpAndSettle();
     expect(find.text('Piaskowy Wilk (6)'), findsOneWidget);
     expect(find.textContaining('Błystek ('), findsNothing);
   });

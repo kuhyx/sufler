@@ -9,6 +9,7 @@ import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/line_timing_sheet.dart';
 import 'package:sufler/ui/services.dart';
+import 'package:sufler/ui/timing_session_screen.dart';
 
 /// My lines with their pause length; tap one to override or record it.
 class TimingScreen extends StatefulWidget {
@@ -64,6 +65,19 @@ class _TimingScreenState extends State<TimingScreen> {
     await _load();
   }
 
+  Future<void> _recordAll(List<ScriptLine> lines) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TimingSessionScreen(
+          scriptId: widget.scriptId,
+          title: 'wszystkie',
+          lines: lines,
+        ),
+      ),
+    );
+    await _load();
+  }
+
   double _seconds(ScriptLine line) => pauseSeconds(
     index: line.index,
     text: line.text,
@@ -104,6 +118,17 @@ class _TimingScreenState extends State<TimingScreen> {
                           ? 'Nie wybrano ról: pokazuję wszystkie kwestie.'
                           : 'Twoje kwestie. Stuknij, by zmienić pauzę.',
                     ),
+                    if (_prefs.roles.isNotEmpty && lines.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: FilledButton.icon(
+                          onPressed: () => _recordAll(lines),
+                          icon: const Icon(Icons.mic),
+                          label: const Text('Nagraj czasy'),
+                        ),
+                      ),
                     for (final l in lines)
                       ListTile(
                         leading: Text('${l.index}'),

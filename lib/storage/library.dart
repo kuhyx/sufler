@@ -52,6 +52,11 @@ class ScriptLibrary {
 
   /// Prefs of script [id] (defaults when none saved).
   Future<RehearsalPrefs> loadPrefs(String id) async {
+    await _updates[id]; // read after pending updates, never before
+    return await _readPrefs(id);
+  }
+
+  Future<RehearsalPrefs> _readPrefs(String id) async {
     final json = await store.readJson(_prefs(id));
     return json == null
         ? const RehearsalPrefs()
@@ -64,14 +69,24 @@ class ScriptLibrary {
 
   /// Reads, changes and saves prefs of script [id] in one step, so screens
   /// holding an older copy never overwrite fields they did not touch.
+  /// Updates of one script run one after another (a grade and a position
+  /// saved in the same instant must not both read the old prefs).
   Future<RehearsalPrefs> updatePrefs(
     String id,
     RehearsalPrefs Function(RehearsalPrefs) change,
-  ) async {
-    final next = change(await loadPrefs(id));
-    await savePrefs(id, next);
-    return next;
+  ) {
+    Future<RehearsalPrefs> run() async {
+      final next = change(await _readPrefs(id));
+      await savePrefs(id, next);
+      return next;
+    }
+
+    final result = (_updates[id] ?? Future.value()).then((_) => run());
+    _updates[id] = result.then<void>((_) {}, onError: (_) {});
+    return result;
   }
+
+  final Map<String, Future<void>> _updates = {};
 
   /// Stores an audio pack zip for script [id].
   Future<void> savePack(String id, Uint8List zip) =>
@@ -124,12 +139,11 @@ class ScriptLibrary {
 
   /// Removes the recording of line [index] of script [id].
   Future<void> deleteRecording(String id, int index) async {
-    final prefs = await loadPrefs(id);
-    final key = prefs.recordings[index];
+    final key = (await loadPrefs(id)).recordings[index];
     if (key != null) await store.delete(key);
-    await savePrefs(
+    await updatePrefs(
       id,
-      prefs.copyWith(recordings: {...prefs.recordings}..remove(index)),
+      (p) => p.copyWith(recordings: {...p.recordings}..remove(index)),
     );
   }
 

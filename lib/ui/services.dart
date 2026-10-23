@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/rehearsal/capture.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/tts/render_pack.dart';
@@ -60,6 +61,7 @@ class Services {
     required this.recorder,
     required this.speech,
     required this.clips,
+    required this.capture,
   });
 
   /// On-device persistence.
@@ -91,6 +93,9 @@ class Services {
 
   /// Clip playback (pack clips and own recordings).
   final ClipPlayer clips;
+
+  /// The microphone as a line listener (timing walk, listening rehearsal).
+  final SpeechCapture capture;
 }
 
 /// Makes [Services] available below it.

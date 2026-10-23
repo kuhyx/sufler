@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
 
-/// Speed, own-line visibility, self-grading and loop mode.
+/// Speed, learning vs read-through, listening, self-grading and loop mode.
 class SettingsCard extends StatelessWidget {
   /// Creates the card.
   const new({
@@ -32,7 +32,7 @@ class SettingsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader('Ustawienia próby'),
+        const SectionHeader('Tempo'),
         const SizedBox(height: AppSpacing.sm),
         Text('Tempo ${speed.toStringAsFixed(2)}×'),
         Slider(
@@ -44,28 +44,47 @@ class SettingsCard extends StatelessWidget {
           onChanged: onSpeed,
         ),
         const SizedBox(height: AppSpacing.sm),
-        const Text('Tekst mojej kwestii'),
+        const SectionHeader('Tekst mojej kwestii'),
         const SizedBox(height: AppSpacing.xs),
         SegmentedButton<TextVisibility>(
           segments: const [
-            ButtonSegment(value: TextVisibility.show, label: Text('Pokaż')),
-            ButtonSegment(value: TextVisibility.hide, label: Text('Ukryj')),
             ButtonSegment(
               value: TextVisibility.revealAfter,
-              label: Text('Po pauzie'),
+              label: Text('Nauka'),
             ),
+            ButtonSegment(
+              value: TextVisibility.hide,
+              label: Text('Bez tekstu'),
+            ),
+            ButtonSegment(value: TextVisibility.show, label: Text('Czytanie')),
           ],
           selected: {s.visibility},
           onSelectionChanged: (v) =>
               onSettings(s.copyWith(visibility: v.single)),
         ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(switch (s.visibility) {
+          TextVisibility.revealAfter =>
+            'Mówisz z pamięci, potem widzisz tekst i oceniasz ✓/✗.',
+          TextVisibility.hide => 'Tekstu nie widać nawet przy ocenie.',
+          TextVisibility.show => 'Pierwsze czytanie: tekst widać od razu.',
+        }, style: Theme.of(context).textTheme.bodySmall),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Oceniaj się ✓/✗'),
-          value: s.selfGrade || s.loop,
-          onChanged: s.loop
+          value: s.grades,
+          onChanged: s.grades && !s.selfGrade
               ? null
               : (v) => onSettings(s.copyWith(selfGrade: v)),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Słuchaj mnie (mikrofon)'),
+          subtitle: const Text(
+            'kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę',
+          ),
+          value: s.listen,
+          onChanged: (v) => onSettings(s.copyWith(listen: v)),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
