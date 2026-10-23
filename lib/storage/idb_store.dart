@@ -12,7 +12,7 @@ const _bytes = 'bytes';
 /// JSON is stored as a string; bytes as a Uint8List value.
 class IdbStore implements Store {
   /// Opens database [dbName] through [factory] lazily on first use.
-  IdbStore(this.factory, {this.dbName = 'sufler'});
+  new(this.factory, {this.dbName = 'sufler'});
 
   /// The IndexedDB implementation.
   final IdbFactory factory;

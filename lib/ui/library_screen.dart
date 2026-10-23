@@ -9,7 +9,7 @@ import 'package:sufler/ui/services.dart';
 /// Imported scripts, plus import from a file or a Google Docs link.
 class LibraryScreen extends StatefulWidget {
   /// Creates the screen.
-  const LibraryScreen({super.key});
+  const new({super.key});
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();

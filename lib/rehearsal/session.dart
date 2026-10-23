@@ -18,7 +18,7 @@ enum Phase {
 /// Score of one pass through the section.
 class PassScore {
   /// Creates a score.
-  const PassScore(this.ok, this.total);
+  const new(this.ok, this.total);
 
   /// Own lines graded correct.
   final int ok;
@@ -40,7 +40,7 @@ class PassScore {
 /// was graded correct, and a skipped own line counts as missed.
 class RehearsalSession {
   /// Starts at the first cue of pass 1.
-  RehearsalSession(
+  new(
     this.cues, {
     bool selfGrade = false,
     this.loop = false,

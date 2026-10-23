@@ -12,7 +12,7 @@ typedef MergePick = ({String from, String into});
 /// Change one line's speakers and kind.
 class LineEditDialog extends StatefulWidget {
   /// Creates the dialog.
-  const LineEditDialog({required this.script, required this.line, super.key});
+  const new({required this.script, required this.line, super.key});
 
   /// The script (cast list).
   final Script script;
@@ -76,9 +76,9 @@ class _LineEditDialogState extends State<LineEditDialog> {
         child: const Text('Anuluj'),
       ),
       FilledButton(
-        onPressed: () => Navigator.of(
-          context,
-        ).pop<LineEdit>((speakers: _speakers, kind: _kind)),
+        onPressed: () =>
+            Navigator.of(context)
+                .pop<LineEdit>((speakers: _speakers, kind: _kind)),
         child: const Text('Zapisz'),
       ),
     ],
@@ -88,7 +88,7 @@ class _LineEditDialogState extends State<LineEditDialog> {
 /// Pick two characters to merge (alias A -> B).
 class MergeDialog extends StatefulWidget {
   /// Creates the dialog.
-  const MergeDialog({required this.script, super.key});
+  const new({required this.script, super.key});
 
   /// The script (cast list).
   final Script script;
@@ -138,9 +138,9 @@ class _MergeDialogState extends State<MergeDialog> {
       FilledButton(
         onPressed: _from == _into
             ? null
-            : () => Navigator.of(
-                context,
-              ).pop<MergePick>((from: _from, into: _into)),
+            : () =>
+                  Navigator.of(context)
+                      .pop<MergePick>((from: _from, into: _into)),
         child: const Text('Scal'),
       ),
     ],

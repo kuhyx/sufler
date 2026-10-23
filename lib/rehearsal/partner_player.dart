@@ -27,7 +27,7 @@ abstract interface class ClipPlayer {
 /// device TTS with a per-character voice.
 class PartnerPlayer implements LinePlayer {
   /// Creates a player for [script].
-  PartnerPlayer({
+  new({
     required this.script,
     required this.speech,
     required this.clips,

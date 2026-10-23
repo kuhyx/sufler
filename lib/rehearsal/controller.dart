@@ -18,7 +18,7 @@ abstract interface class LinePlayer {
 /// [LinePlayer] and runs the countdown for the actor's lines.
 class RehearsalController extends ChangeNotifier {
   /// Wraps [session]; call [start] to begin.
-  RehearsalController(
+  new(
     this.session,
     this.player, {
     this.tick = const Duration(milliseconds: 100),

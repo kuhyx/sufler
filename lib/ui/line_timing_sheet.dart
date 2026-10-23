@@ -12,7 +12,7 @@ import 'package:sufler/ui/services.dart';
 /// effect: the last thing the actor did wins.
 class LineTimingSheet extends StatefulWidget {
   /// Creates the sheet.
-  const LineTimingSheet({
+  const new({
     required this.scriptId,
     required this.line,
     required this.seconds,

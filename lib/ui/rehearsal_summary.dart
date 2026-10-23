@@ -5,11 +5,7 @@ import 'package:sufler/rehearsal/session.dart';
 /// End of the rehearsal: per-pass scores and "again".
 class RehearsalSummary extends StatelessWidget {
   /// Creates the summary.
-  const RehearsalSummary({
-    required this.session,
-    required this.onAgain,
-    super.key,
-  });
+  const new({required this.session, required this.onAgain, super.key});
 
   /// The finished session.
   final RehearsalSession session;

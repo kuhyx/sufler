@@ -5,7 +5,7 @@ import 'package:sufler/model/script.dart';
 @immutable
 class Voice {
   /// Creates a voice.
-  const Voice(this.pitch, this.rate);
+  const new(this.pitch, this.rate);
 
   /// TTS pitch (1.0 = default).
   final double pitch;

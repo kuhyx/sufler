@@ -1,11 +1,15 @@
 ## Commands
 
 - run: `flutter run`
-- test: `flutter test --reporter=compact`
+- test: `flutter test -j 4 --reporter=compact`
 - test-changed: `scripts/test_changed.sh`
 - lint: `flutter analyze`
-- coverage: `flutter test --reporter=compact --coverage`
+- coverage: `flutter test -j 4 --reporter=compact --coverage`
 - coverage-gaps: `coverage-gaps coverage/lcov.info`
+
+`-j 4`: each widget-test process (test/ui) peaks ~300 MB; default -j (=cores)
+exceeds the 2 GiB `capped.sh` ceiling and a flutter_tester is OOM-killed
+("Cannot add event while adding stream"). CI is uncapped and keeps the default.
 
 ## Project rules
 

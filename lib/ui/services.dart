@@ -9,22 +9,20 @@ import 'package:sufler/storage/library.dart';
 import 'package:sufler/tts/render_pack.dart';
 
 /// Imports a dropped document (signature of `importDocument`).
-typedef DocImporter =
-    Future<Script> Function({
-      required String fileName,
-      required Uint8List bytes,
-    });
+typedef DocImporter = Future<Script> Function({
+  required String fileName,
+  required Uint8List bytes,
+});
 
 /// Imports a Google Docs share link (signature of `importGoogleDoc`).
 typedef UrlImporter = Future<Script> Function(String url);
 
 /// Builds an Anki deck (signature of `exportApkg`).
-typedef ApkgExporter =
-    Future<Uint8List> Function(
-      Script script,
-      Set<Role> roles, {
-      AudioPack? audio,
-    });
+typedef ApkgExporter = Future<Uint8List> Function(
+  Script script,
+  Set<Role> roles, {
+  AudioPack? audio,
+});
 
 /// A file the user picked.
 typedef PickedFile = ({String name, Uint8List bytes});
@@ -51,7 +49,7 @@ abstract interface class Recorder {
 /// implementations; widget tests wire fakes.
 class Services {
   /// Creates the bundle.
-  const Services({
+  const new({
     required this.library,
     required this.importDocument,
     required this.importGoogleDoc,
@@ -98,11 +96,7 @@ class Services {
 /// Makes [Services] available below it.
 class ServicesScope extends InheritedWidget {
   /// Provides [services] to [child].
-  const ServicesScope({
-    required this.services,
-    required super.child,
-    super.key,
-  });
+  const new({required this.services, required super.child, super.key});
 
   /// The services.
   final Services services;

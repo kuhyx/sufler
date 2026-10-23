@@ -9,7 +9,7 @@ import 'package:sufler/storage/store.dart';
 /// A key becomes one URI-encoded file name: `<key>.json` or `<key>.bin`.
 class FileStore implements Store {
   /// Stores files under [root], created on first write.
-  FileStore(this.root);
+  new(this.root);
 
   /// Directory holding every record.
   final Directory root;

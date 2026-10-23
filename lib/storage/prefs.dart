@@ -7,7 +7,7 @@ import 'package:sufler/model/role.dart';
 @immutable
 class RehearsalPrefs {
   /// Creates prefs.
-  const RehearsalPrefs({
+  const new({
     this.roles = const {},
     this.speed = 1,
     this.lineSeconds = const {},
@@ -15,7 +15,7 @@ class RehearsalPrefs {
   });
 
   /// Parses [json] produced by [toJson].
-  factory RehearsalPrefs.fromJson(Json json) => RehearsalPrefs(
+  factory fromJson(Json json) => RehearsalPrefs(
     roles: {for (final r in stringList(json['roles'])) Role.parse(r)},
     speed: (json['speed'] as num? ?? 1).toDouble(),
     lineSeconds: {
@@ -78,7 +78,7 @@ enum TextVisibility {
 @immutable
 class AppSettings {
   /// Creates settings.
-  const AppSettings({
+  const new({
     this.visibility = TextVisibility.show,
     this.selfGrade = false,
     this.loop = false,
@@ -86,7 +86,7 @@ class AppSettings {
   });
 
   /// Parses [json] produced by [toJson].
-  factory AppSettings.fromJson(Json json) => AppSettings(
+  factory fromJson(Json json) => AppSettings(
     visibility: TextVisibility.values.byName(
       json['visibility'] as String? ?? 'show',
     ),

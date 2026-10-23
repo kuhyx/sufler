@@ -9,7 +9,7 @@ import 'package:sufler/storage/store.dart';
 /// scripts, per-script prefs, audio packs, own recordings, app settings.
 class ScriptLibrary {
   /// Wraps [store].
-  ScriptLibrary(this.store);
+  new(this.store);
 
   /// Backing store.
   final Store store;

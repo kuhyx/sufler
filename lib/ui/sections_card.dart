@@ -7,7 +7,7 @@ import 'package:sufler/ui/line_picker_screen.dart';
 /// What to rehearse: a scene, a song, a custom range or a cumulative run.
 class SectionsCard extends StatelessWidget {
   /// Creates the card.
-  const SectionsCard({
+  const new({
     required this.script,
     required this.onStart,
     required this.onPick,
