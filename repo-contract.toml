@@ -1,0 +1,2 @@
+[agent_ready]
+skip = "Desktop UI is a loopback-only Flutter web build launched by a local wrapper; not a public website."
