@@ -1,14 +1,11 @@
-import 'dart:typed_data';
+/// Anki export: front = the cue before each of the actor's lines, back = the
+/// actor's line, cue audio from an `AudioPack` when given.
+///
+/// `exportApkg(script, roles, {audio})` builds the `.apkg` bytes. On Android
+/// it writes the collection locally with sqlite3; on web (desktop) sqlite3
+/// does not run, so the deck is derived in the browser and posted to the
+/// desktop wrapper's `POST /api/apkg`, which writes it with the same code.
+library;
 
-import 'package:sufler/audio/audio_pack.dart';
-import 'package:sufler/model/role.dart';
-import 'package:sufler/model/script.dart';
-
-/// Builds an Anki `.apkg`: front = the cue before each of the actor's lines,
-/// back = the actor's line. Cue audio comes from [audio] when given.
-/// Owned by the Anki layer; this stub is replaced by the real writer.
-Future<Uint8List> exportApkg(
-  Script script,
-  Set<Role> roles, {
-  AudioPack? audio,
-}) => throw UnimplementedError('exportApkg');
+export 'export_apkg_io.dart'
+    if (dart.library.js_interop) 'export_apkg_web.dart';

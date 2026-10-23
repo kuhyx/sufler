@@ -8,14 +8,30 @@ environment:
 
 dependencies:
   archive: 4.5.2
+  crypto: 3.0.7
   flutter:
     sdk: flutter
+  http: 1.6.0
   meta: 1.19.0
+  path: 1.9.1
+  sqlite3: 3.7.1
 
 dev_dependencies:
+  flutter_launcher_icons: 0.14.4
   flutter_test:
     sdk: flutter
   very_good_analysis: ^11.0.0
 
 flutter:
   uses-material-design: true
+
+# PYTHONPATH=~/src/testsAndMisc python3 -m python_pkg.app_icons generate --app sufler
+# then: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#211D1B"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  adaptive_icon_monochrome: "assets/icon/icon_monochrome.png"
+  min_sdk_android: 21
