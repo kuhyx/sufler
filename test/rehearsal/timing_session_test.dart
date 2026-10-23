@@ -28,6 +28,7 @@ _rig() {
     lines: _lines,
     capture: mic,
     save: (line, t) async => saved[line.index] = t,
+    saveTime: (line, s) async {},
   );
   return (session: session, mic: mic, saved: saved);
 }
@@ -98,11 +99,15 @@ void main() {
     await run;
   });
 
-  test('no microphone ends the walk with a reason', () async {
+  test('no microphone no longer ends the walk: the line goes manual', () async {
     final r = _rig();
     r.mic.queue.add(null);
-    await r.session.run();
+    final run = r.session.run();
+    await _settle();
     expect(r.session.problem, 'Nie słyszę mikrofonu');
+    expect(r.session.state, TakeState.manual);
     expect(r.saved, isEmpty);
+    await r.session.stop();
+    await run;
   });
 }

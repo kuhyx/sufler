@@ -50,6 +50,11 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         seconds: take.durationSeconds,
         audio: take.audio,
       ),
+      // A tapped time is a manual pause; any recording stays as it is.
+      saveTime: (line, pause) => svc.library.updatePrefs(
+        widget.scriptId,
+        (p) => p.copyWith(lineSeconds: {...p.lineSeconds, line.index: pause}),
+      ),
     );
     unawaited(session.run());
   }
@@ -84,7 +89,12 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
     final theme = Theme.of(context).textTheme;
     final total = s.lines.length;
     final last = s.lastTake;
-    final saved = s.lastLine == null || last == null
+    final pause = s.lastPause;
+    final saved = s.lastLine == null
+        ? null
+        : pause != null
+        ? 'Zapisano kwestię ${s.lastLine!.index}: pauza ${seconds(pause)}'
+        : last == null
         ? null
         : 'Zapisano kwestię ${s.lastLine!.index}: '
               '${seconds(last.durationSeconds)} (+1 s pauzy)';
@@ -103,19 +113,30 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
     return [
       Text('Kwestia ${s.position + 1}/$total', style: theme.labelLarge),
       LinearProgressIndicator(value: s.position / total),
-      const SizedBox(height: AppSpacing.lg),
-      Text('Przeczytaj na głos:', style: theme.bodySmall),
-      Text(line.text, style: theme.headlineSmall),
-      const SizedBox(height: AppSpacing.md),
-      ValueListenableBuilder<double>(
-        valueListenable: _levelSource,
-        builder: (context, level, _) => LinearProgressIndicator(
-          key: const Key('level'),
-          value: level,
-          minHeight: AppSpacing.sm,
-        ),
+      SwitchListTile(
+        key: const Key('manual-walk'),
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Bez mikrofonu: stuknij po każdej kwestii'),
+        value: s.manualAll,
+        onChanged: (on) => s.setManual(on: on),
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: AppSpacing.md),
+      if (s.state == TakeState.manual)
+        ..._manual(theme, s)
+      else ...[
+        Text('Przeczytaj na głos:', style: theme.bodySmall),
+        Text(line.text, style: theme.headlineSmall),
+        const SizedBox(height: AppSpacing.md),
+        ValueListenableBuilder<double>(
+          valueListenable: _levelSource,
+          builder: (context, level, _) => LinearProgressIndicator(
+            key: const Key('level'),
+            value: level,
+            minHeight: AppSpacing.sm,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+      ],
       if (s.state == TakeState.listening)
         const Text('Słucham… gdy skończysz mówić, przejdę dalej.'),
       if (saved != null) Text(saved, style: theme.bodySmall),
@@ -128,6 +149,28 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
       ),
     ];
   }
+
+  /// Tap timing: own text hidden (said from memory); the time from when
+  /// the line came up to the tap becomes its pause.
+  List<Widget> _manual(TextTheme theme, TimingSession s) => [
+    Text(
+      [
+        if (s.problem != null) '${s.problem}.',
+        'Powiedz kwestię i stuknij, gdy skończysz.',
+      ].join(' '),
+    ),
+    const SizedBox(height: AppSpacing.md),
+    SizedBox(
+      height: AppSpacing.xxl * 2,
+      child: FilledButton(
+        // textStyle, not Text.style: keeps the button's foreground colour.
+        style: FilledButton.styleFrom(textStyle: theme.headlineSmall),
+        onPressed: s.finished,
+        child: const Text('Skończyłem'),
+      ),
+    ),
+    const SizedBox(height: AppSpacing.sm),
+  ];
 
   ValueListenable<double> get _levelSource =>
       ServicesScope.of(context).capture.level;
