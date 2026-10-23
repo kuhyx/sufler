@@ -5,13 +5,13 @@ import 'package:sufler/model/script.dart';
 @immutable
 class Role {
   /// A character role.
-  const Role.character(this.id) : isSong = false;
+  const new character(this.id) : isSong = false;
 
   /// A song role: every line of the song is the actor's.
-  const Role.song(this.id) : isSong = true;
+  const new song(this.id) : isSong = true;
 
   /// Parses `character:<id>` / `song:<id>`.
-  factory Role.parse(String value) {
+  factory parse(String value) {
     final i = value.indexOf(':');
     final kind = value.substring(0, i);
     final id = value.substring(i + 1);

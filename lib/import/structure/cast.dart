@@ -6,7 +6,7 @@ import 'package:sufler/model/script.dart';
 /// A character being collected, with the spellings folded into it.
 class CastMember {
   /// Creates a member.
-  CastMember(this.id, this.name, this.order);
+  new(this.id, this.name, this.order);
 
   /// Slug id.
   final String id;

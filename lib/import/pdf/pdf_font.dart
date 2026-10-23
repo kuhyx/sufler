@@ -9,7 +9,7 @@ typedef Glyph = ({int code, String text, double width, bool isSpace});
 /// The parts of a font needed to read text: code -> Unicode, and widths.
 class PdfFont {
   /// Reads the font dictionary [d] from [file].
-  PdfFont(PdfFile file, PdfDict d) {
+  new(PdfFile file, PdfDict d) {
     final subtype = nameOf(d['Subtype']);
     _composite = subtype == 'Type0';
     final toUnicode = file.resolve(d['ToUnicode']);

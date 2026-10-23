@@ -14,7 +14,7 @@ const String apkgRoute = '/api/apkg';
 /// The wrapper could not build the deck.
 class ApkgExportException implements Exception {
   /// Creates the exception with a human-readable [message].
-  const ApkgExportException(this.message);
+  const new(this.message);
 
   /// What went wrong.
   final String message;

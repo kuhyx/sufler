@@ -23,7 +23,7 @@ enum LineKind {
 @immutable
 class ScriptLine {
   /// Creates a line.
-  const ScriptLine({
+  const new({
     required this.index,
     required this.speakers,
     required this.text,
@@ -34,7 +34,7 @@ class ScriptLine {
   });
 
   /// Parses [json] produced by [toJson].
-  factory ScriptLine.fromJson(Json json) => ScriptLine(
+  factory fromJson(Json json) => ScriptLine(
     index: json['index']! as int,
     speakers: stringList(json['speakers']),
     text: json['text']! as String,

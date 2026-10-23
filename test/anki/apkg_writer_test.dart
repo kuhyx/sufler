@@ -29,9 +29,9 @@ Unpacked unpack(Uint8List apkg) {
   final dir = Directory.systemTemp.createTempSync('sufler_apkg_test');
   final path = '${dir.path}/collection.anki2';
   File(path).writeAsBytesSync(archive.findFile('collection.anki2')!.content);
-  final media =
-      jsonDecode(utf8.decode(archive.findFile('media')!.content))
-          as Map<String, Object?>;
+  final media = jsonDecode(
+    utf8.decode(archive.findFile('media')!.content),
+  ) as Map<String, Object?>;
   return Unpacked(sqlite3.open(path), media, {
     for (final f in archive.files) f.name: f.content,
   }, dir);
@@ -57,11 +57,9 @@ void main() {
   test('cards land in per-scene subdecks', () async {
     final apkg = unpack(await exportApkg(script, annaAndSong));
     addTearDown(apkg.close);
-    final decks =
-        jsonDecode(
-              apkg.db.select('SELECT decks FROM col').single['decks'] as String,
-            )
-            as Map<String, Object?>;
+    final decks = jsonDecode(
+      apkg.db.select('SELECT decks FROM col').single['decks'] as String,
+    ) as Map<String, Object?>;
     final names = {
       for (final d in decks.values.cast<Map<String, Object?>>())
         d['id']! as int: d['name']! as String,

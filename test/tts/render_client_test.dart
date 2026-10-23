@@ -33,9 +33,8 @@ void main() {
       isFalse,
     );
     expect(
-      await _client(
-        (_) async => throw http.ClientException('down'),
-      ).available(),
+      await _client((_) async => throw http.ClientException('down'))
+          .available(),
       isFalse,
     );
   });

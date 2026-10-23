@@ -5,7 +5,7 @@ import 'package:sufler/model/script.dart';
 /// An open song: where lyrics go and who sings them.
 class OpenSong {
   /// Opens a song.
-  OpenSong(this.id, this.title, this.start, this.speakers);
+  new(this.id, this.title, this.start, this.speakers);
 
   /// Section id.
   final String id;

@@ -25,7 +25,7 @@ import 'package:sufler/model/json.dart';
 /// proxies would otherwise be an open relay on the network.
 class WrapperServer {
   /// Creates a server for [webRoot]; upstream bases are injectable for tests.
-  WrapperServer({required this.webRoot, Uri? googleBase, Uri? ttsBase})
+  new({required this.webRoot, Uri? googleBase, Uri? ttsBase})
     : upstream = UpstreamRoutes(
         googleBase: googleBase ?? Uri.parse('https://docs.google.com'),
         ttsBase: ttsBase ?? Uri.parse('http://127.0.0.1:8791'),

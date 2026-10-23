@@ -25,7 +25,7 @@ final RegExp _docId = RegExp(r'^[A-Za-z0-9_-]{1,200}$');
 /// Proxies to [googleBase] and [ttsBase] with one shared [HttpClient].
 class UpstreamRoutes {
   /// Creates the routes.
-  UpstreamRoutes({required this.googleBase, required this.ttsBase});
+  new({required this.googleBase, required this.ttsBase});
 
   /// Path prefix proxied to the voice service (`/api/tts/x` -> `/x`).
   static const ttsPrefix = '/api/tts/';

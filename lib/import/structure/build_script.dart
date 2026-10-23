@@ -71,7 +71,7 @@ bool _headingShaped(String text, int maxWords) =>
     songTitle(text) == null;
 
 class _Structurer {
-  _Structurer(this.cast);
+  new(this.cast);
 
   final Cast cast;
   final ScriptSink out = ScriptSink();

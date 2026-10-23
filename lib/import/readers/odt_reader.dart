@@ -42,7 +42,7 @@ String? _attr(XmlElement e, String local) =>
     e.attributes.where((a) => a.localName == local).firstOrNull?.value;
 
 class _OdtWalker {
-  _OdtWalker(this.colours);
+  new(this.colours);
 
   final Map<String, int?> colours;
   final List<StyledLine> lines = [];

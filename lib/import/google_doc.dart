@@ -8,7 +8,7 @@ import 'package:sufler/model/script.dart';
 /// A Google Doc could not be fetched; [message] is shown to the user.
 class GoogleDocException implements Exception {
   /// Creates the exception.
-  const GoogleDocException(this.message);
+  const new(this.message);
 
   /// Human-readable reason.
   final String message;
