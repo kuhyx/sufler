@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- "Record me": the actor records their own line. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Google Docs import. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="sufler"
         android:name="${applicationName}"
@@ -40,6 +44,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- flutter_tts: Android 11+ must declare it looks up TTS engines. -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
         </intent>
     </queries>
 </manifest>
