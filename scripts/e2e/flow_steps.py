@@ -34,7 +34,7 @@ def f1_import(run: Run) -> None:
         files=[str(run.pdf)],
         backendNodeId=chooser["backendNodeId"],
     )
-    run.step("the script screen opens (role picker shown)")
+    run.step("the script opens on its roles screen (first visit)")
     run.cdp.wait_for("Twoje role", 40)
     run.shot("script-screen")
     run.step("IndexedDB holds the script")
@@ -44,7 +44,9 @@ def f1_import(run: Run) -> None:
     spoken = sum(1 for ln in script["lines"] if oracle.is_spoken(ln))
     run.note(f"stored: {len(script['lines'])} lines, {spoken} spoken")
     run.step("back on the library, the tile shows the spoken-line count")
-    run.cdp.tap("Back")
+    run.cdp.tap("Back")  # roles -> hub
+    run.cdp.wait_for("Moje role", 10)
+    run.cdp.tap("Back")  # hub -> library
     run.cdp.wait_for("Twoje skrypty", 10)
     tile = run.cdp.wait_for(f"{run.pdf.name} · {spoken} kwestii", 10)
     run.check(script["title"] in tile["text"], f"tile reads {tile['text']!r}")
@@ -100,6 +102,7 @@ def f3_rehearse(run: Run) -> None:
     run.boot()
     script, facts = run.open_script()
     run.select_only_role(facts)
+    run.hub("Sceny")
     pick = oracle.pick_scene(script, run.role)
     run.step(f"start scene '{pick.title}' (lines {pick.start}-{pick.end})")
     run.cdp.tap(f"kwestie {pick.start}–{pick.end}")
@@ -134,9 +137,11 @@ def f3_rehearse(run: Run) -> None:
     run.cdp.page.pump(1.5)
     run.check(run.cdp.text() != before, "countdown text did not change in 1.5 s")
     run.shot("countdown")
-    run.step("Space ends the line and the rehearsal advances")
+    run.step("Space ends the line: its text is revealed; a grade advances")
     at = run.header()
     run.cdp.key_space()
+    run.cdp.wait_for("Jak poszło?", 5)
+    run.cdp.tap("Dobrze", 5)
     run.cdp.page.pump(1)
     after = run.header()
     advanced = after is None or (at is not None and after[0] > at[0])
@@ -151,6 +156,7 @@ def f4_anki(run: Run) -> None:
     run.boot()
     script, facts = run.open_script()
     run.select_only_role(facts)
+    run.hub("Narzędzia")
     run.step("allow downloads into the artefact dir")
     downloads = run.dir / "downloads"
     downloads.mkdir()
@@ -210,6 +216,7 @@ def f5_voices(run: Run) -> None:
     run.cdp.page.call("Network.enable")
     run.boot()
     run.open_script()
+    run.hub("Narzędzia")
     run.step('click "Generuj głosy"')
     run.cdp.click(run.cdp.find_scrolling("Generuj głosy", 300))
     run.step("at least one /api/tts/jobs progress answer")

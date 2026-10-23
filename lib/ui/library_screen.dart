@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/ui/import_panel.dart';
+import 'package:sufler/ui/parse_refresh.dart';
 import 'package:sufler/ui/script_screen.dart';
 import 'package:sufler/ui/services.dart';
 
@@ -43,15 +45,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (mounted) setState(() => _scripts = list);
   }
 
-  Future<void> _import(Future<Script?> Function() load) async {
+  Future<void> _import(
+    Future<({Script script, Uint8List? bytes})?> Function() load,
+  ) async {
     setState(() => _busy = true);
     try {
-      final script = await load();
-      if (script == null) return;
-      final existing = await _services.library.loadScript(script.id);
-      if (existing == null) await _services.library.saveScript(script);
+      final got = await load();
+      if (got == null) return;
+      final note = await storeImport(_services, got.script, bytes: got.bytes);
       await _reload();
-      if (mounted) await _open(script.id);
+      if (!mounted) return;
+      if (note != null) showToast(context, note);
+      await _open(got.script.id);
     } on Object catch (e) {
       if (mounted) showError(context, 'Import nie powiódł się: $e');
     } finally {
@@ -63,15 +68,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _import(() async {
       final file = await _services.files.pick(['pdf', 'docx', 'odt', 'txt']);
       if (file == null) return null;
-      return await _services.importDocument(
+      final script = await _services.importDocument(
         fileName: file.name,
         bytes: file.bytes,
       );
+      return (script: script, bytes: file.bytes);
     }),
   );
 
-  void _importLink(String url) =>
-      unawaited(_import(() => _services.importGoogleDoc(url)));
+  void _importLink(String url) => unawaited(
+    _import(() async {
+      final script = await _services.importGoogleDoc(url);
+      return (script: script, bytes: null);
+    }),
+  );
 
   Future<void> _openImport() => showModalBottomSheet<void>(
     context: context,

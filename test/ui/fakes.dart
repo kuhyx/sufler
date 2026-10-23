@@ -168,7 +168,9 @@ class TestRig {
       RenderProgress(
         done: 2,
         total: 2,
-        pack: AudioPack.fromZip(fixturePackZip()),
+        pack: AudioPack.fromZip(
+          fixturePackZip(fingerprint: fixtureScript().fingerprint),
+        ),
       ),
     ]),
     files: files,

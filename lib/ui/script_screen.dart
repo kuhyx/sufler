@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/audio/audio_pack.dart';
+import 'package:sufler/audio/pack_check.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/range.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/correction_screen.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
+import 'package:sufler/ui/parse_refresh.dart';
 import 'package:sufler/ui/rehearsal_screen.dart';
 import 'package:sufler/ui/roles_screen.dart';
 import 'package:sufler/ui/script_tabs.dart';
@@ -37,6 +39,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
   AudioPack? _pack;
   bool _canRender = false;
   bool _loaded = false;
+  bool _packWarned = false;
 
   Services get _svc => ServicesScope.of(context);
   String get _id => widget.scriptId;
@@ -50,7 +53,14 @@ class _ScriptScreenState extends State<ScriptScreen> {
   }
 
   Future<void> _firstLoad() async {
+    String? note;
+    try {
+      note = await refreshStaleParse(_svc, _id);
+    } on Object catch (e) {
+      debugPrint('re-parse of $_id failed: $e');
+    }
     await _load();
+    if (note != null && mounted) showToast(context, note);
     await _svc.library.rememberScript(_id);
     // First visit with no roles: show the roles screen once.
     if (!mounted || _prefs.roles.isNotEmpty || _prefs.rolesAsked) return;
@@ -63,9 +73,17 @@ class _ScriptScreenState extends State<ScriptScreen> {
     final script = await lib.loadScript(_id);
     final prefs = await lib.loadPrefs(_id);
     final settings = await lib.loadSettings();
-    final pack = await lib.loadPack(_id);
+    final stored = await lib.loadPack(_id);
+    final checked = stored == null || script == null
+        ? null
+        : checkPack(script, stored);
+    final pack = checked?.pack;
     final canRender = await _svc.renderAvailable();
     if (!mounted) return;
+    if (pack == null && checked != null && !_packWarned) {
+      _packWarned = true;
+      showError(context, checked.message!);
+    }
     setState(() {
       _script = script;
       _prefs = prefs;

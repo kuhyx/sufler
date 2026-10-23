@@ -45,7 +45,12 @@ class ScriptLibrary {
     await store.delete(_script(id));
     await store.delete(_prefs(id));
     await store.delete(_pack(id));
-    for (final key in await store.keys(_recDir(id))) {
+    for (final prefix in [_recDir(id), 'backup/$id/']) {
+      for (final key in await store.keys(prefix)) {
+        await store.delete(key);
+      }
+    }
+    for (final key in ['source/$id', 'meta/$id', 'edits/$id']) {
       await store.delete(key);
     }
   }

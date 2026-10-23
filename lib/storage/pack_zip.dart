@@ -22,6 +22,7 @@ Uint8List packToZip(Script script, AudioPack pack) {
     'scriptId': pack.scriptId,
     'engine': pack.engine,
     'voices': pack.voices,
+    'fingerprint': ?pack.fingerprint,
     'lines': lines,
   };
   archive.add(

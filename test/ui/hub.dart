@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/app.dart';
 
 import 'fakes.dart';
@@ -46,6 +47,7 @@ Future<TestRig> openHub(
   final rig = TestRig(db: db, renderable: renderable);
   if (script != null) rig.script = script;
   await tester.io(() => rig.library.saveScript(rig.script));
+  await tester.io(() => rig.library.saveMeta(rig.script));
   await tester.io(
     () => rig.library.savePrefs(
       rig.script.id,

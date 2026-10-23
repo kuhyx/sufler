@@ -36,6 +36,19 @@ void main() {
       const Role.character(wolf),
       const Role.song('piosenka'),
     });
+    // A group with the merged character keeps it under its new id.
+    expect(
+      renameRole(
+        {
+          Role.group([elf, 'a', 'b']),
+        },
+        from: elf,
+        into: wolf,
+      ),
+      {
+        Role.group([wolf, 'a', 'b']),
+      },
+    );
   });
 
   test('roleOptions lists characters and songs with spoken line counts', () {

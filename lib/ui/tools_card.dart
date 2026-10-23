@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/audio/audio_pack.dart';
+import 'package:sufler/audio/pack_check.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/pack_zip.dart';
@@ -56,7 +58,8 @@ class _ToolsCardState extends State<ToolsCard> {
     try {
       await body();
     } on Object catch (e) {
-      if (mounted) showError(context, '$what: $e');
+      final why = e is FormatException ? e.message : '$e';
+      if (mounted) showError(context, '$what: $why');
     }
   }
 
@@ -77,13 +80,17 @@ class _ToolsCardState extends State<ToolsCard> {
     );
   });
 
-  Future<void> _store(AudioPack pack) async {
+  Future<void> _store(AudioPack pack, {Uint8List? zip}) async {
+    final checked = checkPack(widget.script, pack);
+    if (checked.pack == null) throw FormatException(checked.message!);
     await _svc.library.savePack(
       widget.script.id,
-      packToZip(widget.script, pack),
+      zip ?? packToZip(widget.script, pack),
     );
     widget.onPack(pack);
-    if (mounted) showToast(context, 'Głosy zapisane (${pack.length} kwestii)');
+    if (!mounted) return;
+    showToast(context, 'Głosy zapisane (${pack.length} kwestii)');
+    if (checked.message != null) showError(context, checked.message!);
   }
 
   Future<void> _render() => _guard('Generowanie nie powiodło się', () async {
@@ -106,9 +113,7 @@ class _ToolsCardState extends State<ToolsCard> {
     if (pack.scriptId != widget.script.id) {
       throw const FormatException('paczka jest dla innego skryptu');
     }
-    await _svc.library.savePack(widget.script.id, file.bytes);
-    widget.onPack(pack);
-    if (mounted) showToast(context, 'Głosy zapisane (${pack.length} kwestii)');
+    await _store(pack, zip: file.bytes);
   });
 
   @override

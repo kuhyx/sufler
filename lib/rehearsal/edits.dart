@@ -71,9 +71,16 @@ Set<Role> renameRole(
   Set<Role> roles, {
   required String from,
   required String into,
-}) => roles
-    .map((r) => !r.isSong && r.id == from ? Role.character(into) : r)
-    .toSet();
+}) => {
+  for (final r in roles)
+    switch (r.kind) {
+      RoleKind.character when r.id == from => Role.character(into),
+      RoleKind.group when r.members.contains(from) => Role.group(
+        r.members.map((m) => m == from ? into : m),
+      ),
+      _ => r,
+    },
+};
 
 /// A role the actor can pick, with how many spoken lines it owns.
 typedef RoleOption = ({Role role, String label, int count});

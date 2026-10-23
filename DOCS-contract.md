@@ -72,9 +72,31 @@ this file together.
 
 ## Role (`lib/model/role.dart`)
 
-`character:<id>` or `song:<id>`. The actor picks any set of roles; a line is
-theirs when a role owns it (`isMine`). Picking a song makes every lyric line of
-that song theirs, regardless of `speakers`.
+`character:<id>`, `song:<id>` or `group:<ids>`. The actor picks any set of
+roles; a line is theirs when it is spoken and a role owns it (`isMine`).
+
+- `character:<id>`: every line whose `speakers` contain the id.
+- `song:<id>`: every lyric line of that song, regardless of `speakers`.
+- `group:<id>+<id>+…`: member ids sorted and joined with `+`; owns every line
+  whose `speakers` contain ALL members (the group singing together, alone or
+  with others). `group:` (no members) is the chorus: lines with empty
+  `speakers`.
+
+Group speakers are derived from the script, not stored in it
+(`lib/rehearsal/groups.dart`): ensemble headings (`Wszyscy`, `Razem`, `Chór`,
+`Krasnale`, …) and plural headings over numbered members (`Śnieżynki` over
+`Śnieżynka 1`, `Śnieżynka 2`) stay `character:` roles listed as groups; any
+set of 3+ characters speaking together on 2+ lines (a cast-list group whose
+song was attributed to every member) is a `group:` role; unattributed lines
+give `group:`. Picking a character suggests (pre-ticks) the groups it belongs
+to.
+
+## Script fingerprint (`Script.fingerprint`)
+
+sha256 (hex) of the UTF-8 bytes of, for EVERY line in order, the row
+`"${index}\t${kind.name}\t${speakers.join(',')}\t${text}\n"` (the same
+formula as the pack manifest's `fingerprint` below). It identifies one exact
+parse: any change of a line's index, kind, speakers or text changes it.
 
 ## Audio pack (TTS service → app)
 
@@ -93,7 +115,12 @@ posted Script in order (spoken or not), the row
 `"<index>\t<kind>\t<speakers joined with ','>\t<text>\n"`, where `kind` is the
 JSON `kind` string and `text` the line's `text` as sent (`speakers` empty gives
 an empty field). The app recomputes it from its own parse and rejects a pack
-whose fingerprint differs. Pinned by `tts/tests/test_fingerprint.py`.
+whose fingerprint differs ("Paczka głosów pochodzi z innej wersji tekstu —
+wygeneruj ponownie"); a partial pack with a matching fingerprint is fine. A
+pack without `fingerprint` (older service) is accepted with a warning only
+when every clip index is a line of the script. Pinned by
+`tts/tests/test_fingerprint.py` and `test/audio/pack_check_test.dart` (same
+hand-written digest).
 
 Clips exist for every spoken line (the app decides which ones to play), so one
 pack serves any role choice. Unattributed song lines use a neutral narrator voice.
@@ -118,9 +145,57 @@ by `test/desktop/gdoc_contract_test.dart`.
 ## Rehearsal prefs (per script, stored on device)
 
 ```json
-{"roles": ["character:piaskowy-wilk"], "speed": 1.0,
- "lineSeconds": {"<line-index>": 4.2}, "recordings": {"<line-index>": "<path>"}}
+{"roles": ["character:piaskowy-wilk", "group:blystek+zagiewka"], "speed": 1.0,
+ "lineSeconds": {"<line-index>": 4.2}, "recordings": {"<line-index>": "<path>"},
+ "knowledge": {"<line-index>": [false, true]},
+ "resume": {"label": "Scena 3", "start": 120, "end": 240, "position": 7,
+            "mode": "range"},
+ "rolesAsked": true}
 ```
+
+- Every field is optional: prefs written by older versions load unchanged.
+- `knowledge`: the actor's ✓ (`true`) / ✗ grades per line, oldest first, the
+  last 20 kept. "Only lines I missed" = lines whose last grade is ✗.
+- `resume`: the last rehearsal (line range, `mode` `range` or `missed`) and
+  the cue position reached; the app offers to continue there.
+- `rolesAsked`: the roles screen was shown once for this script.
+- A per-line pause set with −/+ during rehearsal or measured by "Nagraj
+  czasy" without audio is a `lineSeconds` entry; a measured take with audio
+  is stored as the recording (speech only, so its length + 1 s is the pause)
+  and drops that line's `lineSeconds`.
+
+## Re-parse (stored scripts after a parser change)
+
+`parserVersion` (`lib/import/parser_version.dart`) is bumped with every
+structuring change. Next to `script/<id>` the device keeps `source/<id>` (the
+imported document's bytes), `meta/<id>` (`{"parserVersion": n,
+"parseFingerprint": "<fingerprint of the raw parse>"}`) and `edits/<id>` (the
+manual corrections: `{"op": "line", "index", "speakers"?, "kind"?}` and
+`{"op": "merge", "from", "into"}`, in order).
+
+When a stored script's `parserVersion` is older (on open, from `source/`) or
+the same document is imported again with a different raw fingerprint, the new
+parse replaces the old one: lines are aligned old → new (longest common
+subsequence of normalised texts, then similar lines inside each gap);
+`lineSeconds`, `recordings` (re-keyed to `rec/<id>/<new index>`), `knowledge`
+and the `resume` range move to the new indices; corrections are replayed (for
+scripts stored before the log: merges inferred from aliases); data of lines
+that no longer exist is dropped from prefs but kept, with the old script and
+prefs, under `backup/<id>/…`. The app shows one line, e.g. "Zaktualizowano
+parsowanie: 2 kwestie przeniesione, 0 utraconych". A script stored before
+versions without its document asks for a re-import.
+
+## App settings (device-wide, not per script)
+
+```json
+{"version": 2, "visibility": "revealAfter", "selfGrade": false, "loop": false,
+ "cleanTarget": 3, "listen": false, "lastScriptId": "<script id>"}
+```
+
+`visibility`: `revealAfter` (learning: hidden while said, then shown and
+graded), `hide`, `show` (read-through). Settings without `version` (v1) stored
+the old default `show`; it loads as `revealAfter` once. The app opens
+`lastScriptId` on start (or the only script, when none is remembered).
 
 ## Transcription (TTS service, speech-to-text)
 
@@ -161,3 +236,9 @@ child process and exits after 10 min idle, independently of Chatterbox.
 Measured on the RTX 3090 with a ~4 s Polish clip: ~0.2 s warm, ~1.5 s cold
 (model load), WER 0.00 on three synthesised sentences, 7.0 GiB of VRAM with
 Chatterbox loaded as well.
+
+App side (`lib/audio/transcribe_client.dart`): the desktop build posts each
+"Nagraj czasy" / listening take as WAV to `/api/tts/transcribe?lang=pl` and
+prefers `speechStart`/`speechEnd` over its own VAD; any status but 200 (404
+older service, 503 no STT) or a network error means "no transcript". Android
+uses the on-device recognizer (`speech_to_text`, `pl_PL`) instead.

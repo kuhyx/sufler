@@ -62,11 +62,11 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
   }
 
   Future<void> _setOverride(double? value) async {
-    final lib = _svc.library;
-    final prefs = await lib.loadPrefs(widget.scriptId);
-    final map = {...prefs.lineSeconds}..remove(_index);
-    if (value != null) map[_index] = value;
-    await lib.savePrefs(widget.scriptId, prefs.copyWith(lineSeconds: map));
+    await _svc.library.updatePrefs(widget.scriptId, (p) {
+      final map = {...p.lineSeconds}..remove(_index);
+      if (value != null) map[_index] = value;
+      return p.copyWith(lineSeconds: map);
+    });
     if (mounted) Navigator.of(context).pop();
   }
 

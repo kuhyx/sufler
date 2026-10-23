@@ -74,10 +74,16 @@ class Run:
     # --- shared navigation -------------------------------------------------
 
     def boot(self) -> None:
-        """Reload the app (audio probe injected) on the library screen."""
+        """Reload the app (audio probe injected): it shows the library, or
+        (once a script was opened) that script's hub straight away."""
         self.cdp.reload_instrumented()
         self.cdp.enable_semantics()
-        self.cdp.wait_for("Twoje skrypty", 20)
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            if self.cdp.find("Twoje skrypty") or self.cdp.find("Moje role"):
+                return
+            self.cdp.page.pump(0.3)
+        raise TimeoutError("neither the library nor a script hub after 20 s")
 
     def stored(self) -> Json | None:
         """The script imported from the PDF, as stored in IndexedDB."""
@@ -89,9 +95,17 @@ class Run:
         script = self.stored()
         self.check(script, f"{self.pdf.name} not in the library; run F1 first")
         assert script is not None  # for the type checker
-        self.cdp.tap(script["title"], 15)
+        if not self.cdp.find("Moje role"):
+            self.cdp.tap(script["title"], 15)
+        self.cdp.tap("Moje role", 15)
         self.cdp.wait_for("Twoje role", 15)
         return script, oracle.role_facts(script, self.role)
+
+    def hub(self, tab: str = "Sceny") -> None:
+        """Back from "Moje role" to the script hub, on ``tab``."""
+        if self.cdp.find("Twoje role"):
+            self.cdp.tap("Back")
+        self.cdp.tap(tab, 10)
 
     def chip(self, facts: oracle.RoleFacts) -> Json:
         """The role chip: ``<name> (<count>)``."""

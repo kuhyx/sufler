@@ -3,11 +3,18 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:sufler/model/json.dart';
+import 'package:sufler/model/script.dart';
 
 /// A rendered voice pack: one Ogg/Opus clip per spoken line.
 /// Format: DOCS-contract.md "Audio pack".
 class AudioPack {
-  new _(this.scriptId, this.engine, this.voices, this._clips);
+  new _(
+    this.scriptId,
+    this.engine,
+    this.voices,
+    this._clips, {
+    this.fingerprint,
+  });
 
   /// Reads a `<script-id>.sufler-audio.zip`.
   factory fromZip(Uint8List bytes) {
@@ -31,6 +38,7 @@ class AudioPack {
           e.key: e.value! as String,
       },
       clips,
+      fingerprint: manifest['fingerprint'] as String?,
     );
   }
 
@@ -43,6 +51,10 @@ class AudioPack {
   /// Character id -> voice id.
   final Map<String, String> voices;
 
+  /// [Script.fingerprint] of the parse it was rendered for; null in packs
+  /// made before the field existed.
+  final String? fingerprint;
+
   final Map<int, Uint8List> _clips;
 
   /// The clip for line [index], or null when the pack has none.
@@ -50,4 +62,7 @@ class AudioPack {
 
   /// Number of clips in the pack.
   int get length => _clips.length;
+
+  /// Line indices that have a clip.
+  Iterable<int> get indices => _clips.keys;
 }

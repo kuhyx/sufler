@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sufler/model/json.dart';
 import 'package:sufler/model/script_line.dart';
@@ -110,6 +113,21 @@ class Script {
 
   /// Every line; [ScriptLine.index] equals its position here.
   final List<ScriptLine> lines;
+
+  /// sha256 (hex) of the UTF-8 of every line as the row
+  /// `index TAB kind TAB speakers,joined TAB text LF`: identifies this
+  /// exact parse (DOCS-contract.md
+  /// "Audio pack"). A voice pack carries the fingerprint it was rendered
+  /// for, so clips are never played against a different parse.
+  String get fingerprint {
+    final rows = StringBuffer();
+    for (final l in lines) {
+      rows.write(
+        '${l.index}\t${l.kind.name}\t${l.speakers.join(',')}\t${l.text}\n',
+      );
+    }
+    return sha256.convert(utf8.encode(rows.toString())).toString();
+  }
 
   /// JSON form; see DOCS-contract.md.
   Json toJson() => {

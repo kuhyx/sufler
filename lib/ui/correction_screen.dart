@@ -4,6 +4,8 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/edits.dart';
+import 'package:sufler/storage/migrate.dart';
+import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/correction_dialogs.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/services.dart';
@@ -51,6 +53,10 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
     await _save(
       editLine(_script!, line.index, speakers: edit.speakers, kind: edit.kind),
     );
+    await _svc.library.logCorrection(
+      widget.scriptId,
+      lineCorrection(line.index, speakers: edit.speakers, kind: edit.kind),
+    );
   }
 
   Future<void> _merge() async {
@@ -61,11 +67,14 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
     if (pick == null || pick.from == pick.into) return;
     await _save(mergeCharacter(_script!, from: pick.from, into: pick.into));
     final lib = _svc.library;
-    final prefs = await lib.loadPrefs(widget.scriptId);
-    await lib.savePrefs(
+    await lib.logCorrection(
       widget.scriptId,
-      prefs.copyWith(
-        roles: renameRole(prefs.roles, from: pick.from, into: pick.into),
+      mergeCorrection(from: pick.from, into: pick.into),
+    );
+    await lib.updatePrefs(
+      widget.scriptId,
+      (p) => p.copyWith(
+        roles: renameRole(p.roles, from: pick.from, into: pick.into),
       ),
     );
     if (mounted) showToast(context, 'Postacie scalone');
