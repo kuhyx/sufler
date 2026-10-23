@@ -1,0 +1,56 @@
+# Maintainer: Krzysztof Rudnicki <krzysztofrudnicki0@gmail.com>
+#
+# Local package: built from this checkout by ../install_arch.sh, which runs
+# `flutter build web` and `dart build cli` first. No source download.
+pkgname=sufler
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Learn your lines: partner lines read aloud, Anki export (Flutter web app in a Chrome window)'
+arch=('x86_64')
+url='https://github.com/kuhyx/sufler'
+license=('MIT')
+# No browser in depends: makepkg would install it, and this machine has a
+# policy that removes `chromium` seconds later, failing dependency resolution.
+# The wrapper discovers Chrome/Thorium/Chromium/Brave at run time and honours
+# $SUFLER_BROWSER.
+depends=('glibc' 'bash' 'hicolor-icon-theme')
+optdepends=('google-chrome: renders the app window'
+            'chromium: renders the app window'
+            'brave-bin: renders the app window'
+            'thorium-browser-bin: renders the app window')
+# !strip is LOAD-BEARING: the wrapper is a Dart AOT executable with its
+# snapshot embedded in the ELF. Stripping discards the snapshot and the binary
+# degrades to a bare Dart VM printing a usage message.
+# !debug: Dart AOT binaries carry no extractable DWARF.
+options=('!strip' '!debug')
+
+package() {
+  # The checkout to package; install_arch.sh exports it after building.
+  local _repo="${SUFLER_REPO:?run packaging/install_arch.sh, which sets it}"
+  local bundle="$_repo/build/cli/bundle"
+  # Keep the bundle's bin/ + lib/ layout: the executable loads native
+  # libraries (libsqlite3.so) from ../lib and the web assets from ../web.
+  install -dm755 "$pkgdir/opt/sufler"
+  cp -r "$bundle/bin" "$pkgdir/opt/sufler/bin"
+  if [[ -d "$bundle/lib" ]]; then
+    cp -r "$bundle/lib" "$pkgdir/opt/sufler/lib"
+  fi
+  chmod 755 "$pkgdir/opt/sufler/bin/sufler_desktop"
+
+  install -dm755 "$pkgdir/opt/sufler/web"
+  cp -r "$_repo/build/web/." "$pkgdir/opt/sufler/web/"
+
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/sufler" <<'WRAPPER'
+#!/bin/bash
+exec /opt/sufler/bin/sufler_desktop "$@"
+WRAPPER
+
+  install -Dm644 "$_repo/packaging/sufler.desktop" \
+    "$pkgdir/usr/share/applications/sufler.desktop"
+  local size
+  for size in 16 24 32 48 64 128 256 512; do
+    install -Dm644 "$_repo/packaging/icons/$size/sufler.png" \
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/sufler.png"
+  done
+  # No gtk-update-icon-cache / update-desktop-database: pacman hooks own it.
+}
