@@ -53,3 +53,6 @@ app.*.map.json
 *.docx
 *.odt
 !test/fixtures/**
+
+# Agent worktrees
+/.claude/
