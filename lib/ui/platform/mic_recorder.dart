@@ -16,11 +16,21 @@ class MicRecorder implements Recorder {
   final BytesBuilder _buf = BytesBuilder(copy: false);
   StreamSubscription<Uint8List>? _sub;
   Completer<void>? _closed;
+  // What the platform actually delivers: it may override the request (the
+  // WAV header must match or the "recording + 1 s" pause is wrong).
+  int _actualRate = _rate;
+  int _actualChannels = 1;
 
   @override
   Future<bool> start() async {
     if (!await _rec.hasPermission()) return false;
     _buf.clear();
+    _actualRate = _rate;
+    _actualChannels = 1;
+    await _rec.setOnConfigChanged((c) {
+      _actualRate = c.sampleRate;
+      _actualChannels = c.numChannels;
+    });
     final closed = _closed = Completer<void>();
     final stream = await _rec.startStream(
       const RecordConfig(
@@ -46,6 +56,10 @@ class MicRecorder implements Recorder {
     await _sub?.cancel();
     _sub = null;
     if (_buf.isEmpty) return null;
-    return pcmToWav(_buf.takeBytes(), sampleRate: _rate);
+    return pcmToWav(
+      _buf.takeBytes(),
+      sampleRate: _actualRate,
+      channels: _actualChannels,
+    );
   }
 }
