@@ -14,6 +14,7 @@ class GradeView extends StatelessWidget {
     required this.suggestion,
     required this.onGrade,
     this.trailing,
+    this.textView,
     super.key,
   });
 
@@ -34,6 +35,9 @@ class GradeView extends StatelessWidget {
 
   /// Extra widget beside the text (play my recording).
   final Widget? trailing;
+
+  /// Builds the revealed text (word lookups); plain text when null.
+  final Widget Function(String text, TextStyle? style)? textView;
 
   Widget _button({required bool ok}) {
     final icon = Icon(ok ? Icons.check : Icons.close);
@@ -63,7 +67,9 @@ class GradeView extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(hidden ? '…' : cue.text, style: theme.headlineSmall),
+              child: hidden || textView == null
+                  ? Text(hidden ? '…' : cue.text, style: theme.headlineSmall)
+                  : textView!(cue.text, theme.headlineSmall),
             ),
             ?trailing,
           ],

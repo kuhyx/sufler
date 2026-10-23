@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
+import 'package:sufler/assist/assistant.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/model/line_note.dart';
@@ -10,6 +11,7 @@ import 'package:sufler/rehearsal/capture.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/tts/render_pack.dart';
+import 'package:sufler/ui/platform/links.dart';
 
 /// Imports a dropped document (signature of `importDocument`).
 typedef DocImporter = Future<Script> Function({
@@ -73,7 +75,9 @@ class Services {
     required this.speech,
     required this.clips,
     required this.capture,
+    required this.assistant,
     this.transcribe,
+    this.openLink = openExternalLink,
   });
 
   /// On-device persistence.
@@ -115,6 +119,12 @@ class Services {
   /// Speech-to-text with word times for whole-run takes (desktop voice
   /// service); null where there is none (Android).
   final Transcribe? transcribe;
+
+  /// The PC side: explanations and re-rendered line voices.
+  final Assistant assistant;
+
+  /// Opens a web page (dictionary lookups).
+  final Future<void> Function(Uri uri) openLink;
 }
 
 /// Makes [Services] available below it.

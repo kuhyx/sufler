@@ -50,8 +50,9 @@ class PartnerPlayer implements LinePlayer {
     this.speed = 1,
   });
 
-  /// Script being rehearsed (for voice assignment).
-  final Script script;
+  /// Script being rehearsed (for voice assignment); replaced when a line is
+  /// corrected during the rehearsal.
+  Script script;
 
   /// TTS fallback.
   final Speech speech;
@@ -59,8 +60,8 @@ class PartnerPlayer implements LinePlayer {
   /// Clip output.
   final ClipPlayer clips;
 
-  /// Rendered voices, if loaded.
-  final AudioPack? pack;
+  /// Rendered voices, if loaded; replaced when a line gets a new clip.
+  AudioPack? pack;
 
   /// Global speed multiplier, applied to TTS rate.
   final double speed;

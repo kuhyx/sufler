@@ -40,3 +40,29 @@ class RehearsalSummary extends StatelessWidget {
     );
   }
 }
+
+/// The line above a rehearsal: pass, position, clean streak, last score.
+class RehearsalHeader extends StatelessWidget {
+  /// Creates the header of [session].
+  const new({required this.session, super.key});
+
+  /// The rehearsal.
+  final RehearsalSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = session;
+    final parts = [
+      'Przebieg ${s.pass}',
+      if (s.phase != Phase.finished)
+        'kwestia ${s.position + 1}/${s.cues.length}',
+      if (s.loop) 'czyste z rzędu ${s.cleanStreak}/${s.cleanTarget}',
+      if (s.history.isNotEmpty && s.phase != Phase.finished)
+        'ostatni wynik ${s.history.last}',
+    ];
+    return Text(
+      parts.join(' · '),
+      style: Theme.of(context).textTheme.bodySmall,
+    );
+  }
+}

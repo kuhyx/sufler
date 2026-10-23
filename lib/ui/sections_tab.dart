@@ -4,6 +4,7 @@ import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/range.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/notes_view.dart';
 import 'package:sufler/ui/pure_run.dart';
 import 'package:sufler/ui/song_preview.dart';
 
@@ -60,6 +61,8 @@ class SectionsTab extends StatelessWidget {
     final range = LineRange.section(s);
     final mine = ownLines(script, prefs, range);
     final known = mine.where((l) => prefs.knowledge[l.index]?.last ?? false);
+    final notes = notesIn(script, prefs.notes, s.start, s.end);
+    final count = notes.values.fold(0, (n, list) => n + list.length);
     final parts = [
       'kwestie ${s.start}–${s.end}',
       if (songs) 'śpiewa: ${songSingers(script, s)}',
@@ -73,6 +76,12 @@ class SectionsTab extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (count > 0)
+            NotesButton(
+              count: count,
+              tooltip: 'Notatki: ${s.title} ($count)',
+              onPressed: () => openSectionNotes(context, s.title, notes),
+            ),
           if (mine.isNotEmpty)
             IconButton(
               tooltip: 'Nagraj czasy: ${s.title}',

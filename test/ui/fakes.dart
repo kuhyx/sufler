@@ -19,6 +19,7 @@ import 'package:sufler/ui/services.dart';
 import '../rehearsal/fake_capture.dart';
 import '../rehearsal/fixture.dart';
 import '../storage/pack_zip_test.dart' show fixturePackZip;
+import 'fake_assistant.dart';
 
 class FakeFiles implements FileAccess {
   PickedFile? next;
@@ -43,27 +44,35 @@ class FakeRecorder implements Recorder {
   }
 }
 
-/// TTS that "speaks" for one second of (fake) time; with [fail] it has no
-/// voice and every utterance fails at once.
+/// TTS that "speaks" for [length] (one second) of (fake) time; with [fail]
+/// it has no voice and every utterance fails at once.
 class FakeSpeech implements Speech {
   final said = <String>[];
   bool fail = false;
+  Duration length = const Duration(seconds: 1);
   @override
   Future<void> speak(String text, Voice voice, double speed) {
     said.add(text);
     if (fail) return Future.error(const SpeechFailure('synthesis-failed'));
-    return Future.delayed(const Duration(seconds: 1));
+    return Future.delayed(length);
   }
 
   @override
   Future<void> stop() async {}
 }
 
+/// Clip output; each clip "plays" for [length] of (fake) time.
 class FakeClips implements ClipPlayer {
   final played = <String>[];
+  final bytes = <List<int>>[];
+  Duration length = Duration.zero;
   @override
-  Future<void> play(Uint8List bytes, String mimeType) async =>
-      played.add(mimeType);
+  Future<void> play(Uint8List clip, String mimeType) async {
+    played.add(mimeType);
+    bytes.add(clip);
+    if (length > Duration.zero) await Future<void>.delayed(length);
+  }
+
   @override
   Future<void> stop() async {}
 }
@@ -149,6 +158,8 @@ class TestRig {
   final speech = FakeSpeech();
   final clips = FakeClips();
   final capture = FakeCapture();
+  final assistant = FakeAssistant();
+  final links = <String>[];
 
   /// The desktop recognizer for whole-run takes; null: none (Android).
   Transcribe? transcribe;
@@ -197,5 +208,7 @@ class TestRig {
     clips: clips,
     capture: capture,
     transcribe: transcribe,
+    assistant: assistant,
+    openLink: (uri) async => links.add('$uri'),
   );
 }

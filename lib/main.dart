@@ -2,6 +2,7 @@
 // Bootstrap only: wiring that cannot be exercised without a real app host.
 import 'package:flutter/material.dart';
 import 'package:sufler/anki/export_apkg.dart';
+import 'package:sufler/assist/offline_assistant.dart';
 import 'package:sufler/import/import_document.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/storage/open_store.dart';
@@ -34,6 +35,7 @@ Future<void> main() async {
         clips: AudioClips(),
         capture: openSpeechCapture(),
         transcribe: openTranscriber(),
+        assistant: const OfflineAssistant(),
       ),
     ),
   );

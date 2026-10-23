@@ -7,7 +7,10 @@ import 'package:sufler/rehearsal/session.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/grade_view.dart';
 import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/line_tools.dart';
+import 'package:sufler/ui/lookup_text.dart';
 import 'package:sufler/ui/pause_control.dart';
+import 'package:sufler/ui/rehearsal_assist.dart';
 
 /// The current cue (partner line, my countdown, or my self-grade), with the
 /// previous line above it for context. My own text stays hidden while I
@@ -26,6 +29,7 @@ class CueView extends StatelessWidget {
     required this.onPlayRecording,
     required this.onGrade,
     required this.onAdjust,
+    required this.assist,
     super.key,
   });
 
@@ -52,6 +56,9 @@ class CueView extends StatelessWidget {
 
   /// −/+ on the current own line's pause.
   final ValueChanged<double> onAdjust;
+
+  /// Corrections (✎), word lookups and notes.
+  final RehearsalAssist assist;
 
   @override
   Widget build(BuildContext context) {
@@ -85,8 +92,10 @@ class CueView extends StatelessWidget {
             suggestion: controller.suggestion,
             onGrade: onGrade,
             trailing: _recorded(cue) ? _playButton(cue) : null,
+            textView: (text, style) => _lookable(context, cue, text, style),
           ),
         },
+        LineTools(cue: cue, assist: assist),
         // A run's pause is the sum of its lines': set per line instead.
         if (cue.mine && cue.following.isEmpty) ...[
           const SizedBox(height: AppSpacing.md),
@@ -152,6 +161,18 @@ class CueView extends StatelessWidget {
   Widget _text(BuildContext context, String text) =>
       Text(text, style: Theme.of(context).textTheme.headlineSmall);
 
+  /// Visible text of [cue]: a long-pressed word opens the lookup sheet.
+  Widget _lookable(
+    BuildContext context,
+    Cue cue,
+    String text, [
+    TextStyle? style,
+  ]) => LookupText(
+    text,
+    style: style ?? Theme.of(context).textTheme.headlineSmall,
+    onLookup: (pick) => assist.lookup(context, cue, pick),
+  );
+
   /// A partner line, or a replayed prompt ([hide]: it is mine, shown only
   /// when the visibility allows).
   Widget _partner(BuildContext context, Cue cue, {bool hide = false}) => Column(
@@ -159,13 +180,10 @@ class CueView extends StatelessWidget {
     children: [
       _label(context, _who(cue)),
       const SizedBox(height: AppSpacing.sm),
-      if (hide)
-        _text(
-          context,
-          visibility == TextVisibility.hide ? '(twoja kwestia)' : cue.text,
-        )
-      else if (_partnerShown(cue))
-        _text(context, cue.text)
+      if (hide && visibility == TextVisibility.hide)
+        _text(context, '(twoja kwestia)')
+      else if (hide || _partnerShown(cue))
+        _lookable(context, cue, cue.text)
       else
         _speaking(context),
       for (final d in cue.lines.expand((l) => l.directions))
@@ -201,7 +219,7 @@ class CueView extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         if (visibility == TextVisibility.show)
-          _text(context, cue.text)
+          _lookable(context, cue, cue.text)
         else
           _text(
             context,
