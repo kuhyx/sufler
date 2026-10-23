@@ -25,13 +25,20 @@ def _tail(text: str) -> str:
 
 
 def _played_back_to_back(run: Run, calls: list[dict[str, Any]], lines: int) -> None:
-    """The partner step before the role's: one audio call per line, and a
-    voiced one (media clip) plays each clip to its end before the next."""
+    """The partner step before the role's: one playback per line, and a
+    voiced one (media clip) plays each clip to its end before the next.
+
+    After fast "Dalej" skips the web player repeats play() on the clip that
+    is already playing (same element, not paused): those are no-ops, not
+    playbacks, so only calls that started a paused element count.
+    """
+    starts = [c for c in calls if c["kind"] == "speech" or c.get("paused")]
     run.check(
-        len(calls) == lines,
-        f"{len(calls)} audio calls for a {lines}-line partner step: {calls}",
+        len(starts) == lines,
+        f"{len(starts)} playbacks for a {lines}-line partner step: {calls}",
     )
-    media = [c for c in calls if c["kind"] == "media"]
+    media = [c for c in starts if c["kind"] == "media"]
+    run.check(len({c["el"] for c in media}) == len(media), f"clip replayed: {calls}")
     for a, b in itertools.pairwise(media):
         run.check("ended" in a and b["t"] >= a["ended"], f"overlap: {a} / {b}")
 
@@ -52,7 +59,8 @@ def f3_rehearse(run: Run) -> None:
     first = next(
         ln for ln in script["lines"][pick.start : pick.end + 1] if oracle.is_spoken(ln)
     )
-    who = run.cdp.wait_for(pick.first_label, 5)["text"]
+    # The label's node also carries the text (or "mówi…") below it.
+    who = run.cdp.wait_for(pick.first_label, 5)["text"].split("\n")[0]
     run.check(who == pick.first_label, f"label {who!r}")
     run.cdp.page.pump(2)
     log = audio_log(run)
@@ -85,7 +93,7 @@ def f3_rehearse(run: Run) -> None:
         ) from e
     calls = [c for c in audio_log(run) if c["t"] > since]
     _played_back_to_back(run, calls, pick.before_lines)
-    run.note(f"partner step: {len(calls)} calls, last {json.dumps(calls[-1])}")
+    run.note(f"partner step: {len(calls)} play calls, last {json.dumps(calls[-1])}")
     run.step("one countdown for the whole own step; its text is hidden")
     head, tail = pick.mine_text[:40], _tail(pick.mine_last)
     before = run.cdp.text()

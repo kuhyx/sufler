@@ -23,8 +23,16 @@
     };
   }
   const play = HTMLMediaElement.prototype.play;
+  // Each element gets a number, so repeated play() calls on one element (a
+  // no-op while it plays) can be told apart from two clips sounding at once.
+  const ids = new WeakMap();
+  let elements = 0;
   HTMLMediaElement.prototype.play = function () {
-    const entry = { kind: 'media', t: now(), src: String(this.src).slice(0, 40) };
+    if (!ids.has(this)) ids.set(this, ++elements);
+    const entry = {
+      kind: 'media', t: now(), el: ids.get(this), paused: this.paused,
+      src: String(this.src).slice(0, 40),
+    };
     log.push(entry);
     const p = play.call(this);
     p.then(() => { entry.playing = now(); entry.duration = this.duration; },
