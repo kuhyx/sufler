@@ -16,6 +16,7 @@ class LineTimingSheet extends StatefulWidget {
     required this.scriptId,
     required this.line,
     required this.seconds,
+    this.estimated = false,
     super.key,
   });
 
@@ -27,6 +28,9 @@ class LineTimingSheet extends StatefulWidget {
 
   /// Current effective pause.
   final double seconds;
+
+  /// [seconds] is guessed from his pace ("szacowane").
+  final bool estimated;
 
   @override
   State<LineTimingSheet> createState() => _LineTimingSheetState();
@@ -124,7 +128,10 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
       children: [
         Text(widget.line.text, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
-        Text('Teraz: ${seconds(widget.seconds)}'),
+        Text(
+          'Teraz: ${seconds(widget.seconds)}'
+          '${widget.estimated ? ' · szacowane' : ''}',
+        ),
         const SizedBox(height: AppSpacing.md),
         TextField(
           key: const Key('seconds'),

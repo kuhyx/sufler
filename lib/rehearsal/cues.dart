@@ -8,7 +8,12 @@ import 'package:sufler/rehearsal/timing.dart';
 @immutable
 class Cue {
   /// Creates a cue.
-  const new({required this.line, required this.mine, required this.seconds});
+  const new({
+    required this.line,
+    required this.mine,
+    required this.seconds,
+    this.estimated = false,
+  });
 
   /// The script line.
   final ScriptLine line;
@@ -18,6 +23,9 @@ class Cue {
 
   /// Pause length for my lines (also computed for partner lines; unused).
   final double seconds;
+
+  /// True when [seconds] is guessed from his pace ("szacowane").
+  final bool estimated;
 }
 
 /// Spoken lines of [range] in reading order, split into mine and partner.
@@ -28,22 +36,29 @@ List<Cue> buildCues(
   double speed = 1,
   Map<int, double> overrides = const {},
   Map<int, double> recordingSeconds = const {},
+  double? pace,
 }) {
   final last = range.end.clamp(-1, script.lines.length - 1);
+  Cue cue(ScriptLine line) {
+    final p = resolvePause(
+      index: line.index,
+      text: line.text,
+      speed: speed,
+      overrides: overrides,
+      recordingSeconds: recordingSeconds,
+      pace: pace,
+    );
+    return Cue(
+      line: line,
+      mine: isMine(line, roles),
+      seconds: p.seconds,
+      estimated: p.source == PauseSource.estimate,
+    );
+  }
+
   return [
     for (var i = range.start.clamp(0, script.lines.length); i <= last; i++)
-      if (script.lines[i].isSpoken)
-        Cue(
-          line: script.lines[i],
-          mine: isMine(script.lines[i], roles),
-          seconds: pauseSeconds(
-            index: i,
-            text: script.lines[i].text,
-            speed: speed,
-            overrides: overrides,
-            recordingSeconds: recordingSeconds,
-          ),
-        ),
+      if (script.lines[i].isSpoken) cue(script.lines[i]),
   ];
 }
 
@@ -62,6 +77,6 @@ List<Cue> onlyMissed(List<Cue> cues, Set<int> missed) {
   return out;
 }
 
-/// [cue] with a new pause length.
+/// [cue] with a new pause length, set by hand (no longer estimated).
 Cue withSeconds(Cue cue, double seconds) =>
     Cue(line: cue.line, mine: cue.mine, seconds: seconds);

@@ -4,6 +4,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/rehearsal/pace.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/labels.dart';
@@ -28,6 +29,9 @@ class _TimingScreenState extends State<TimingScreen> {
   RehearsalPrefs _prefs = const RehearsalPrefs();
   Map<int, double> _recorded = const {};
 
+  /// His pace, recomputed on every load (recordings may have changed).
+  double? _pace;
+
   Services get _svc => ServicesScope.of(context);
 
   @override
@@ -46,6 +50,7 @@ class _TimingScreenState extends State<TimingScreen> {
       _script = script;
       _prefs = prefs;
       _recorded = recorded;
+      _pace = script == null ? null : secondsPerSyllable(script, recorded);
     });
   }
 
@@ -58,7 +63,8 @@ class _TimingScreenState extends State<TimingScreen> {
         child: LineTimingSheet(
           scriptId: widget.scriptId,
           line: line,
-          seconds: _seconds(line),
+          seconds: _pause(line).seconds,
+          estimated: _pause(line).source == PauseSource.estimate,
         ),
       ),
     );
@@ -78,19 +84,22 @@ class _TimingScreenState extends State<TimingScreen> {
     await _load();
   }
 
-  double _seconds(ScriptLine line) => pauseSeconds(
-    index: line.index,
-    text: line.text,
-    speed: _prefs.speed,
-    overrides: _prefs.lineSeconds,
-    recordingSeconds: _recorded,
-  );
+  ({double seconds, PauseSource source}) _pause(ScriptLine line) =>
+      resolvePause(
+        index: line.index,
+        text: line.text,
+        speed: _prefs.speed,
+        overrides: _prefs.lineSeconds,
+        recordingSeconds: _recorded,
+        pace: _pace,
+      );
 
-  String _source(int index) {
-    if (_prefs.lineSeconds.containsKey(index)) return 'ręcznie';
-    if (_recorded.containsKey(index)) return 'z nagrania';
-    return 'automatycznie';
-  }
+  static String _source(PauseSource s) => switch (s) {
+    PauseSource.manual => 'ręcznie',
+    PauseSource.recording => 'z nagrania',
+    PauseSource.estimate => 'szacowane',
+    PauseSource.formula => 'automatycznie',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +143,8 @@ class _TimingScreenState extends State<TimingScreen> {
                         leading: Text('${l.index}'),
                         title: Text(l.text),
                         subtitle: Text(
-                          'Pauza ${seconds(_seconds(l))} · ${_source(l.index)}',
+                          'Pauza ${seconds(_pause(l).seconds)} · '
+                          '${_source(_pause(l).source)}',
                         ),
                         trailing: _recorded.containsKey(l.index)
                             ? const Icon(Icons.mic)

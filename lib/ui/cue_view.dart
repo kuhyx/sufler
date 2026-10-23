@@ -83,7 +83,11 @@ class CueView extends StatelessWidget {
         },
         if (cue.mine) ...[
           const SizedBox(height: AppSpacing.md),
-          PauseControl(length: cue.seconds, onAdjust: onAdjust),
+          PauseControl(
+            length: cue.seconds,
+            estimated: cue.estimated,
+            onAdjust: onAdjust,
+          ),
         ],
       ],
     );

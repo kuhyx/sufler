@@ -82,4 +82,42 @@ void main() {
       );
     });
   });
+
+  group('estimate from his own pace', () {
+    // "Piaskowe Wilki nie jedzą Krasnali!" = 11 spoken syllables.
+    const text = 'Piaskowe Wilki nie jedzą Krasnali!';
+
+    test('pace x syllables + 1 s, like a recording; speed ignored', () {
+      final p = resolvePause(index: 2, text: text, speed: 2, pace: 0.4);
+      expect(p.seconds, closeTo(0.4 * 11 + 1, 1e-9));
+      expect(p.source, PauseSource.estimate);
+      expect(pauseSeconds(index: 2, text: text, pace: 0.4), closeTo(5.4, 1e-9));
+    });
+
+    test('manual > recording > estimate > formula', () {
+      PauseSource source({Map<int, double> o = const {}, double? pace}) =>
+          resolvePause(
+            index: 2,
+            text: text,
+            overrides: o,
+            recordingSeconds: {2: 3},
+            pace: pace,
+          ).source;
+      expect(source(o: {2: 9}, pace: 0.4), PauseSource.manual);
+      expect(source(pace: 0.4), PauseSource.recording);
+      expect(
+        resolvePause(index: 5, text: text, pace: 0.4).source,
+        PauseSource.estimate,
+      );
+      final formula = resolvePause(index: 5, text: text);
+      expect(formula.source, PauseSource.formula);
+      expect(formula.seconds, defaultPauseSeconds(text));
+    });
+
+    test('a line with no vowels keeps the formula', () {
+      final p = resolvePause(index: 5, text: '...', pace: 0.4);
+      expect(p.source, PauseSource.formula);
+      expect(p.seconds, defaultPauseSeconds('...'));
+    });
+  });
 }

@@ -166,6 +166,9 @@ by `test/desktop/gdoc_contract_test.dart`.
   czasy" without audio is a `lineSeconds` entry; a measured take with audio
   is stored as the recording (speech only, so its length + 1 s is the pause)
   and drops that line's `lineSeconds`.
+- Pause precedence: `lineSeconds` > recording (+ 1 s) > estimate > formula.
+  The estimate (median seconds per syllable over the recordings, needs >= 3,
+  `lib/rehearsal/pace.dart`) is derived on the fly and never stored.
 
 ## Re-parse (stored scripts after a parser change)
 

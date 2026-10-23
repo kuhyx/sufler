@@ -6,6 +6,7 @@ import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/pack_check.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/cues.dart';
+import 'package:sufler/rehearsal/pace.dart';
 import 'package:sufler/rehearsal/range.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/correction_screen.dart';
@@ -127,6 +128,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       speed: _prefs.speed,
       overrides: _prefs.lineSeconds,
       recordingSeconds: recorded,
+      pace: secondsPerSyllable(script, recorded),
     );
     if (missedOnly) cues = onlyMissed(cues, _prefs.missed);
     if (!mounted) return;

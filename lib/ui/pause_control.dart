@@ -8,16 +8,30 @@ const double pauseStep = 0.5;
 /// "Pauza 4,2 s" with − / + buttons; changes persist for that line.
 class PauseControl extends StatelessWidget {
   /// Creates the control for a pause of [length].
-  const new({required this.length, required this.onAdjust, super.key});
+  const new({
+    required this.length,
+    required this.onAdjust,
+    this.estimated = false,
+    super.key,
+  });
 
   /// Current pause length of the line.
   final double length;
+
+  /// The length is guessed from his pace: "szacowane" under it (its own
+  /// line: beside the buttons it overflows a phone).
+  final bool estimated;
 
   /// Called with −[pauseStep] or +[pauseStep].
   final ValueChanged<double> onAdjust;
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [_buttons(), if (estimated) const Text('szacowane')],
+  );
+
+  Widget _buttons() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       IconButton(

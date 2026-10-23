@@ -91,4 +91,25 @@ void main() {
     expect(onlyMissed(cues, {}), isEmpty);
     expect(withSeconds(cues[1], 7).seconds, 7);
   });
+
+  test('estimated pauses are flagged; −/+ (withSeconds) makes them manual', () {
+    final cues = buildCues(
+      script,
+      {const Role.character(wolf)},
+      LineRange.section(script.scenes[0]),
+      recordingSeconds: {4: 1.2},
+      pace: 0.4,
+    );
+    final two = cues.firstWhere((c) => c.line.index == 2);
+    final four = cues.firstWhere((c) => c.line.index == 4);
+    expect(two.estimated, isTrue);
+    expect(two.seconds, closeTo(0.4 * 11 + 1, 1e-9));
+    expect(four.estimated, isFalse);
+    expect(four.seconds, closeTo(2.2, 1e-9));
+    expect(withSeconds(two, 6).estimated, isFalse);
+    final plain = buildCues(script, {
+      const Role.character(wolf),
+    }, LineRange.section(script.scenes[0]));
+    expect(plain.any((c) => c.estimated), isFalse);
+  });
 }
