@@ -62,7 +62,7 @@ def f6_pack(run: Run) -> None:
     script, facts = run.open_script()
     run.select_only_role(facts)
     run.hub("Sceny")
-    pick = oracle.pick_scene(script, run.role)
+    pick = oracle.pick_scene(script, run.picked_roles(script))
     run.step(f"start scene '{pick.title}' (lines {pick.start}-{pick.end})")
     run.cdp.tap(f"kwestie {pick.start}–{pick.end}")
     run.cdp.wait_for(f"kwestia 1/{pick.cues}", 10)

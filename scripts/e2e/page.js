@@ -55,19 +55,33 @@
       .filter((t) => /^.+ \(\d+\)$/.test(t)))];
   },
 
+  // "Grupy" checkboxes on "Moje role": label `<name> (<n>)\n<notes>` (notes
+  // say "twoja grupa" for a group of the picked characters) and state.
+  groupBoxes() {
+    return this.nodes()
+      .filter((e) => e.getAttribute('role') === 'checkbox' && this.label(e).includes('\n'))
+      .map((e) => ({ text: this.label(e), checked: e.getAttribute('aria-checked') === 'true' }));
+  },
+
   // Every non-empty label on the page, one per line.
   text() {
     return [...new Set(this.nodes().map((e) => this.label(e)).filter((t) => t))].join('\n');
   },
 
-  // The stored script imported from file `source`, read straight from
-  // IndexedDB (lib/storage/idb_store.dart: db `sufler`, store `json`).
-  async script(source) {
-    const db = await new Promise((ok, bad) => {
+  // The sufler IndexedDB (lib/storage/idb_store.dart: db `sufler`, store
+  // `json`, values are JSON strings).
+  async _json() {
+    return new Promise((ok, bad) => {
       const r = indexedDB.open('sufler');
       r.onsuccess = () => ok(r.result);
       r.onerror = () => bad(r.error);
     });
+  },
+
+  // The stored script imported from file `source`, read straight from
+  // IndexedDB.
+  async script(source) {
+    const db = await this._json();
     const all = await new Promise((ok, bad) => {
       const r = db.transaction('json').objectStore('json').getAll();
       r.onsuccess = () => ok(r.result);
@@ -76,5 +90,17 @@
     db.close();
     const scripts = all.map((s) => JSON.parse(s)).filter((s) => s && s.lines);
     return scripts.find((s) => s.source === source) || null;
+  },
+
+  // The stored value under `key` (e.g. `prefs/<script id>`), or null.
+  async json(key) {
+    const db = await this._json();
+    const got = await new Promise((ok, bad) => {
+      const r = db.transaction('json').objectStore('json').get(key);
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => bad(r.error);
+    });
+    db.close();
+    return got == null ? null : JSON.parse(got);
   },
 })

@@ -67,21 +67,28 @@ def f1_import(run: Run) -> None:
 
 def f2_roles(run: Run) -> None:
     """F2: the role picker lists the role with its line count, and the songs."""
-    run.step("open the imported script")
+    run.step("a reload opens the last script's hub, not the library")
     run.boot()
+    run.check(run.cdp.find("Moje role"), "the app opened on the library")
+    run.note("reload -> script hub")
     _script, facts = run.open_script()
     run.step(f"chip '{facts.name} (n)' shows its spoken-line count")
     chip = run.chip(facts)
     want = f"{facts.name} ({len(facts.spoken)})"
     run.check(chip["text"] == want, f"chip {chip['text']!r}, expected {want!r}")
     run.note(f"chip '{chip['text']}' ({facts.dialogue_blocks} dialogue blocks)")
-    run.step("every song has a chip (headed + unheaded ♪)")
-    missing = [
-        t
-        for t in facts.headed_songs + facts.unheaded_songs
-        if not run.cdp.find(f"{t} (")
-    ]
-    run.check(not missing, f"no chip for songs {missing}")
+    run.step("every song has a card under 'Piosenki' (headed + unheaded ♪)")
+    # The cards sit below the fold in a lazily built ListView: scroll down to
+    # each in script order (find_scrolling only wheels down).
+    missing: list[str] = []
+    for title in facts.songs:
+        try:
+            run.cdp.find_scrolling(f"{title} (", 640)
+        except CdpError:
+            missing.append(title)
+    run.check(not missing, f"no card for songs {missing}")
+    preview = run.cdp.find("Śpiewa: ")
+    run.check(preview, "song cards show no 'Śpiewa: ...' preview")
     run.note(
         f"songs: {len(facts.headed_songs)} headed + "
         f"{len(facts.unheaded_songs)} unheaded"
@@ -103,7 +110,7 @@ def f3_rehearse(run: Run) -> None:
     script, facts = run.open_script()
     run.select_only_role(facts)
     run.hub("Sceny")
-    pick = oracle.pick_scene(script, run.role)
+    pick = oracle.pick_scene(script, run.picked_roles(script))
     run.step(f"start scene '{pick.title}' (lines {pick.start}-{pick.end})")
     run.cdp.tap(f"kwestie {pick.start}–{pick.end}")
     run.cdp.wait_for(f"kwestia 1/{pick.cues}", 10)
@@ -132,15 +139,24 @@ def f3_rehearse(run: Run) -> None:
             f"{e}; {len(log)} audio calls, last {json.dumps(log[-1:])}"
         ) from e
     run.note(f"audio log: {json.dumps(audio_log(run)[-2:])}")
-    run.step("the countdown runs")
+    run.step("the countdown runs; the role's own text is hidden")
+    cues = [
+        ln for ln in script["lines"][pick.start : pick.end + 1] if oracle.is_spoken(ln)
+    ]
+    mine = cues[k]["text"][:40]
     before = run.cdp.text()
     run.cdp.page.pump(1.5)
     run.check(run.cdp.text() != before, "countdown text did not change in 1.5 s")
+    run.check(run.cdp.find("Mów z pamięci"), "no 'Mów z pamięci…' placeholder")
+    run.check(not run.cdp.find(mine), f"own line {mine!r} shown before Space")
     run.shot("countdown")
     run.step("Space ends the line: its text is revealed; a grade advances")
     at = run.header()
     run.cdp.key_space()
     run.cdp.wait_for("Jak poszło?", 5)
+    run.cdp.wait_for(mine, 5)
+    run.note(f"kwestia {at}: own text hidden in the countdown, shown for the grade")
+    run.shot("grade")
     run.cdp.tap("Dobrze", 5)
     run.cdp.page.pump(1)
     after = run.header()
@@ -186,16 +202,19 @@ def f4_anki(run: Run) -> None:
     )
     run.check(out.returncode == 0, f"apkg_check: {out.stderr.strip()[-300:]}")
     notes: list[list[str]] = json.loads(out.stdout)
-    run.step("note count == role spoken lines; fronts are cues, backs role lines")
-    want = oracle.expected_cards(script, run.role)
+    run.step("notes == the picked roles' lines; fronts are cues, backs own lines")
+    # The deck covers every picked role: the character plus the groups that
+    # ticking it pre-ticks ("Wszyscy" lines are the actor's to say too).
+    roles = run.picked_roles(script)
+    want = oracle.expected_cards(script, roles)
     run.check(
-        len(notes) == len(want) == len(facts.spoken),
-        f"{len(notes)} notes, {len(want)} expected cards, "
+        len(notes) == len(want) >= len(facts.spoken),
+        f"{len(notes)} notes, {len(want)} expected cards for {sorted(roles)}, "
         f"{len(facts.spoken)} {facts.name} spoken lines",
     )
     backs = sorted(n[1] for n in notes)
     run.check(
-        backs == sorted(b for _, b in want), f"backs differ from {facts.name} lines"
+        backs == sorted(b for _, b in want), f"backs differ from {sorted(roles)} lines"
     )
     unmatched = [
         oracle.unescape(b)[:30]
@@ -203,7 +222,11 @@ def f4_anki(run: Run) -> None:
         if not any(n[1] == b and f in n[0] for n in notes)
     ]
     run.check(not unmatched, f"front lacks its cue for {unmatched}")
-    run.note(f"{len(notes)} notes == {len(facts.spoken)} {facts.name} spoken lines")
+    groups = sorted(roles - {f"character:{run.role}"})
+    run.note(
+        f"{len(notes)} notes == {len(facts.spoken)} {facts.name} spoken lines "
+        f"+ {len(want) - len(facts.spoken)} from pre-ticked groups {groups}"
+    )
 
 
 def f5_voices(run: Run) -> None:

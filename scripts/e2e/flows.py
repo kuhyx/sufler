@@ -1,4 +1,4 @@
-"""Core desktop flows F1-F6 (DOCS-features.md), one per invocation.
+"""Core desktop flows F1-F7 (DOCS-features.md), one per invocation.
 
 Usage (normally via scripts/e2e_desktop.sh F<n>, after `up`):
     flows.py F<n> --port 9479 --out private/e2e --pdf private/krasnale.pdf
@@ -23,6 +23,7 @@ import oracle
 from cdp import Cdp, CdpError
 from flow_pack import f6_pack
 from flow_steps import f1_import, f2_roles, f3_rehearse, f4_anki, f5_voices
+from flow_stt import f7_transcribe
 
 Json = dict[str, Any]
 
@@ -112,17 +113,53 @@ class Run:
         return self.cdp.wait_for(f"{facts.name} (", 10)
 
     def select_only_role(self, facts: oracle.RoleFacts) -> None:
-        """Make the role's chip the one selected role (deselect the rest)."""
+        """Make the role's chip the one selected role (deselect the rest),
+        with exactly its own groups ticked, as a fresh pick of it would."""
         mine = self.chip(facts)["text"]
         for _ in range(6):
             on = self.cdp.helper("selectedChips()")
             on = on if isinstance(on, list) else []
             if on == [mine]:
+                self._only_own_groups()
                 return
             other = [t for t in on if t != mine]
             self.cdp.click(self.cdp.wait_for(other[0] if other else mine, 5))
             self.cdp.page.pump(0.5)
         self.check(False, f"could not make {mine!r} the only selected role")
+
+    def _only_own_groups(self) -> None:
+        """Tick the groups marked "twoja grupa", untick the rest.
+
+        Unticking a character keeps the groups its pick pre-ticked (by design:
+        "untick to drop them"), so a previous run's role leaves them behind.
+        """
+        for _ in range(8):
+            boxes = self.cdp.helper("groupBoxes()")
+            wrong = [
+                b["text"]
+                for b in (boxes if isinstance(boxes, list) else [])
+                if b["checked"] != ("twoja grupa" in b["text"])
+            ]
+            if not wrong:
+                return
+            self.cdp.click(self.cdp.wait_for(wrong[0], 5))
+            self.cdp.page.pump(0.5)
+        self.check(False, "could not tick exactly the role's own groups")
+
+    def picked_roles(self, script: Json) -> set[str]:
+        """The roles the app saved in the script's prefs, checked against
+        the data: the role plus the groups its pick pre-ticks ("Wszyscy", ...;
+        :func:`oracle.own_groups`), which the app rehearses and exports too.
+        """
+        prefs = self.cdp.helper(
+            f"json({json.dumps('prefs/' + script['id'])})", wait=True
+        )
+        roles = set(prefs.get("roles", [])) if isinstance(prefs, dict) else set()
+        want = {f"character:{self.role}"} | oracle.own_groups(script, self.role)
+        self.check(
+            roles == want, f"prefs roles {sorted(roles)}, expected {sorted(want)}"
+        )
+        return want
 
     def header(self) -> tuple[int, int] | None:
         """Rehearsal header ``kwestia <n>/<m>``, if shown."""
@@ -137,6 +174,7 @@ FLOWS: dict[str, tuple[int, Callable[[Run], None]]] = {
     "F4": (5, f4_anki),
     "F5": (4, f5_voices),
     "F6": (6, f6_pack),
+    "F7": (4, f7_transcribe),
 }
 
 
@@ -149,7 +187,7 @@ def main() -> int:
     ap.add_argument("--pdf", type=Path, required=True)
     ap.add_argument("--display", default=":79")
     ap.add_argument("--role", default="zagiewka", help="character id to play")
-    ap.add_argument("--pack", type=Path, help="voice pack zip (F6)")
+    ap.add_argument("--pack", type=Path, help="voice pack zip (F6, F7)")
     args = ap.parse_args()
     total, body = FLOWS[args.flow]
     cdp = Cdp(args.port)
