@@ -17,6 +17,11 @@ SAMPLES = DATA / "voice-samples"
 CHECKS = DATA / "voice-check"
 PIPER_MODELS = DATA / "piper"
 PIPER_PREFIX = "piper-"
+# Chatterbox Multilingual weights, pinned to one ResembleAI/chatterbox commit;
+# the engine loads this directory directly (no Hugging Face cache involved).
+CHATTERBOX_REPO = "ResembleAI/chatterbox"
+CHATTERBOX_REVISION = "5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18"
+WEIGHTS = DATA / "chatterbox" / CHATTERBOX_REVISION
 
 
 def prompt_path(base: str) -> Path | None:

@@ -1,7 +1,7 @@
 # sufler voice service: Chatterbox Multilingual TTS on 127.0.0.1:8791.
-# Deps + weights first: scripts/install_tts.sh (it does not enable this unit).
-# Enable: ln -sf %h/src/sufler/systemd/sufler-tts.service ~/.config/systemd/user/
-#         systemctl --user daemon-reload && systemctl --user enable --now sufler-tts
+# Install: scripts/install_tts.sh (deps, weights, prompts; links this unit into
+#          ~/.config/systemd/user and reloads; it does not enable it).
+# Enable:  systemctl --user enable --now sufler-tts.service
 [Unit]
 Description=sufler voice service (Chatterbox TTS, loopback :8791)
 After=network.target
@@ -10,7 +10,8 @@ After=network.target
 Type=simple
 WorkingDirectory=%h/src/sufler/tts
 ExecStart=%h/src/sufler/tts/.venv/bin/python -m sufler_tts
-# Weights are fetched by install_tts.sh; never touch the network at runtime.
+# Weights live in ~/.local/share/sufler/chatterbox/<revision> (install_tts.sh);
+# the hub stays offline so nothing in chatterbox reaches the network at runtime.
 Environment=HF_HUB_OFFLINE=1
 Environment=PYTHONUNBUFFERED=1
 Restart=on-failure

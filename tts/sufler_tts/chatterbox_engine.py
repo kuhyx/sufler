@@ -7,7 +7,7 @@ import importlib
 import numpy as np
 import torch
 
-from sufler_tts.assets import prompt_path
+from sufler_tts.assets import WEIGHTS, prompt_path
 from sufler_tts.compat import install_pkg_resources_shim
 from sufler_tts.engine import SAMPLE_RATE, Audio, chatterbox_name
 from sufler_tts.voices import Voice
@@ -19,12 +19,15 @@ class ChatterboxEngine:
     """Loads the model on construction; one set of conditionals per voice base."""
 
     def __init__(self, device: str = "cuda") -> None:
-        """Load weights from the Hugging Face cache (fetched by install_tts.sh)."""
+        """Load the pinned weights directory (fetched by install_tts.sh)."""
         install_pkg_resources_shim()  # must precede the chatterbox import
         # import_module: chatterbox ships no type information.
         mtl = importlib.import_module("chatterbox.mtl_tts")
         self.device = device
-        self.model = mtl.ChatterboxMultilingualTTS.from_pretrained(device=device)
+        if not (WEIGHTS / "t3_mtl23ls_v2.safetensors").is_file():
+            raise FileNotFoundError(f"no Chatterbox weights in {WEIGHTS}")
+        # from_local, not from_pretrained: no Hugging Face hub lookup at runtime.
+        self.model = mtl.ChatterboxMultilingualTTS.from_local(WEIGHTS, device)
         self._conds: dict[str, object] = {"default": self.model.conds}
 
     @property
