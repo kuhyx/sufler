@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:sufler/model/script.dart';
@@ -29,6 +28,10 @@ typedef TimeSaver = Future<void> Function(ScriptLine line, double seconds);
 
 /// How many later lines a take is compared with to spot a skipped line.
 const int skipLookahead = 3;
+
+/// Taps this soon after "Skończyłem" appears are a bounce of the previous
+/// one (the button stays in place from line to line), not a finished line.
+const Duration tapGuard = Duration(milliseconds: 500);
 
 /// "Nagraj czasy": walks [lines] one by one, listens to each until the
 /// actor stops speaking, saves the take and moves on without a tap. When
@@ -92,6 +95,7 @@ class TimingSession extends ChangeNotifier {
   bool _disposed = false;
   Completer<bool>? _decision;
   Completer<void>? _tap;
+  DateTime? _tapShown;
 
   /// The line being read; null when done.
   ScriptLine? get current => state == TakeState.done || position >= lines.length
@@ -151,6 +155,7 @@ class TimingSession extends ChangeNotifier {
   /// Waits for "Skończyłem"; false when the walk was stopped instead.
   Future<bool> _tapped() async {
     state = TakeState.manual;
+    _tapShown = clock();
     _notify();
     await (_tap = Completer<void>()).future;
     _tap = null;
@@ -162,9 +167,9 @@ class TimingSession extends ChangeNotifier {
     _saved(index, null);
   }
 
-  /// Saves [took] (rounded to 0.1 s, at least 0.1 s) as the pause.
+  /// Saves [took] (rounded to 0.1 s) as the pause.
   Future<void> _keepTime(int index, Duration took) async {
-    final pause = math.max(0.1, (took.inMilliseconds / 100).round() / 10);
+    final pause = (took.inMilliseconds / 100).round() / 10;
     await saveTime(lines[index], pause);
     lastTake = null;
     _saved(index, pause);
@@ -184,7 +189,11 @@ class TimingSession extends ChangeNotifier {
   void redo() => _decision?.complete(false);
 
   /// "Skończyłem": the actor finished the line in [TakeState.manual].
-  void finished() => _complete(_tap);
+  void finished() {
+    final shown = _tapShown;
+    if (shown != null && clock().difference(shown) < tapGuard) return;
+    _complete(_tap);
+  }
 
   /// Times the rest of the walk by tapping ([on]) or by the mic again
   /// (from the next line). Switching on mid-listen drops that take.

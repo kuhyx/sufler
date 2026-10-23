@@ -153,11 +153,12 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
   /// Tap timing: own text hidden (said from memory); the time from when
   /// the line came up to the tap becomes its pause.
   List<Widget> _manual(TextTheme theme, TimingSession s) => [
+    // After a missed take the line may already be under way: the clock
+    // runs from when it came up, so only ask for the tap.
     Text(
-      [
-        if (s.problem != null) '${s.problem}.',
-        'Powiedz kwestię i stuknij, gdy skończysz.',
-      ].join(' '),
+      s.problem != null
+          ? '${s.problem}. Stuknij, gdy skończysz tę kwestię.'
+          : 'Powiedz kwestię i stuknij, gdy skończysz.',
     ),
     const SizedBox(height: AppSpacing.md),
     SizedBox(

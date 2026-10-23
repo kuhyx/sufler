@@ -19,6 +19,16 @@ Future<void> _settle(WidgetTester t) async {
   }
 }
 
+/// Lets real time pass the tap guard (DateTime.now is not faked), then
+/// taps "Skończyłem".
+Future<void> _finish(WidgetTester t, [Finder? button]) async {
+  await t.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 600)),
+  );
+  await t.tap(button ?? find.text('Skończyłem'));
+  await _settle(t);
+}
+
 Future<TestRig> _walk(WidgetTester tester, String db) async {
   tester.usePhone();
   final rig = await openHub(
@@ -53,8 +63,7 @@ void main() {
     final done = find.widgetWithText(FilledButton, 'Skończyłem');
     expect(done, findsOneWidget);
     expect(tester.getSize(done).height, greaterThanOrEqualTo(72));
-    await tester.tap(done);
-    await _settle(tester);
+    await _finish(tester, done);
     expect(find.text('Kwestia 2/2'), findsOneWidget);
     expect(find.text('Naprawdę.'), findsOneWidget);
     expect(rig.capture.listening, isTrue);
@@ -74,13 +83,11 @@ void main() {
     expect(rig.capture.listening, isFalse);
     expect(find.textContaining('Nie słyszę mikrofonu'), findsNothing);
     expect(find.text(_first), findsNothing);
-    await tester.tap(find.text('Skończyłem'));
-    await _settle(tester);
+    await _finish(tester);
     expect(find.text('Kwestia 2/2'), findsOneWidget);
     expect(find.text('Naprawdę.'), findsNothing);
     expect(rig.capture.listening, isFalse);
-    await tester.tap(find.text('Skończyłem'));
-    await _settle(tester);
+    await _finish(tester);
     expect(find.text('Gotowe: zapisano 2 z 2'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds.keys, unorderedEquals([2, 4]));

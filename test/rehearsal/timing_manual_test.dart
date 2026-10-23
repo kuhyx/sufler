@@ -110,17 +110,38 @@ void main() {
     expect(r.session.manualAll, isTrue);
     expect(r.session.state, TakeState.manual);
     expect(r.session.problem, isNull);
-    for (final s in [1.5, 2.04, 0.01]) {
+    for (final s in [1.5, 2.04, 0.66]) {
       r.wait(s);
       r.session.finished();
       await _settle();
     }
     await run;
     expect(r.mic.listens, 0);
-    // Rounded to 0.1 s, never below it.
-    expect(r.times, {2: 1.5, 4: 2.0, 7: 0.1});
+    // Rounded to 0.1 s.
+    expect(r.times, {2: 1.5, 4: 2.0, 7: 0.7});
     expect(r.session.saved, 3);
     expect(r.session.state, TakeState.done);
+  });
+
+  test('a double tap does not time the next line too', () async {
+    final r = _Rig(manual: true);
+    final run = r.session.run();
+    await _settle();
+    r.wait(2);
+    r.session.finished();
+    await _settle();
+    // The button stays put: a bounce 0.15 s later is not line 4 done.
+    r.wait(0.15);
+    r.session.finished();
+    await _settle();
+    expect(r.times, {2: 2.0});
+    expect(r.session.current!.index, 4);
+    r.wait(1.85);
+    r.session.finished();
+    await _settle();
+    expect(r.times, {2: 2.0, 4: 2.0});
+    await r.session.stop();
+    await run;
   });
 
   test(
@@ -145,6 +166,7 @@ void main() {
       expect(r.mic.listens, 1);
       // And back to the mic from the next line on.
       r.session.setManual(on: false);
+      r.wait(1);
       r.session.finished();
       await _settle();
       expect(r.session.state, TakeState.listening);
