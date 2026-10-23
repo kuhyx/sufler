@@ -10,7 +10,7 @@ from sufler_tts.assign import assign_voices, voice_for_line
 from sufler_tts.audio import concat, encode
 from sufler_tts.cache import ClipCache, clip_key, seed_for
 from sufler_tts.engine import Engine
-from sufler_tts.pack import build_pack, pack_name
+from sufler_tts.pack import build_pack, pack_name, script_fingerprint
 from sufler_tts.script import Script
 from sufler_tts.textprep import clean_text, split_text
 from sufler_tts.voices import Voice, get_voice
@@ -65,4 +65,5 @@ def render_script(
         voice = get_voice(voice_for_line(by_index[index], voices))
         clips[index] = render_clip(text, voice, engine, cache)
         progress(done, len(todo))
-    return build_pack(script.id, engine.name, voices, clips, packs)
+    fingerprint = script_fingerprint(script)
+    return build_pack(script.id, engine.name, voices, clips, packs, fingerprint)

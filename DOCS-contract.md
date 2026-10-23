@@ -83,9 +83,17 @@ A zip named `<script-id>.sufler-audio.zip`:
 ```
 manifest.json   {"scriptId": "...", "engine": "chatterbox-multilingual@<ver>",
                  "voices": {"<character-id>": "<voice-id>"},
+                 "fingerprint": "<sha256 hex>",
                  "lines": {"<line-index>": "audio/<line-index>.ogg"}}
 audio/<line-index>.ogg   one clip per spoken line, Opus in Ogg, mono 24 kHz
 ```
+
+`fingerprint` = sha256 (hex) of the UTF-8 bytes of, for EVERY line of the
+posted Script in order (spoken or not), the row
+`"<index>\t<kind>\t<speakers joined with ','>\t<text>\n"`, where `kind` is the
+JSON `kind` string and `text` the line's `text` as sent (`speakers` empty gives
+an empty field). The app recomputes it from its own parse and rejects a pack
+whose fingerprint differs. Pinned by `tts/tests/test_fingerprint.py`.
 
 Clips exist for every spoken line (the app decides which ones to play), so one
 pack serves any role choice. Unattributed song lines use a neutral narrator voice.
@@ -113,3 +121,43 @@ by `test/desktop/gdoc_contract_test.dart`.
 {"roles": ["character:piaskowy-wilk"], "speed": 1.0,
  "lineSeconds": {"<line-index>": 4.2}, "recordings": {"<line-index>": "<path>"}}
 ```
+
+## Transcription (TTS service, speech-to-text)
+
+`POST http://127.0.0.1:8791/transcribe?lang=pl` on the voice service (the
+desktop wrapper proxies `/api/tts/*` to it). The body is the audio itself, sent
+with `Content-Length` (max 32 MiB): WAV PCM 16-bit (any sample rate, mono or
+not; 16 kHz mono typical) or Ogg/WebM Opus; ffmpeg decodes and resamples to
+mono 16 kHz, so any ffmpeg-readable upload works. `lang` is a 2-3 letter
+language code, default `pl`.
+
+```json
+{"text": "Piaskowe wilki nie jedzą krasnali.",
+ "segments": [{"start": 0.31, "end": 2.40, "text": "Piaskowe wilki nie jedzą krasnali."}],
+ "speechStart": 0.31, "speechEnd": 2.40,
+ "engine": "faster-whisper@1.2.1/large-v3-turbo"}
+```
+
+- Times are seconds from the start of the uploaded clip. `speechStart` /
+  `speechEnd` are the first word's start and the last word's end (tighter than
+  the segment times); VAD drops leading and trailing silence first.
+- No speech found: `200` with `"text": ""`, `"segments": []`, and
+  `"speechStart"` / `"speechEnd"` both `null`.
+- `text` is Whisper's own casing and punctuation; compare it normalised
+  (lower-case, punctuation dropped), not byte for byte.
+
+| Status | Body | Meaning |
+|---|---|---|
+| 200 | the object above | transcribed |
+| 400 | `{"error": "undecodable audio"}` | empty body or ffmpeg cannot decode it |
+| 400 | `{"error": "lang must be ..."}` | malformed `lang` |
+| 413 | `{"error": "too big"}` | body over 32 MiB |
+| 500 | `{"error": "<reason>"}` | model failed to load or run |
+| 503 | `{"error": "no STT"}` | service started without a transcriber |
+
+`GET /health` also reports `"stt": "<engine>"`. The model (faster-whisper
+`large-v3-turbo`, CTranslate2 fp16, MIT) loads on the first request in its own
+child process and exits after 10 min idle, independently of Chatterbox.
+Measured on the RTX 3090 with a ~4 s Polish clip: ~0.2 s warm, ~1.5 s cold
+(model load), WER 0.00 on three synthesised sentences, 7.0 GiB of VRAM with
+Chatterbox loaded as well.

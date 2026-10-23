@@ -52,7 +52,13 @@ def test_pack_layout_matches_contract(
     assert sorted(names) == sorted(
         ["manifest.json", *(f"audio/{i}.ogg" for i in SPOKEN)]
     )
-    assert set(manifest) == {"scriptId", "engine", "voices", "lines"}
+    assert set(manifest) == {
+        "scriptId",
+        "engine",
+        "voices",
+        "fingerprint",
+        "lines",
+    }
     assert manifest["scriptId"] == "abc123"
     assert manifest["engine"] == engine.name
     assert set(manifest["voices"]) == {"piaskowy-wilk", "krolowa", "blystek"}
