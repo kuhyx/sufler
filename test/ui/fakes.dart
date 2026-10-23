@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idb_shim/idb_client_memory.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/transcribe_client.dart';
+import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
@@ -153,6 +154,7 @@ class TestRig {
   Transcribe? transcribe;
   final imported = <String>[];
   final exported = <Set<Role>>[];
+  final exportedNotes = <Map<int, List<LineNote>>>[];
 
   /// What the picker cache holds for any lookup; every lookup's file name.
   Uint8List? pickedCopy;
@@ -169,8 +171,9 @@ class TestRig {
       imported.add(url);
       return script;
     },
-    exportApkg: (s, roles, {AudioPack? audio}) async {
+    exportApkg: (s, roles, {audio, notes = const {}}) async {
       exported.add(roles);
+      exportedNotes.add(notes);
       return Uint8List.fromList([9]);
     },
     renderAvailable: () async => renderable,

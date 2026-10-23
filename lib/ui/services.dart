@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/transcribe_client.dart';
+import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/capture.dart';
@@ -24,6 +25,7 @@ typedef ApkgExporter = Future<Uint8List> Function(
   Script script,
   Set<Role> roles, {
   AudioPack? audio,
+  Map<int, List<LineNote>> notes,
 });
 
 /// Finds a kept copy of document [fileName] whose content hash is [id]

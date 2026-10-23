@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/anki/sufler_cards.dart';
+import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
 
 import 'fixture.dart';
@@ -95,6 +96,25 @@ void main() {
       copy.media['sufler-abc123-2.ogg'],
       deck.media['sufler-abc123-2.ogg'],
     );
+  });
+
+  test("the assistant's notes on a line go on the back of its card", () {
+    final cards = buildDeck(
+      script,
+      annaAndSong,
+      notes: {
+        4: [
+          const LineNote(about: 'masz', text: 'od <mieć>'),
+          const LineNote(about: 'Dobrze?', text: 'pytanie'),
+        ],
+      },
+    ).cards;
+    final back = cards[1].back;
+    expect(back, startsWith('Jak się masz?<br>Dobrze?'));
+    expect(back, contains('<b>masz</b>: od &lt;mieć&gt;'));
+    expect(back, contains('<b>Dobrze?</b>: pytanie'));
+    expect(cards[1].front, isNot(contains('mieć')));
+    expect(cards[0].back, 'Dzień dobry.');
   });
 
   test('no roles, no cards', () {

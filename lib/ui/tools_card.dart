@@ -5,6 +5,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/pack_check.dart';
+import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/pack_zip.dart';
@@ -21,6 +22,7 @@ class ToolsCard extends StatefulWidget {
     required this.onPack,
     required this.onCorrect,
     required this.onTimings,
+    this.notes = const {},
     this.onRefreshParse,
     super.key,
   });
@@ -33,6 +35,9 @@ class ToolsCard extends StatefulWidget {
 
   /// Loaded voice pack, if any.
   final AudioPack? pack;
+
+  /// The assistant's notes per line (they go on the Anki card backs).
+  final Map<int, List<LineNote>> notes;
 
   /// Whether "Generate voices" is offered.
   final bool canRender;
@@ -76,6 +81,7 @@ class _ToolsCardState extends State<ToolsCard> {
       widget.script,
       widget.roles,
       audio: widget.pack,
+      notes: widget.notes,
     );
     await _svc.files.save(
       '${widget.script.title}.apkg',
