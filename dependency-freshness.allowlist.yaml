@@ -12,3 +12,12 @@ exceptions:
       chatterbox-tts 0.1.7 exact-pins librosa==0.11.0; tts/ imports librosa
       directly (voicecheck pitch tracking), so it is declared at that pin.
     blocked_by: "transitive:chatterbox-tts@0.1.7"
+  - ecosystem: toolchain
+    package: python
+    pinned: "3.14"
+    latest_known: "3.15.1"
+    reason: >-
+      torch 2.14.1 ships no cp315 wheels (cp314/cp314t only), so the tts/
+      venv must be CPython 3.14 (tts/.python-version); uv otherwise picks 3.15
+      and `uv sync --locked` fails on torch.
+    blocked_by: "transitive:torch@2.14.1"
