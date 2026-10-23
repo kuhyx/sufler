@@ -1,10 +1,11 @@
 import 'package:sufler/import/structure/cast.dart';
 import 'package:sufler/import/structure/headings.dart';
+import 'package:sufler/import/structure/infer_cast.dart';
 import 'package:sufler/import/structure/script_sink.dart';
+import 'package:sufler/import/structure/singers.dart';
 import 'package:sufler/import/styled_line.dart';
 import 'package:sufler/model/script.dart';
 
-final _songWord = RegExp(r'^Piosenka\s*|["„”“]');
 final _songIntro = RegExp('piosenk|śpiew', caseSensitive: false);
 
 /// Turns the extracted lines of a play into a [Script] (DOCS-contract.md).
@@ -19,12 +20,7 @@ Script buildScript(
   required String source,
 }) {
   final texts = [for (final l in lines) l.text];
-  final (castNames, castEnd) = castList(texts);
-  final cast = Cast();
-  for (final (i, name) in castNames.indexed) {
-    if (cast.resolve(name, record: false)?.name != name) cast.add(name, i);
-  }
-  _infer(cast, lines, castEnd + 1);
+  final (cast, castEnd) = buildCast(lines);
   final last = lines.lastWhere(
     (l) => l.text.trim().isNotEmpty,
     orElse: () => const StyledLine(''),
@@ -45,35 +41,6 @@ Script buildScript(
   );
 }
 
-/// Adds recurring heading-shaped lines (2+ times, each followed by text)
-/// that the cast list does not already cover.
-void _infer(Cast cast, List<StyledLine> lines, int from) {
-  final counts = <String, int>{};
-  final first = <String, int>{};
-  for (var i = from; i < lines.length; i++) {
-    if (lines[i].tint != Tint.normal) continue;
-    final (name, _) = splitTrailingDirection(lines[i].text);
-    if (!_headingShaped(name, 4)) continue;
-    final next = lines.skip(i + 1).map((l) => l.text.trim());
-    final text = next.firstWhere((t) => t.isNotEmpty, orElse: () => '');
-    if (text.isEmpty || headingParts(text) != null) continue;
-    counts[name] = (counts[name] ?? 0) + 1;
-    first.putIfAbsent(name, () => i);
-  }
-  final recurring = counts.keys.where((k) => counts[k]! >= 2).toList()
-    ..sort((a, b) => counts[b]!.compareTo(counts[a]!));
-  for (final name in recurring) {
-    for (final part in headingParts(name)!) {
-      if (cast.resolve(part) == null) cast.add(part, 1000 + first[name]!);
-    }
-  }
-}
-
-bool _headingShaped(String text, int maxWords) =>
-    headingParts(text, maxWords: maxWords) != null &&
-    !isSceneHeading(text) &&
-    songTitle(text) == null;
-
 class _Structurer {
   new(this.cast);
 
@@ -85,6 +52,10 @@ class _Structurer {
   List<String> _headDirections = [];
   Tint? _runTint;
   List<String>? _runSpeakers;
+  List<String>? _runAll;
+
+  /// Who has spoken or sung in the current scene (singer-tag fallback).
+  final Set<String> _scene = {};
 
   /// The document's last line when it is an end-of-play marker ("Koniec").
   /// Only the last one: mid-play, "Koniec!" can be a character's line.
@@ -104,7 +75,7 @@ class _Structurer {
   (List<String>, String?)? _heading(String text, {bool record = true}) {
     final (name, direction) = splitTrailingDirection(text);
     final parts = headingParts(name);
-    if (parts == null || !_headingShaped(name, 8)) return null;
+    if (parts == null || !headingShaped(name, 8)) return null;
     final ids = <String>[];
     for (final p in parts) {
       final m = cast.resolve(p, record: false);
@@ -147,6 +118,7 @@ class _Structurer {
       _flush();
       out.startScene(squash(text));
       speakers = const [];
+      _scene.clear();
       _runTint = null;
       return;
     }
@@ -163,15 +135,19 @@ class _Structurer {
     final title = songTitle(text);
     if (title != null) {
       _flush();
-      // "Piosenka Macochy" is sung by Macocha, whoever spoke last.
-      final named = cast.inflected(title.replaceAll(_songWord, ''));
-      out.startSong(title, named == null ? speakers : [named.id]);
+      // "Piosenka Macochy" is sung by Macocha, whoever spoke last;
+      // "Piosenka Krasnali" by every member of the group "Krasnale".
+      out.startSong(title, titleSingers(cast, title) ?? speakers);
       return;
     }
+    if (_singerTag(l, text)) return;
     final heading = _insideParens ? null : _heading(text);
     if (heading != null) {
+      _scene.addAll(heading.$1);
       if (song != null && song.coloured == true && l.tint == Tint.song) {
-        song.speakers = heading.$1;
+        song
+          ..speakers = heading.$1
+          ..all = {...song.all, ...heading.$1}.toList();
         return;
       }
       _flush();
@@ -187,6 +163,38 @@ class _Structurer {
     if (_text.isNotEmpty) _text.write(_wraps ? ' ' : '\n');
     _text.write(text);
     _wraps = l.wraps;
+  }
+
+  /// A singer tag ("R.", "Razem") in a song or a red run: sets who sings
+  /// the lyrics after it and stays an unspoken direction.
+  bool _singerTag(StyledLine l, String text) {
+    final song = out.song;
+    final red = l.tint == Tint.song;
+    if (song == null ? !red : song.coloured == true && !red) return false;
+    if (!red && _heading(text, record: false) != null) return false;
+    final run = song == null && _runTint == Tint.song;
+    final all = song?.all ?? (run ? _runAll : null) ?? speakers;
+    final ids = singerTag(text, cast, all, _scene);
+    if (ids == null) return false;
+    final everyone = {...all, ...ids}.toList();
+    if (song != null) {
+      song
+        ..speakers = ids
+        ..all = everyone;
+    } else {
+      if (!run) _flush();
+      _runTint = Tint.song;
+      _runSpeakers = ids;
+      _runAll = everyone;
+    }
+    out.emit(
+      LineKind.direction,
+      ids,
+      '',
+      directions: [squash(text)],
+      songId: song?.id,
+    );
+    return true;
   }
 
   /// Handles [text] as a lyric of [song]; false when the song has ended.
@@ -209,10 +217,10 @@ class _Structurer {
     _flush();
     if (_runTint != tint) {
       _runTint = tint;
-      _runSpeakers = null;
+      _runSpeakers = _runAll = null;
       if (tint == Tint.song && _songIntro.hasMatch(text)) {
         final named = cast.mentionedIn(text);
-        _runSpeakers = named.isEmpty ? speakers : named;
+        _runSpeakers = _runAll = named.isEmpty ? speakers : named;
         out.emit(LineKind.direction, _runSpeakers!, '', directions: [text]);
         return;
       }
@@ -221,7 +229,8 @@ class _Structurer {
     // An unheaded red passage becomes its own song section from its first
     // lyric on, so it can be picked as a song role; `line` then routes the
     // rest of the run through `_lyric`, which closes it on a colour change.
-    if (tint == Tint.song && out.startUnheadedSong(text, singers)) {
+    final all = _runAll ?? singers;
+    if (tint == Tint.song && out.startUnheadedSong(text, singers, all: all)) {
       return out.emitText(LineKind.song, singers, text, songId: out.song!.id);
     }
     final kind = tint == Tint.song ? LineKind.song : LineKind.recitation;

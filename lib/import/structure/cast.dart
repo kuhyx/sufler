@@ -121,24 +121,27 @@ class Cast {
   /// The member an inflected phrase names ("Piaskowego Wilka", "macochy"):
   /// same word count, each word sharing all but its last 2 letters.
   CastMember? inflected(String phrase) {
-    final words = _norm(phrase).toLowerCase().split(' ');
-    bool stem(String a, String b) {
-      var i = 0;
-      while (i < a.length && i < b.length && a[i] == b[i]) {
-        i++;
-      }
-      return i >= 3 && i >= math.min(a.length, b.length) - 2;
-    }
-
-    final hits = _members.where((m) {
-      final name = m.name.toLowerCase().split(' ');
-      if (name.length != words.length) return false;
-      for (var i = 0; i < name.length; i++) {
-        if (!stem(name[i], words[i])) return false;
-      }
-      return true;
-    }).toList();
+    final hits = _members.where((m) => _inflects(m.name, phrase)).toList();
     return hits.length == 1 ? hits.single : null;
+  }
+
+  final Map<String, List<String>> _groups = {};
+
+  /// Records a cast-list group: [members] are names already in the cast.
+  void addGroup(String name, Iterable<String> members) {
+    final ids = <String>[];
+    for (final n in members) {
+      final id = resolve(n, record: false)?.id;
+      if (id != null && !ids.contains(id)) ids.add(id);
+    }
+    if (ids.isNotEmpty) _groups[_norm(name)] = ids;
+  }
+
+  /// Member ids of the one group an inflected phrase names ("Krasnali"
+  /// for the group "Krasnale"), or null.
+  List<String>? group(String phrase) {
+    final hits = _groups.keys.where((g) => _inflects(g, phrase)).toList();
+    return hits.length == 1 ? _groups[hits.single] : null;
   }
 
   /// Members named (by name, alias or distinctive first word) in [text],
@@ -163,4 +166,21 @@ class Cast {
     found.sort((a, b) => a.$1.compareTo(b.$1));
     return [for (final f in found) f.$2];
   }
+}
+
+/// Whether [phrase] is an inflected form of [name]: same word count, each
+/// word sharing all but its last 2 letters (at least 3).
+bool _inflects(String name, String phrase) {
+  final a = _norm(name).toLowerCase().split(' ');
+  final b = _norm(phrase).toLowerCase().split(' ');
+  if (a.length != b.length) return false;
+  for (var w = 0; w < a.length; w++) {
+    final (x, y) = (a[w], b[w]);
+    var i = 0;
+    while (i < x.length && i < y.length && x[i] == y[i]) {
+      i++;
+    }
+    if (i < 3 || i < math.min(x.length, y.length) - 2) return false;
+  }
+  return true;
 }
