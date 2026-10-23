@@ -4,7 +4,7 @@
     <!-- Google Docs import. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="sufler"
+        android:label="Sufler"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
