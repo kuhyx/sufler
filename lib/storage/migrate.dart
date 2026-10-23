@@ -62,6 +62,7 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
       roles: p.roles,
       speed: p.speed,
       lineSeconds: move(p.lineSeconds),
+      tapSeconds: move(p.tapSeconds),
       recordings: move(p.recordings),
       knowledge: move(p.knowledge),
       resume: resume,

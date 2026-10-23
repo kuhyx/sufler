@@ -84,6 +84,7 @@ class RehearsalPrefs {
     this.roles = const {},
     this.speed = 1,
     this.lineSeconds = const {},
+    this.tapSeconds = const {},
     this.recordings = const {},
     this.knowledge = const {},
     this.resume,
@@ -103,6 +104,7 @@ class RehearsalPrefs {
       roles: {for (final r in stringList(json['roles'])) Role.parse(r)},
       speed: (json['speed'] as num? ?? 1).toDouble(),
       lineSeconds: byLine('lineSeconds', (v) => (v! as num).toDouble()),
+      tapSeconds: byLine('tapSeconds', (v) => (v! as num).toDouble()),
       recordings: byLine('recordings', (v) => v! as String),
       knowledge: byLine(
         'knowledge',
@@ -124,6 +126,11 @@ class RehearsalPrefs {
 
   /// Manual per-line pause overrides, seconds.
   final Map<int, double> lineSeconds;
+
+  /// Line index -> seconds timed by a tap in "Nagraj czasy" (line shown to
+  /// "Skończyłem"): a pace sample like a recording. The pause itself is
+  /// the [lineSeconds] entry the tap also wrote.
+  final Map<int, double> tapSeconds;
 
   /// Line index -> storage key of the actor's own recording.
   final Map<int, String> recordings;
@@ -182,6 +189,8 @@ class RehearsalPrefs {
     'roles': [for (final r in roles) r.toString()],
     'speed': speed,
     'lineSeconds': {for (final e in lineSeconds.entries) '${e.key}': e.value},
+    if (tapSeconds.isNotEmpty)
+      'tapSeconds': {for (final e in tapSeconds.entries) '${e.key}': e.value},
     'recordings': {for (final e in recordings.entries) '${e.key}': e.value},
     'knowledge': {for (final e in knowledge.entries) '${e.key}': e.value},
     'resume': ?resume?.toJson(),
@@ -200,6 +209,7 @@ class RehearsalPrefs {
     Set<Role>? roles,
     double? speed,
     Map<int, double>? lineSeconds,
+    Map<int, double>? tapSeconds,
     Map<int, String>? recordings,
     Map<int, List<bool>>? knowledge,
     ResumePoint? resume,
@@ -211,6 +221,7 @@ class RehearsalPrefs {
     roles: roles ?? this.roles,
     speed: speed ?? this.speed,
     lineSeconds: lineSeconds ?? this.lineSeconds,
+    tapSeconds: tapSeconds ?? this.tapSeconds,
     recordings: recordings ?? this.recordings,
     knowledge: knowledge ?? this.knowledge,
     resume: clearResume ? null : resume ?? this.resume,

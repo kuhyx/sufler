@@ -147,6 +147,16 @@ void main() {
     expect(ResumePoint.fromJson(missed.toJson()).missedOnly, isTrue);
   });
 
+  test('tapped times: optional, round trip, omitted when empty', () {
+    final old = RehearsalPrefs.fromJson(const {
+      'lineSeconds': {'4': 4.2},
+    });
+    expect(old.tapSeconds, isEmpty);
+    expect(old.toJson().containsKey('tapSeconds'), isFalse);
+    final p = old.copyWith(tapSeconds: {4: 4.2, 7: 1.5});
+    expect(RehearsalPrefs.fromJson(p.toJson()).tapSeconds, {4: 4.2, 7: 1.5});
+  });
+
   test('pure runs: optional, round trip, kept through a re-parse', () {
     const old = RehearsalPrefs();
     expect(old.toJson().containsKey('pureRuns'), isFalse);

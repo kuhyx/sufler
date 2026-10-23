@@ -129,7 +129,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       speed: _prefs.speed,
       overrides: _prefs.lineSeconds,
       recordingSeconds: recorded,
-      pace: secondsPerSyllable(script, recorded),
+      pace: secondsPerSyllable(script, recorded, tapSeconds: _prefs.tapSeconds),
     );
     final (:cues, :start) = rehearsalWalk(
       plain,

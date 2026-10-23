@@ -88,6 +88,7 @@ void main() {
             .copyWith(
               roles: {const Role.character(wolf)},
               lineSeconds: {4: 9},
+              tapSeconds: {4: 2.5},
               resume: const ResumePoint(
                 label: 'Scena 2',
                 start: 6,
@@ -126,6 +127,7 @@ void main() {
 
       final p = await lib.loadPrefs('abc123');
       expect(p.lineSeconds, {5: 9.0});
+      expect(p.tapSeconds, {5: 2.5});
       expect(p.knowledge, {
         2: [false],
       });

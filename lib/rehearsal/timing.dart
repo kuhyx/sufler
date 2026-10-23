@@ -5,7 +5,8 @@
 ///   2. own recording length + 1 s (absolute, speed ignored),
 ///   3. estimate from his own pace (`pace.dart`): median seconds per
 ///      syllable x the line's spoken syllables + 1 s, as if he had recorded
-///      it (absolute, speed ignored; only with >= 3 recorded lines),
+///      it (absolute, speed ignored; only with >= 3 recorded or tapped
+///      lines),
 ///   4. formula `syllables / 3.5 * 1.6 + 1.5`, divided by the speed.
 library;
 
@@ -44,7 +45,7 @@ enum PauseSource {
   /// The actor's own recording of the line.
   recording,
 
-  /// Guessed from his pace over the recorded lines.
+  /// Guessed from his pace over the recorded and tapped lines.
   estimate,
 
   /// The syllable formula.

@@ -68,5 +68,22 @@ void main() {
         closeTo(0.4, 1e-9),
       );
     });
+
+    test('tapped times count like recordings; a recording wins its line', () {
+      // Two recordings plus one tapped line make three samples.
+      expect(
+        secondsPerSyllable(script, {1: 2.5, 4: 1.2}, tapSeconds: {5: 0.9}),
+        closeTo(0.4, 1e-9),
+      );
+      // Line 4 tapped and recorded: one sample (the recording), not two.
+      expect(
+        secondsPerSyllable(script, {1: 2.5, 4: 1.2}, tapSeconds: {4: 9}),
+        isNull,
+      );
+      expect(
+        secondsPerSyllable(script, const {}, tapSeconds: {1: 2.5, 4: 1.2}),
+        isNull,
+      );
+    });
   });
 }
