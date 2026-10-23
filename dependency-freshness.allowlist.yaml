@@ -1,0 +1,14 @@
+# Dependencies held below latest stable in this repo, and why. Adds to the
+# fleet-wide ~/src/utils/dependency-freshness.allowlist.yaml. `transitive:`
+# entries are predicates: they clear themselves when the blocker moves, so
+# they carry no `expires`.
+
+exceptions:
+  - ecosystem: pypi
+    package: librosa
+    pinned: "0.11.0"
+    latest_known: "1.0.0"
+    reason: >-
+      chatterbox-tts 0.1.7 exact-pins librosa==0.11.0; tts/ imports librosa
+      directly (voicecheck pitch tracking), so it is declared at that pin.
+    blocked_by: "transitive:chatterbox-tts@0.1.7"
