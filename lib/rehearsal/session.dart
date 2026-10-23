@@ -39,13 +39,16 @@ class PassScore {
 /// Loop mode always self-grades: a pass is only clean when every own line
 /// was graded correct, and a skipped own line counts as missed.
 class RehearsalSession {
-  /// Starts at the first cue of pass 1.
+  /// Starts pass 1 at cue [startAt] (0: the beginning; a resumed walk
+  /// passes where it stopped).
   new(
     this.cues, {
     bool selfGrade = false,
     this.loop = false,
     this.cleanTarget = 3,
+    int startAt = 0,
   }) : grades = selfGrade || loop {
+    position = startAt.clamp(0, cues.length);
     _enter();
   }
 

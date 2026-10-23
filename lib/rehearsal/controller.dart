@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/rehearsal/capture.dart';
+import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/session.dart';
+import 'package:sufler/rehearsal/similarity.dart';
 
 /// Plays a partner line aloud (pack clip or device TTS). The future
 /// completes when the line has finished playing.
@@ -15,14 +18,23 @@ abstract interface class LinePlayer {
 }
 
 /// Drives a [RehearsalSession] in real time: plays partner lines through a
-/// [LinePlayer] and runs the countdown for the actor's lines.
+/// [LinePlayer] and runs the countdown for the actor's lines. With a
+/// [capture] it also listens to each own line: the line ends when the
+/// actor stops speaking, and the grade is suggested from what was heard.
 class RehearsalController extends ChangeNotifier {
   /// Wraps [session]; call [start] to begin.
   new(
     this.session,
     this.player, {
+    this.capture,
     this.tick = const Duration(milliseconds: 100),
   });
+
+  /// Shortest pause [adjustPause] allows.
+  static const double minPause = 0.5;
+
+  /// Microphone for listening to own lines, if enabled.
+  final SpeechCapture? capture;
 
   /// The underlying state machine.
   final RehearsalSession session;
@@ -44,6 +56,15 @@ class RehearsalController extends ChangeNotifier {
   /// Seconds left of the actor's current pause.
   double get remaining => _remainingMs / 1000;
 
+  /// What the microphone heard of the current own line (null: nothing yet,
+  /// or no recognizer).
+  String? heard;
+
+  /// Grade pre-selected from [heard]: ✓ when it matches the line.
+  bool? suggestion;
+
+  bool _listening = false;
+
   /// Begins at the session's current cue.
   void start() => _enter();
 
@@ -56,6 +77,7 @@ class RehearsalController extends ChangeNotifier {
     _timer?.cancel();
     _timer = null;
     unawaited(player.stop());
+    if (_listening) unawaited(capture?.cancel());
   }
 
   void _enter() {
@@ -65,9 +87,40 @@ class RehearsalController extends ChangeNotifier {
       unawaited(_playPartner(cue.line, ++_generation));
     } else if (cue != null && session.phase == Phase.mine) {
       _remainingMs = (cue.seconds * 1000).round();
+      heard = null;
+      suggestion = null;
       _runCountdown();
+      if (capture != null) unawaited(_listen(cue.line, _generation));
     }
     _notify();
+  }
+
+  Future<void> _listen(ScriptLine line, int gen) async {
+    _listening = true;
+    final take = await capture!.listen();
+    _listening = false;
+    if (gen != _generation || _disposed || take == null) return;
+    heard = take.transcript;
+    suggestion = suggestedGrade(line.text, heard);
+    if (session.phase == Phase.mine && !paused) {
+      done();
+    } else {
+      _notify();
+    }
+  }
+
+  /// Lengthens (or with a negative [delta], shortens) the current own
+  /// line's pause, the running countdown with it; returns the new length.
+  double adjustPause(double delta) {
+    final cue = session.current!;
+    final next = (cue.seconds + delta).clamp(minPause, 600.0);
+    session.cues[session.position] = withSeconds(cue, next);
+    if (session.phase == Phase.mine) {
+      final ms = _remainingMs + ((next - cue.seconds) * 1000).round();
+      _remainingMs = ms.clamp(tick.inMilliseconds, 600000);
+    }
+    _notify();
+    return next;
   }
 
   Future<void> _playPartner(ScriptLine line, int gen) async {
@@ -97,6 +150,8 @@ class RehearsalController extends ChangeNotifier {
   void done() {
     if (session.phase != Phase.mine) return;
     _timer?.cancel();
+    // Keep listening's result for the grade; stop recording now.
+    if (_listening) unawaited(capture!.finish());
     session.finishPause();
     _enter();
   }

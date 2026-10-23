@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 const _header = 44;
@@ -33,4 +34,21 @@ double wavSeconds(Uint8List wav) {
   final byteRate = b.getUint32(28, Endian.little);
   if (byteRate == 0) return 0;
   return b.getUint32(40, Endian.little) / byteRate;
+}
+
+/// The part of WAV [wav] (made by [pcmToWav]) from [start] to [end]
+/// seconds, as a new WAV; clamped to the audio, whole frames only.
+Uint8List trimWav(Uint8List wav, double start, double end) {
+  final b = ByteData.sublistView(wav);
+  final rate = b.getUint32(24, Endian.little);
+  final block = b.getUint16(32, Endian.little);
+  final frames = b.getUint32(40, Endian.little) ~/ block;
+  int at(double s) => (s * rate).round().clamp(0, frames);
+  final from = _header + at(start) * block;
+  final to = _header + math.max(at(start), at(end)) * block;
+  return pcmToWav(
+    wav.sublist(from, to),
+    sampleRate: rate,
+    channels: block ~/ 2,
+  );
 }

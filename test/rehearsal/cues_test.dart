@@ -73,4 +73,22 @@ void main() {
     expect(const LineRange(1, 2).hashCode, const LineRange(1, 2).hashCode);
     expect(const LineRange(1, 2).toString(), 'LineRange(1..2)');
   });
+
+  test('only missed lines, each with the line before it as the prompt', () {
+    final cues = buildCues(script, {
+      const Role.character(wolf),
+    }, LineRange(0, script.lines.length - 1));
+    // Own lines 2, 4, 10. Missed 4 and 10: 4 is cued by my own line 2,
+    // which is read out like a partner line.
+    expect(_walk(onlyMissed(cues, {4, 10})), [
+      (2, false),
+      (4, true),
+      (9, false),
+      (10, true),
+    ]);
+    // Consecutive missed lines: the first is the second's prompt.
+    expect(_walk(onlyMissed(cues, {2, 4})), [(1, false), (2, true), (4, true)]);
+    expect(onlyMissed(cues, {}), isEmpty);
+    expect(withSeconds(cues[1], 7).seconds, 7);
+  });
 }

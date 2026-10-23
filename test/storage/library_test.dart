@@ -124,4 +124,15 @@ void main() {
     expect(p.speed, 2);
     expect(p.missed, {3});
   });
+
+  test('a take with audio is the recording; without, the pause', () async {
+    final lib = _lib();
+    await lib.savePrefs('a', const RehearsalPrefs(lineSeconds: {2: 9, 4: 9}));
+    final wav = pcmToWav(Uint8List(16000 * 2 * 2), sampleRate: 16000);
+    await lib.saveTake('a', 2, seconds: 2, audio: wav);
+    await lib.saveTake('a', 5, seconds: 1.234);
+    final p = await lib.loadPrefs('a');
+    expect(p.lineSeconds, {4: 9, 5: 2.2});
+    expect(await lib.recordingSeconds(p), {2: 2});
+  });
 }

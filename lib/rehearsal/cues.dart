@@ -46,3 +46,22 @@ List<Cue> buildCues(
         ),
   ];
 }
+
+/// "Only lines I missed": each own cue whose line is in [missed], preceded
+/// by the cue before it as its prompt (read out even if it is mine).
+List<Cue> onlyMissed(List<Cue> cues, Set<int> missed) {
+  final out = <Cue>[];
+  for (final (i, cue) in cues.indexed) {
+    if (!cue.mine || !missed.contains(cue.line.index)) continue;
+    if (i > 0 && (out.isEmpty || out.last.line != cues[i - 1].line)) {
+      final prompt = cues[i - 1];
+      out.add(Cue(line: prompt.line, mine: false, seconds: prompt.seconds));
+    }
+    out.add(cue);
+  }
+  return out;
+}
+
+/// [cue] with a new pause length.
+Cue withSeconds(Cue cue, double seconds) =>
+    Cue(line: cue.line, mine: cue.mine, seconds: seconds);

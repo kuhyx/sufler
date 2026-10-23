@@ -101,6 +101,24 @@ class ScriptLibrary {
     return key;
   }
 
+  /// Stores a timed take of line [index]. With [audio] (the speech span
+  /// only) it becomes the line's recording, so the pause is its length
+  /// + 1 s, and a manual override is dropped (the last action wins).
+  /// Without audio the pause is set to [seconds] + 1 s directly.
+  Future<void> saveTake(
+    String id,
+    int index, {
+    required double seconds,
+    Uint8List? audio,
+  }) async {
+    if (audio != null) await saveRecording(id, index, audio);
+    await updatePrefs(id, (p) {
+      final map = {...p.lineSeconds}..remove(index);
+      if (audio == null) map[index] = ((seconds + 1) * 10).round() / 10;
+      return p.copyWith(lineSeconds: map);
+    });
+  }
+
   /// The recording stored under [key], or null.
   Future<Uint8List?> loadRecording(String key) => store.readBytes(key);
 

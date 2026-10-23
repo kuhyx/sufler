@@ -26,4 +26,15 @@ void main() {
     expect(wavSeconds(Uint8List(10)), 0);
     expect(wavSeconds(Uint8List(44)), 0);
   });
+
+  test('trim keeps the span, clamped to the audio', () {
+    final pcm = Uint8List.fromList(List.generate(64000, (i) => i % 256));
+    final wav = pcmToWav(pcm, sampleRate: 16000); // 2 s
+    final cut = trimWav(wav, 0.5, 1.25);
+    expect(wavSeconds(cut), 0.75);
+    expect(cut.sublist(44, 46), pcm.sublist(16000, 16002));
+    expect(wavSeconds(trimWav(wav, 1.5, 9)), 0.5);
+    expect(wavSeconds(trimWav(wav, -1, 0.5)), 0.5);
+    expect(wavSeconds(trimWav(wav, 1, 0.5)), 0);
+  });
 }
