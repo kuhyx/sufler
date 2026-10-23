@@ -149,6 +149,8 @@ class _ScriptScreenState extends State<ScriptScreen> {
       end: range.end,
       position: start,
       missedOnly: missedOnly,
+      // Left mid-retry: the cue it resumes at keeps its ✗.
+      retry: from?.retry ?? false,
     );
     // The rehearsal screen saves [resume] (and every position reached).
     await _push(

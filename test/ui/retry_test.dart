@@ -71,6 +71,37 @@ void main() {
     expect(find.byKey(_badge), findsNothing);
   });
 
+  testWidgets('leaving mid-retry keeps the ✗: resumed ✓ is not first', (
+    tester,
+  ) async {
+    tester.usePhone();
+    final rig = await openHub(tester, 'retry-resume', roles: _wolf);
+    await tester.tapVisible(find.text('Scena 1'));
+    await _speakDone(tester);
+    await _say(tester, 'Źle');
+    expect(find.byKey(const Key('retry')), findsOneWidget);
+    await leaveRehearsal(tester);
+
+    await tester.tap(find.byKey(const Key('learn')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(_header(tester), contains('kwestia 2/4'));
+    expect(find.byKey(const Key('retry')), findsOneWidget);
+    await _say(tester, 'Dobrze');
+    await _say(tester, 'Dobrze');
+    await _speakDone(tester);
+    expect(find.text('Koniec'), findsOneWidget);
+    await leaveRehearsal(tester);
+    final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
+    expect(prefs.knowledge, {
+      2: [false],
+      4: [true],
+    });
+    expect(prefs.missed, {2});
+    expect(prefs.pureRuns, isEmpty);
+    expect(find.byKey(_badge), findsNothing);
+  });
+
   testWidgets('a pure run of a scene shows its badge in Sceny', (tester) async {
     tester.usePhone();
     final rig = await openHub(tester, 'pure', roles: _wolf);

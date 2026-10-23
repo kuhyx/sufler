@@ -55,6 +55,7 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
       end: start < end ? end : start,
       position: r.position,
       missedOnly: r.missedOnly,
+      retry: r.retry,
     );
   }
   return (

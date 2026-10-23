@@ -65,6 +65,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
   RehearsalController? _ctl;
   late RehearsalAssist _assist;
   int _saved = -1;
+  bool _savedRetry = false;
   int _pure = 0;
 
   Services get _svc => ServicesScope.of(context);
@@ -90,6 +91,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         loop: s.loop,
         cleanTarget: s.cleanTarget,
         startAt: widget.resume.position,
+        retry: widget.resume.retry,
       ),
       player,
       capture: s.listen ? svc.capture : null,
@@ -117,17 +119,24 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     unawaited(_svc.library.updatePrefs(_id, (p) => p.withPureRun(section.id)));
   }
 
-  /// Keeps the resume point at the cue reached (the start once finished).
+  /// Keeps the resume point at the cue reached (the start once finished),
+  /// with whether it is being asked again after a ✗.
   void _savePosition() {
     final s = _ctl!.session;
     final at = s.phase == Phase.finished ? 0 : s.position;
-    if (at == _saved) return;
+    final retry = s.retry;
+    if (at == _saved && retry == _savedRetry) return;
     _saved = at;
+    _savedRetry = retry;
     unawaited(
       _svc.library.updatePrefs(
         _id,
         (p) => p.copyWith(
-          resume: widget.resume.at(at, line: s.cues[at].line.index),
+          resume: widget.resume.at(
+            at,
+            line: s.cues[at].line.index,
+            retry: retry,
+          ),
         ),
       ),
     );

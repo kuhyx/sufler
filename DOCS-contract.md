@@ -182,7 +182,7 @@ by `test/desktop/gdoc_contract_test.dart`.
  "recordings": {"<line-index>": "<path>"},
  "knowledge": {"<line-index>": [false, true]},
  "resume": {"label": "Scena 3", "start": 120, "end": 240, "position": 7,
-            "mode": "range", "line": 131},
+            "mode": "range", "line": 131, "retry": true},
  "rolesAsked": true, "pureRuns": ["scena-3"],
  "notes": {"<line-index>": [{"about": "Wilku", "text": "<explanation>"}]}}
 ```
@@ -203,7 +203,11 @@ by `test/desktop/gdoc_contract_test.dart`.
   the script line of that cue (its first line, for a run) and is what
   resumes: the position shifts when runs fold into one cue or the setting
   changes. Without `line` (older prefs) the position is read against the
-  walk with no runs folded.
+  walk with no runs folded. `retry: true` (omitted otherwise; older prefs
+  have none = false): that cue was graded ✗ on its first try and left while
+  being asked again; on resume the ✗ stands, so the next ✓ is a retry (not
+  stored in `knowledge`, the pass is not clean for `pureRuns`). Kept on
+  re-parse.
 - `rolesAsked`: the roles screen was shown once for this script.
 - A per-line pause set with −/+ during rehearsal or measured by "Nagraj
   czasy" without audio is a `lineSeconds` entry. A time tapped in "Nagraj

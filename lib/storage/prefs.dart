@@ -21,6 +21,7 @@ class ResumePoint {
     this.position = 0,
     this.missedOnly = false,
     this.line,
+    this.retry = false,
   });
 
   /// Parses [json] produced by [toJson].
@@ -31,6 +32,7 @@ class ResumePoint {
     position: json['position'] as int? ?? 0,
     missedOnly: json['mode'] == 'missed',
     line: json['line'] as int?,
+    retry: json['retry'] as bool? ?? false,
   );
 
   /// Shown title ("Scena 3", "Kwestie 4–9").
@@ -53,6 +55,11 @@ class ResumePoint {
   /// Null in points saved before it was kept.
   final int? line;
 
+  /// The cue reached was graded ✗ on its first try and is being asked
+  /// again: on resume that ✗ stands, so the next ✓ is not a first attempt
+  /// (not stored as knowledge, the pass not clean).
+  final bool retry;
+
   /// JSON form.
   Json toJson() => {
     'label': label,
@@ -61,16 +68,20 @@ class ResumePoint {
     'position': position,
     'mode': missedOnly ? 'missed' : 'range',
     'line': ?line,
+    // Only when set, so points without a retry keep their old shape.
+    if (retry) 'retry': true,
   };
 
-  /// Copy at another [position] (of script [line]).
-  ResumePoint at(int position, {int? line}) => ResumePoint(
+  /// Copy at another [position] (of script [line]); [retry]: its cue is
+  /// being asked again after a ✗.
+  ResumePoint at(int position, {int? line, bool retry = false}) => ResumePoint(
     label: label,
     start: start,
     end: end,
     position: position,
     missedOnly: missedOnly,
     line: line,
+    retry: retry,
   );
 }
 

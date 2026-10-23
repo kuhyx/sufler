@@ -96,6 +96,32 @@ void main() {
     expect(s.results, {1: false});
   });
 
+  test('resumed mid-retry: the ✗ stays, the next ✓ is not a first try', () {
+    // Walk starting on my line 2 (position 0) so nothing before it is
+    // missing from the pass: only the restored ✗ keeps it from being pure.
+    final s = RehearsalSession(
+      _scene1(const LineRange(2, 5)),
+      selfGrade: true,
+      retry: true,
+    );
+    expect(s.current!.line.index, 2);
+    expect(s.phase, Phase.mine);
+    expect(s.retry, isTrue);
+    s.finishPause();
+    expect(s.grade(ok: true), isFalse);
+    expect(s.results, {0: false});
+    s.finishPause();
+    expect(s.grade(ok: true), isTrue);
+    s.partnerDone();
+    expect(s.phase, Phase.finished);
+    expect(s.history.single.toString(), '1/2');
+    expect(s.purePasses, 0);
+    // Only an own cue can carry the ✗; a partner cue ignores it.
+    final partner = RehearsalSession(_scene1(), selfGrade: true, retry: true);
+    expect(partner.retry, isFalse);
+    expect(partner.results, isEmpty);
+  });
+
   test('scores count first attempts; a pure pass needs every first ✓', () {
     final s = RehearsalSession(_scene1(), loop: true, cleanTarget: 1);
     _pass(s, [
