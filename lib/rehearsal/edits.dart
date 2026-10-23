@@ -16,18 +16,20 @@ Script _with(
   lines: lines ?? s.lines,
 );
 
-/// Correction: set line [index]'s [speakers] and/or [kind].
+/// Correction: set line [index]'s [speakers], [kind] and/or [text].
 Script editLine(
   Script s,
   int index, {
   List<String>? speakers,
   LineKind? kind,
+  String? text,
 }) => _with(
   s,
   lines: s.lines
       .map(
-        (l) =>
-            l.index == index ? l.copyWith(speakers: speakers, kind: kind) : l,
+        (l) => l.index == index
+            ? l.copyWith(speakers: speakers, kind: kind, text: text)
+            : l,
       )
       .toList(),
 );

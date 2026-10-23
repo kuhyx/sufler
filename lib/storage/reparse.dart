@@ -75,8 +75,9 @@ extension ParseStore on ScriptLibrary {
       'backup/$id/${DateTime.now().millisecondsSinceEpoch}',
       {'script': old.toJson(), 'prefs': prefs.toJson()},
     );
-    final map = alignLines(old.lines, fresh.lines);
     final logged = await loadCorrections(id);
+    // Hand-edited text would not match the new parse: align as parsed.
+    final map = alignLines(revertTexts(old, logged).lines, fresh.lines);
     final meta = await loadMeta(id);
     // Before the log existed only merges can be told from parser changes.
     final log = logged.isEmpty && meta.fingerprint == null

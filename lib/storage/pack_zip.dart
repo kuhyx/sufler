@@ -14,18 +14,35 @@ Uint8List packToZip(Script script, AudioPack pack) => _zip(pack, {
 }, pack.fingerprint);
 
 /// [pack] with only the clips in [moves] (old line index -> new), stamped
-/// with [fingerprint]: what survives of a pack after a re-parse.
-Uint8List rekeyPack(AudioPack pack, Map<int, int> moves, String fingerprint) =>
+/// with [fingerprint] (null: unstamped): what survives of a pack after a
+/// re-parse or a correction.
+Uint8List rekeyPack(AudioPack pack, Map<int, int> moves, String? fingerprint) =>
     _zip(pack, moves, fingerprint);
 
-Uint8List _zip(AudioPack pack, Map<int, int> moves, String? fingerprint) {
+/// [pack] with [clip] as line [index]'s (added or replaced).
+Uint8List packWithClip(AudioPack pack, int index, Uint8List clip) => _zip(
+  pack,
+  {for (final i in pack.indices) i: i},
+  pack.fingerprint,
+  extra: {index: clip},
+);
+
+Uint8List _zip(
+  AudioPack pack,
+  Map<int, int> moves,
+  String? fingerprint, {
+  Map<int, Uint8List> extra = const {},
+}) {
   final archive = Archive();
   final lines = <String, String>{};
-  for (final e in moves.entries) {
-    final clip = pack.clip(e.key);
-    if (clip == null) continue;
-    final name = 'audio/${e.value}.ogg';
-    lines['${e.value}'] = name;
+  final clips = {
+    for (final e in moves.entries) e.value: ?pack.clip(e.key),
+    ...extra,
+  };
+  for (final e in clips.entries) {
+    final clip = e.value;
+    final name = 'audio/${e.key}.ogg';
+    lines['${e.key}'] = name;
     archive.add(ArchiveFile.bytes(name, clip));
   }
   final manifest = {

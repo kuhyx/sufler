@@ -4,6 +4,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/edits.dart';
+import 'package:sufler/storage/line_edits.dart';
 import 'package:sufler/storage/migrate.dart';
 import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/correction_dialogs.dart';
@@ -50,13 +51,13 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
       builder: (_) => LineEditDialog(script: _script!, line: line),
     );
     if (edit == null) return;
-    await _save(
-      editLine(_script!, line.index, speakers: edit.speakers, kind: edit.kind),
+    final r = await _svc.library.correctLine(
+      _script!,
+      line.index,
+      speakers: edit.speakers,
+      kind: edit.kind,
     );
-    await _svc.library.logCorrection(
-      widget.scriptId,
-      lineCorrection(line.index, speakers: edit.speakers, kind: edit.kind),
-    );
+    if (mounted) setState(() => _script = r.script);
   }
 
   Future<void> _merge() async {
@@ -65,8 +66,10 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
       builder: (_) => MergeDialog(script: _script!),
     );
     if (pick == null || pick.from == pick.into) return;
-    await _save(mergeCharacter(_script!, from: pick.from, into: pick.into));
+    final old = _script!;
+    await _save(mergeCharacter(old, from: pick.from, into: pick.into));
     final lib = _svc.library;
+    await lib.restampPack(old, _script!);
     await lib.logCorrection(
       widget.scriptId,
       mergeCorrection(from: pick.from, into: pick.into),
