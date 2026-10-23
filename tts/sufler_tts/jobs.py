@@ -27,6 +27,8 @@ class Job:
 
     id: str
     script_id: str
+    # (script id, sorted overrides): what makes two requests the same render.
+    key: tuple[str, tuple[tuple[str, str], ...]] = ("", ())
     total: int = 0
     done: int = 0
     state: State = "queued"
@@ -45,7 +47,11 @@ class Job:
 
 
 class JobRunner:
-    """Validates requests up front, renders them one at a time in order."""
+    """Validates requests up front, renders them one at a time in order.
+
+    A request identical to a job still queued or running (same script id and
+    voice overrides) joins that job instead of queueing a duplicate render.
+    """
 
     def __init__(self, engine: Engine, cache: ClipCache, packs: Path) -> None:
         """Start the worker thread."""
@@ -53,6 +59,7 @@ class JobRunner:
         self.cache = cache
         self.packs = packs
         self._jobs: dict[str, Job] = {}
+        self._lock = threading.Lock()
         self._queue: queue.Queue[tuple[Job, Script, dict[str, str]] | None] = (
             queue.Queue()
         )
@@ -69,9 +76,14 @@ class JobRunner:
         ):
             raise ValueError("'voices' must map character ids to voice ids")
         assign_voices(script, overrides)  # rejects unknown voice ids now
-        job = Job(uuid.uuid4().hex, script.id)
-        self._jobs[job.id] = job
-        self._queue.put((job, script, overrides))
+        key = (script.id, tuple(sorted(overrides.items())))
+        with self._lock:  # HTTP handlers run on several threads
+            for job in self._jobs.values():
+                if job.key == key and job.state in {"queued", "running"}:
+                    return job
+            job = Job(uuid.uuid4().hex, script.id, key)
+            self._jobs[job.id] = job
+            self._queue.put((job, script, overrides))
         return job
 
     def job(self, job_id: str) -> Job | None:
