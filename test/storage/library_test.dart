@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idb_shim/idb_client_memory.dart';
 import 'package:sufler/model/role.dart';
+import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/wav.dart';
 import 'package:sufler/storage/idb_store.dart';
 import 'package:sufler/storage/library.dart';
@@ -87,5 +88,40 @@ void main() {
     final lib = _lib();
     await lib.savePack('x', Uint8List.fromList([1, 2, 3]));
     expect(await lib.loadPack('x'), isNull);
+  });
+
+  test('start script: the remembered one, else the only one', () async {
+    final lib = _lib();
+    expect(await lib.startScriptId(), isNull);
+    await lib.saveScript(fixtureScript());
+    // A library from before "last script" existed: its only script.
+    expect(await lib.startScriptId(), 'abc123');
+    final other = fixtureScript();
+    await lib.saveScript(
+      Script(
+        id: 'zzz',
+        title: 'Inna',
+        source: 'b.txt',
+        characters: other.characters,
+        scenes: other.scenes,
+        songs: other.songs,
+        lines: other.lines,
+      ),
+    );
+    expect(await lib.startScriptId(), isNull);
+    await lib.rememberScript('zzz');
+    await lib.rememberScript('zzz');
+    expect(await lib.startScriptId(), 'zzz');
+    await lib.deleteScript('zzz');
+    expect(await lib.startScriptId(), 'abc123');
+  });
+
+  test('updatePrefs keeps fields the caller did not touch', () async {
+    final lib = _lib();
+    await lib.savePrefs('a', const RehearsalPrefs(speed: 2));
+    await lib.updatePrefs('a', (p) => p.graded(3, ok: false));
+    final p = await lib.loadPrefs('a');
+    expect(p.speed, 2);
+    expect(p.missed, {3});
   });
 }

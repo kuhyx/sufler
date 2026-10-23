@@ -105,4 +105,33 @@ void main() {
       const Role.character('wilk'),
     );
   });
+
+  test('a group role owns lines its members say together', () {
+    final lines = _sample().lines;
+    final pair = Role.group(['wilk', 'lis']);
+    expect(pair.toString(), 'group:lis+wilk');
+    expect(pair.members, ['lis', 'wilk']);
+    expect(Role.parse('group:lis+wilk'), pair);
+    expect(Role.group(['lis', 'wilk', 'lis']), pair);
+    expect(
+      [
+        for (final l in lines)
+          if (isMine(l, {pair})) l.index,
+      ],
+      [2],
+    );
+    // The chorus: lines with no speaker.
+    final chorus = Role.group(const []);
+    expect(chorus.toString(), 'group:');
+    expect(Role.parse('group:'), chorus);
+    expect(chorus.members, isEmpty);
+    expect(
+      [
+        for (final l in lines)
+          if (isMine(l, {chorus})) l.index,
+      ],
+      [3, 4],
+    );
+    expect(pair.isSong, isFalse);
+  });
 }

@@ -19,6 +19,8 @@ void main() {
       'speed': 1.5,
       'lineSeconds': {'4': 4.2},
       'recordings': {'4': 'rec/abc/4'},
+      'knowledge': <String, Object?>{},
+      'rolesAsked': false,
     });
     final back = RehearsalPrefs.fromJson(json);
     expect(back.roles, p.roles);
@@ -55,7 +57,8 @@ void main() {
 
   test('app settings round trip with defaults', () {
     const s = AppSettings();
-    expect(s.visibility, TextVisibility.show);
+    expect(s.visibility, TextVisibility.revealAfter);
+    expect(s.grades, isTrue);
     expect(s.cleanTarget, 3);
     final t = s.copyWith(
       visibility: TextVisibility.revealAfter,
@@ -69,5 +72,64 @@ void main() {
     expect(back.loop, isTrue);
     expect(back.cleanTarget, 5);
     expect(AppSettings.fromJson(const {}).loop, isFalse);
+  });
+
+  test('settings saved by v1 move "show" to learning mode, once', () {
+    // The exact shape the old settings card wrote: every field, default
+    // "show" included, no version key.
+    const v1 = {
+      'visibility': 'show',
+      'selfGrade': false,
+      'loop': true,
+      'cleanTarget': 4,
+    };
+    final s = AppSettings.fromJson(v1);
+    expect(s.visibility, TextVisibility.revealAfter);
+    expect(s.loop, isTrue);
+    expect(s.cleanTarget, 4);
+    expect(s.lastScriptId, isNull);
+    expect(
+      AppSettings.fromJson({...v1, 'visibility': 'hide'}).visibility,
+      TextVisibility.hide,
+    );
+    // Choosing read-through after the migration sticks.
+    final chosen = s.copyWith(visibility: TextVisibility.show).toJson();
+    expect(chosen['version'], settingsVersion);
+    expect(AppSettings.fromJson(chosen).visibility, TextVisibility.show);
+    expect(AppSettings.fromJson({...chosen, 'loop': false}).grades, isFalse);
+    final last = AppSettings.fromJson(s.copyWith(lastScriptId: 'x').toJson());
+    expect(last.lastScriptId, 'x');
+  });
+
+  test('prefs from v1 load; knowledge and resume round trip', () {
+    final old = RehearsalPrefs.fromJson(const {
+      'roles': ['character:a'],
+      'speed': 1.0,
+      'lineSeconds': {'4': 4.2},
+      'recordings': <String, Object?>{},
+    });
+    expect(old.knowledge, isEmpty);
+    expect(old.resume, isNull);
+    expect(old.rolesAsked, isFalse);
+    var p = old.graded(4, ok: true).graded(4, ok: false).graded(7, ok: true);
+    expect(p.missed, {4});
+    for (var i = 0; i < knowledgeDepth + 5; i++) {
+      p = p.graded(9, ok: i.isEven);
+    }
+    expect(p.knowledge[9], hasLength(knowledgeDepth));
+    p = p.copyWith(
+      resume: const ResumePoint(label: 'Scena 1', start: 0, end: 5).at(3),
+      rolesAsked: true,
+    );
+    final back = RehearsalPrefs.fromJson(p.toJson());
+    expect(back.knowledge[4], [true, false]);
+    expect(back.resume!.position, 3);
+    expect(back.resume!.label, 'Scena 1');
+    expect(back.resume!.missedOnly, isFalse);
+    expect(back.rolesAsked, isTrue);
+    expect(back.lineSeconds, {4: 4.2});
+    expect(back.copyWith(clearResume: true).resume, isNull);
+    const missed = ResumePoint(label: 'x', start: 1, end: 2, missedOnly: true);
+    expect(ResumePoint.fromJson(missed.toJson()).missedOnly, isTrue);
   });
 }

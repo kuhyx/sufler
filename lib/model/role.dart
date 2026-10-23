@@ -1,42 +1,80 @@
 import 'package:flutter/foundation.dart';
 import 'package:sufler/model/script.dart';
 
-/// What the actor plays: a character, or a whole song (sung by them).
+/// What kind of thing a [Role] picks.
+enum RoleKind {
+  /// One character: their lines, alone or together with others.
+  character,
+
+  /// A whole song: every lyric line of it.
+  song,
+
+  /// A group of speakers: every line they say together.
+  group,
+}
+
+/// What the actor plays: a character, a whole song, or a group.
 @immutable
 class Role {
   /// A character role.
-  const new character(this.id) : isSong = false;
+  const new character(this.id) : kind = RoleKind.character;
 
   /// A song role: every line of the song is the actor's.
-  const new song(this.id) : isSong = true;
+  const new song(this.id) : kind = RoleKind.song;
 
-  /// Parses `character:<id>` / `song:<id>`.
+  /// A group role over member ids joined by `+`; see [group].
+  const new _group(this.id) : kind = RoleKind.group;
+
+  /// A group role: every line whose speakers include all of [members]. No
+  /// members = the chorus, i.e. unattributed lines ([ScriptLine.speakers]
+  /// empty).
+  factory group(Iterable<String> members) =>
+      Role._group((members.toSet().toList()..sort()).join('+'));
+
+  /// Parses `character:<id>` / `song:<id>` / `group:<id>+<id>…`.
   factory parse(String value) {
     final i = value.indexOf(':');
-    final kind = value.substring(0, i);
     final id = value.substring(i + 1);
-    return kind == 'song' ? Role.song(id) : Role.character(id);
+    return switch (value.substring(0, i)) {
+      'song' => Role.song(id),
+      'group' => Role._group(id),
+      _ => Role.character(id),
+    };
   }
 
-  /// Character id or song section id.
+  /// Character id, song section id, or the group's sorted member ids
+  /// joined by `+` (empty for the chorus).
   final String id;
 
+  /// What this role picks.
+  final RoleKind kind;
+
   /// True for a song role.
-  final bool isSong;
+  bool get isSong => kind == RoleKind.song;
+
+  /// Member ids of a group role (empty for the chorus and other kinds).
+  List<String> get members =>
+      kind != RoleKind.group || id.isEmpty ? const [] : id.split('+');
 
   /// Whether [line] belongs to the actor under this role.
-  bool owns(ScriptLine line) =>
-      isSong ? line.songId == id : line.speakers.contains(id);
+  bool owns(ScriptLine line) => switch (kind) {
+    RoleKind.song => line.songId == id,
+    RoleKind.character => line.speakers.contains(id),
+    RoleKind.group =>
+      id.isEmpty
+          ? line.speakers.isEmpty
+          : members.every(line.speakers.contains),
+  };
 
   @override
-  String toString() => '${isSong ? 'song' : 'character'}:$id';
+  String toString() => '${kind.name}:$id';
 
   @override
   bool operator ==(Object other) =>
-      other is Role && other.id == id && other.isSong == isSong;
+      other is Role && other.id == id && other.kind == kind;
 
   @override
-  int get hashCode => Object.hash(id, isSong);
+  int get hashCode => Object.hash(id, kind);
 }
 
 /// Whether [line] is the actor's under any of [roles].

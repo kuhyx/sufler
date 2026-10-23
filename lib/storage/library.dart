@@ -62,6 +62,17 @@ class ScriptLibrary {
   Future<void> savePrefs(String id, RehearsalPrefs prefs) =>
       store.writeJson(_prefs(id), prefs.toJson());
 
+  /// Reads, changes and saves prefs of script [id] in one step, so screens
+  /// holding an older copy never overwrite fields they did not touch.
+  Future<RehearsalPrefs> updatePrefs(
+    String id,
+    RehearsalPrefs Function(RehearsalPrefs) change,
+  ) async {
+    final next = change(await loadPrefs(id));
+    await savePrefs(id, next);
+    return next;
+  }
+
   /// Stores an audio pack zip for script [id].
   Future<void> savePack(String id, Uint8List zip) =>
       store.writeBytes(_pack(id), zip);
@@ -83,10 +94,9 @@ class ScriptLibrary {
   Future<String> saveRecording(String id, int index, Uint8List wav) async {
     final key = '${_recDir(id)}$index';
     await store.writeBytes(key, wav);
-    final prefs = await loadPrefs(id);
-    await savePrefs(
+    await updatePrefs(
       id,
-      prefs.copyWith(recordings: {...prefs.recordings, index: key}),
+      (p) => p.copyWith(recordings: {...p.recordings, index: key}),
     );
     return key;
   }
@@ -124,4 +134,23 @@ class ScriptLibrary {
   /// Saves app-wide settings.
   Future<void> saveSettings(AppSettings settings) =>
       store.writeJson(_settings, settings.toJson());
+
+  /// Remembers [id] as the script to open on the next start.
+  Future<void> rememberScript(String id) async {
+    final s = await loadSettings();
+    if (s.lastScriptId != id) {
+      await saveSettings(s.copyWith(lastScriptId: id));
+    }
+  }
+
+  /// The script to open on start: the last one opened, or the only one
+  /// (libraries from before "last script" was stored). Null: library.
+  Future<String?> startScriptId() async {
+    final last = (await loadSettings()).lastScriptId;
+    if (last != null && await store.readJson(_script(last)) != null) {
+      return last;
+    }
+    final ids = await store.keys('script/');
+    return ids.length == 1 ? ids.single.substring('script/'.length) : null;
+  }
 }
