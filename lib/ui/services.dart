@@ -5,12 +5,14 @@ import 'package:sufler/assist/assistant.dart';
 import 'package:sufler/assist/pc_session.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/transcribe_client.dart';
+import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/capture.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/tts/render_pack.dart';
+import 'package:sufler/ui/platform/links.dart';
 
 /// Imports a dropped document (signature of `importDocument`).
 typedef DocImporter = Future<Script> Function({
@@ -26,6 +28,7 @@ typedef ApkgExporter = Future<Uint8List> Function(
   Script script,
   Set<Role> roles, {
   AudioPack? audio,
+  Map<int, List<LineNote>> notes,
 });
 
 /// Finds a kept copy of document [fileName] whose content hash is [id]
@@ -73,8 +76,9 @@ class Services {
     required this.speech,
     required this.clips,
     required this.capture,
+    required this.assistant,
     this.transcribe,
-    this.assistant,
+    this.openLink = openExternalLink,
     this.pcSession,
   });
 
@@ -118,9 +122,12 @@ class Services {
   /// service); null where there is none (Android).
   final Transcribe? transcribe;
 
-  /// The PC: explain a selection, re-render one line's clip (desktop:
-  /// the wrapper; Android: the Firebase relay); null in tests that skip it.
-  final Assistant? assistant;
+  /// The PC side: explanations and re-rendered line voices (desktop: the
+  /// wrapper; Android: the Firebase relay).
+  final Assistant assistant;
+
+  /// Opens a web page (dictionary lookups).
+  final Future<void> Function(Uri uri) openLink;
 
   /// The phone's sign-in for the relay; null on desktop (no sign-in).
   final PcSession? pcSession;

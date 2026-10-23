@@ -183,6 +183,7 @@ class _ScriptTabsState extends State<ScriptTabs> {
           ToolsCard(
             script: w.script,
             roles: w.prefs.roles,
+            notes: w.prefs.notes,
             pack: w.pack,
             canRender: w.canRender,
             onPack: w.onPack,

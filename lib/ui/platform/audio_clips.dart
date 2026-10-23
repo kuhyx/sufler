@@ -1,36 +1,29 @@
 // coverage:ignore-file
-// Platform glue over audioplayers; needs a real audio output.
-import 'dart:async';
+// Platform glue over audioplayers; needs a real audio output. The ordering
+// logic (newest request wins) is LatestClipPlayer, tested on its own.
+import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/foundation.dart';
-import 'package:sufler/rehearsal/partner_player.dart';
+import 'package:sufler/audio/latest_clip.dart';
 
 /// Plays in-memory clips (pack Ogg/Opus, own WAV recordings).
-class AudioClips implements ClipPlayer {
-  final AudioPlayer _player = AudioPlayer();
-  Completer<void>? _playing;
+class AudioClips extends LatestClipPlayer {
+  /// Plays through one audioplayers player.
+  new() : super(_PlayerOutput(AudioPlayer()));
+}
+
+class _PlayerOutput implements ClipOutput {
+  new(this._player);
+
+  final AudioPlayer _player;
 
   @override
-  Future<void> play(Uint8List bytes, String mimeType) async {
-    await stop();
-    final done = _playing = Completer<void>();
-    final sub = _player.onPlayerComplete.listen((_) {
-      if (!done.isCompleted) done.complete();
-    });
-    try {
-      await _player.play(BytesSource(bytes, mimeType: mimeType));
-      await done.future;
-    } finally {
-      await sub.cancel();
-    }
-  }
+  Future<void> start(Uint8List bytes, String mimeType) =>
+      _player.play(BytesSource(bytes, mimeType: mimeType));
 
   @override
-  Future<void> stop() async {
-    final p = _playing;
-    if (p != null && !p.isCompleted) p.complete();
-    _playing = null;
-    await _player.stop();
-  }
+  Future<void> halt() => _player.stop();
+
+  @override
+  Stream<void> get completed => _player.onPlayerComplete;
 }

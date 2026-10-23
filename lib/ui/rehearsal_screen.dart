@@ -12,6 +12,7 @@ import 'package:sufler/rehearsal/session.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/cue_view.dart';
 import 'package:sufler/ui/pure_run.dart';
+import 'package:sufler/ui/rehearsal_assist.dart';
 import 'package:sufler/ui/rehearsal_controls.dart';
 import 'package:sufler/ui/rehearsal_summary.dart';
 import 'package:sufler/ui/services.dart';
@@ -62,6 +63,7 @@ class RehearsalScreen extends StatefulWidget {
 
 class _RehearsalScreenState extends State<RehearsalScreen> {
   RehearsalController? _ctl;
+  late RehearsalAssist _assist;
   int _saved = -1;
   int _pure = 0;
 
@@ -74,6 +76,13 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     if (_ctl != null) return;
     final svc = ServicesScope.of(context);
     final s = widget.settings;
+    final player = PartnerPlayer(
+      script: widget.script,
+      speech: svc.speech,
+      clips: svc.clips,
+      pack: widget.pack,
+      speed: widget.speed,
+    );
     _ctl = RehearsalController(
       RehearsalSession(
         widget.cues,
@@ -82,15 +91,16 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         cleanTarget: s.cleanTarget,
         startAt: widget.resume.position,
       ),
-      PartnerPlayer(
-        script: widget.script,
-        speech: svc.speech,
-        clips: svc.clips,
-        pack: widget.pack,
-        speed: widget.speed,
-      ),
+      player,
       capture: s.listen ? svc.capture : null,
     )..start();
+    _assist = RehearsalAssist(
+      services: svc,
+      script: widget.script,
+      controller: _ctl!,
+      player: player,
+    );
+    unawaited(_assist.load());
     _ctl!
       ..addListener(_savePosition)
       ..addListener(_savePure);
@@ -161,6 +171,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
       ?..removeListener(_savePosition)
       ..removeListener(_savePure);
     _ctl?.dispose();
+    _assist.dispose();
     super.dispose();
   }
 
@@ -191,7 +202,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
           child: Scaffold(
             appBar: AppBar(title: Text(widget.title)),
             body: ListenableBuilder(
-              listenable: ctl,
+              listenable: Listenable.merge([ctl, _assist]),
               builder: (context, _) => _body(ctl),
             ),
             bottomNavigationBar: ListenableBuilder(
@@ -209,7 +220,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     final Widget content = session.phase == Phase.finished
         ? RehearsalSummary(session: session, onAgain: ctl.restart)
         : CueView(
-            script: widget.script,
+            script: _assist.script,
+            assist: _assist,
             controller: ctl,
             visibility: widget.settings.visibility,
             partnerText: widget.settings.partnerText,
@@ -223,24 +235,13 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         constraints: const BoxConstraints(maxWidth: kProseMaxWidth),
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
-          children: [_header(session), const Divider(), content],
+          children: [
+            RehearsalHeader(session: session),
+            const Divider(),
+            content,
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _header(RehearsalSession s) {
-    final parts = [
-      'Przebieg ${s.pass}',
-      if (s.phase != Phase.finished)
-        'kwestia ${s.position + 1}/${s.cues.length}',
-      if (s.loop) 'czyste z rzędu ${s.cleanStreak}/${s.cleanTarget}',
-      if (s.history.isNotEmpty && s.phase != Phase.finished)
-        'ostatni wynik ${s.history.last}',
-    ];
-    return Text(
-      parts.join(' · '),
-      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 }

@@ -83,29 +83,37 @@ void main() {
     expect(await down.renderLine(script: script, index: 2), isNull);
   });
 
-  test('pcOnline polls /api/tts/health and reports changes only', () {
-    fakeAsync((clock) {
-      var up = true;
-      final paths = <String>[];
-      final a = _assistant((r) async {
-        paths.add(r.url.path);
-        if (!up) throw http.ClientException('down');
-        return _json({'ok': true}, 200);
+  test(
+    'pcOnline polls /api/tts/health, every answer, replayed to late listeners',
+    () {
+      fakeAsync((clock) {
+        var up = true;
+        final paths = <String>[];
+        final a = _assistant((r) async {
+          paths.add(r.url.path);
+          if (!up) throw http.ClientException('down');
+          return _json({'ok': true}, 200);
+        });
+        final seen = <bool>[];
+        final sub = a.pcOnline.listen(seen.add);
+        clock.flushMicrotasks();
+        expect(seen, [true]);
+        clock.elapse(const Duration(seconds: 30));
+        expect(seen, [true, true]); // repeats too: PcLink.back waits for one
+        final late = <bool>[];
+        final lateSub = a.pcOnline.listen(late.add);
+        clock.flushMicrotasks();
+        expect(late, [true]); // the current state at once
+        lateSub.cancel();
+        up = false;
+        clock.elapse(const Duration(seconds: 30));
+        expect(seen, [true, true, false]);
+        expect(paths.toSet(), {'/api/tts/health'});
+        sub.cancel();
+        final calls = paths.length;
+        clock.elapse(const Duration(minutes: 5));
+        expect(paths.length, calls); // no polling without a listener
       });
-      final seen = <bool>[];
-      final sub = a.pcOnline.listen(seen.add);
-      clock.flushMicrotasks();
-      expect(seen, [true]);
-      clock.elapse(const Duration(seconds: 30));
-      expect(seen, [true]); // still up: no repeat
-      up = false;
-      clock.elapse(const Duration(seconds: 30));
-      expect(seen, [true, false]);
-      expect(paths.toSet(), {'/api/tts/health'});
-      sub.cancel();
-      final calls = paths.length;
-      clock.elapse(const Duration(minutes: 5));
-      expect(paths.length, calls); // no polling without a listener
-    });
-  });
+    },
+  );
 }

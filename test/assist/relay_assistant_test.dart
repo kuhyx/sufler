@@ -178,7 +178,8 @@ void main() {
       await relay.checkPresenceNow();
       db.write('sufler/presence', null);
       await relay.checkPresenceNow();
-      expect(seen, [true, false]); // distinct values only
+      await pumpEventQueue();
+      expect(seen, [true, false, false]);
       expect(db.read('sufler/clients/$dev/seen'), db.serverMs);
       await sub.cancel();
     },

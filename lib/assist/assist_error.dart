@@ -12,5 +12,5 @@ class AssistantError implements Exception {
   final String message;
 
   @override
-  String toString() => 'AssistantError: $message';
+  String toString() => message; // the UI shows '$e' as is
 }

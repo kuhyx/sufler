@@ -67,6 +67,7 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
       resume: resume,
       rolesAsked: p.rolesAsked,
       pureRuns: p.pureRuns,
+      notes: move(p.notes),
     ),
     moved: moved,
     lost: lost,
@@ -77,17 +78,35 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
 /// One logged manual correction (CorrectionScreen), replayed on re-parse.
 typedef Correction = Json;
 
-/// A correction of line [index]'s speakers and/or kind.
+/// A correction of line [index]'s speakers, kind and/or text; [was] is
+/// the text before a text edit (re-parse aligns by it).
 Correction lineCorrection(
   int index, {
   List<String>? speakers,
   LineKind? kind,
+  String? text,
+  String? was,
 }) => {
   'op': 'line',
   'index': index,
   'speakers': ?speakers,
   'kind': ?kind?.name,
+  'text': ?text,
+  'was': ?was,
 };
+
+/// [s] with the text edits in [log] undone (newest first): the text each
+/// line had as parsed, which is what a new parse is aligned against.
+Script revertTexts(Script s, List<Correction> log) {
+  var out = s;
+  for (final c in log.reversed) {
+    final i = c['index'] as int?;
+    final was = c['was'] as String?;
+    if (c['op'] != 'line' || i == null || was == null) continue;
+    if (i < out.lines.length) out = editLine(out, i, text: was);
+  }
+  return out;
+}
 
 /// A merge of character [from] into [into].
 Correction mergeCorrection({required String from, required String into}) => {
@@ -140,6 +159,7 @@ replayCorrections(Script fresh, List<Correction> log, Map<int, int> map) {
       to,
       speakers: c['speakers'] == null ? null : stringList(c['speakers']),
       kind: kind == null ? null : LineKind.values.byName(kind),
+      text: c['text'] as String?,
     );
     out.add({...c, 'index': to});
   }

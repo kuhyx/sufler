@@ -1,3 +1,4 @@
+import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/cues.dart';
 
 /// What the rehearsal is waiting for right now.
@@ -94,6 +95,22 @@ class RehearsalSession {
   /// is mine (as in "only lines I missed"), only its last line when it is a
   /// run; null when there is none.
   Cue? get prompt => position > 0 ? lastLineOf(cues[position - 1]) : null;
+
+  /// Puts corrected [line] into every cue holding it (a correction made
+  /// during the rehearsal); the walk itself (whose line it is) stays.
+  void replaceLine(ScriptLine line) {
+    ScriptLine pick(ScriptLine l) => l.index == line.index ? line : l;
+    for (final (i, c) in cues.indexed) {
+      if (!c.lines.any((l) => l.index == line.index)) continue;
+      cues[i] = Cue(
+        line: pick(c.line),
+        following: [for (final l in c.following) pick(l)],
+        mine: c.mine,
+        seconds: c.seconds,
+        estimated: c.estimated,
+      );
+    }
+  }
 
   /// The cue being played or said; null when finished.
   Cue? get current => phase == Phase.finished ? null : cues[position];

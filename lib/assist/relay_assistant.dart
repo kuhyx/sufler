@@ -72,8 +72,6 @@ class RelayAssistant implements Assistant {
   /// How often [pcOnline] checks the PC's beat.
   final Duration presenceEvery;
 
-  final StreamController<bool> _manual = StreamController.broadcast();
-
   Future<bool> _ensureSession() async =>
       await session.signedIn() || await session.signIn();
 
@@ -180,46 +178,10 @@ class RelayAssistant implements Assistant {
   }
 
   /// Checks presence now (tests; a UI "retry"), outside the timer.
-  Future<void> checkPresenceNow() async {
-    bool online;
-    try {
-      online = await _probe();
-    } on Object {
-      online = false;
-    }
-    _manual.add(online);
-  }
+  Future<void> checkPresenceNow() => _presence.refresh();
+
+  late final PresenceFeed _presence = PresenceFeed(_probe, presenceEvery);
 
   @override
-  late final Stream<bool> pcOnline = _merge(
-    pollPresence(_probe, presenceEvery),
-  );
-
-  /// The timer's answers plus [checkPresenceNow]'s, repeats dropped.
-  Stream<bool> _merge(Stream<bool> polled) {
-    bool? last;
-    late StreamController<bool> out;
-    final subs = <StreamSubscription<bool>>[];
-    void emit({required bool online}) {
-      if (online == last) return;
-      last = online;
-      out.add(online);
-    }
-
-    out = StreamController<bool>.broadcast(
-      onListen: () {
-        last = null;
-        subs
-          ..add(polled.listen((v) => emit(online: v)))
-          ..add(_manual.stream.listen((v) => emit(online: v)));
-      },
-      onCancel: () async {
-        for (final s in subs) {
-          await s.cancel();
-        }
-        subs.clear();
-      },
-    );
-    return out.stream;
-  }
+  Stream<bool> get pcOnline => _presence.stream;
 }

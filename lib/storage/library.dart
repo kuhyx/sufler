@@ -93,6 +93,16 @@ class ScriptLibrary {
 
   final Map<String, Future<void>> _updates = {};
 
+  /// Runs [change] (a read-modify-write of script [id]'s pack) after every
+  /// earlier one, so a re-stamp and a newly rendered clip never interleave.
+  Future<T> changePack<T>(String id, Future<T> Function() change) {
+    final result = (_packChanges[id] ?? Future.value()).then((_) => change());
+    _packChanges[id] = result.then<void>((_) {}, onError: (_) {});
+    return result;
+  }
+
+  final Map<String, Future<void>> _packChanges = {};
+
   /// Stores an audio pack zip for script [id].
   Future<void> savePack(String id, Uint8List zip) =>
       store.writeBytes(_pack(id), zip);

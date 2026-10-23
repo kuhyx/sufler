@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:sufler/model/json.dart';
+import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
+
+export 'package:sufler/model/line_note.dart';
 
 export 'package:sufler/storage/app_settings.dart';
 
@@ -86,6 +89,7 @@ class RehearsalPrefs {
     this.resume,
     this.rolesAsked = false,
     this.pureRuns = const {},
+    this.notes = const {},
   });
 
   /// Parses [json] produced by [toJson].
@@ -108,6 +112,7 @@ class RehearsalPrefs {
       // Prefs saved before the roles screen existed: ask only if none set.
       rolesAsked: json['rolesAsked'] as bool? ?? false,
       pureRuns: stringList(json['pureRuns']).toSet(),
+      notes: byLine('notes', (v) => objectList(v, LineNote.fromJson)),
     );
   }
 
@@ -136,6 +141,17 @@ class RehearsalPrefs {
   /// Ids of scenes/songs once rehearsed whole with every own line ✓ on
   /// the first try ("czysty przebieg").
   final Set<String> pureRuns;
+
+  /// Line index -> the assistant's notes on it, oldest first.
+  final Map<int, List<LineNote>> notes;
+
+  /// Copy with [note] added to line [index].
+  RehearsalPrefs withNote(int index, LineNote note) => copyWith(
+    notes: {
+      ...notes,
+      index: [...?notes[index], note],
+    },
+  );
 
   /// Copy with section [id] marked as purely run.
   RehearsalPrefs withPureRun(String id) =>
@@ -172,6 +188,11 @@ class RehearsalPrefs {
     'rolesAsked': rolesAsked,
     // Only when set, so prefs without pure runs keep their old shape.
     if (pureRuns.isNotEmpty) 'pureRuns': [...pureRuns],
+    if (notes.isNotEmpty)
+      'notes': {
+        for (final e in notes.entries)
+          '${e.key}': [for (final n in e.value) n.toJson()],
+      },
   };
 
   /// Copy with some fields replaced; [clearResume] drops [resume].
@@ -185,6 +206,7 @@ class RehearsalPrefs {
     bool clearResume = false,
     bool? rolesAsked,
     Set<String>? pureRuns,
+    Map<int, List<LineNote>>? notes,
   }) => RehearsalPrefs(
     roles: roles ?? this.roles,
     speed: speed ?? this.speed,
@@ -194,5 +216,6 @@ class RehearsalPrefs {
     resume: clearResume ? null : resume ?? this.resume,
     rolesAsked: rolesAsked ?? this.rolesAsked,
     pureRuns: pureRuns ?? this.pureRuns,
+    notes: notes ?? this.notes,
   );
 }

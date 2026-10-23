@@ -100,7 +100,9 @@ class HttpAssistant implements Assistant {
   }
 
   @override
-  late final Stream<bool> pcOnline = pollPresence(() async {
+  Stream<bool> get pcOnline => _presence.stream;
+
+  late final PresenceFeed _presence = PresenceFeed(() async {
     final res = await client
         .get(base.resolve('/api/tts/health'))
         .timeout(const Duration(seconds: 5));
