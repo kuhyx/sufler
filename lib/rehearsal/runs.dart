@@ -106,6 +106,28 @@ List<LineRun> rehearsalRuns(Script script, Set<Role> roles) => [
   ...findPartnerRuns(script, roles),
 ];
 
+/// The rehearsal walk over [plain] (unfolded cues): folded by [runs] when
+/// given, then cut to the [missed] lines when given; [start] is the cue
+/// holding script [line] (a resume point), else what was cue [position]
+/// of the unfolded walk (points saved before lines were kept).
+({List<Cue> cues, int start}) rehearsalWalk(
+  List<Cue> plain, {
+  List<LineRun>? runs,
+  Set<int>? missed,
+  int? line,
+  int position = 0,
+}) {
+  final unfolded = missed == null ? plain : onlyMissed(plain, missed);
+  final anchor =
+      line ??
+      (position < unfolded.length ? unfolded[position].line.index : null);
+  var cues = runs == null ? plain : mergeRuns(plain, runs);
+  if (missed != null) cues = onlyMissed(cues, missed);
+  if (anchor == null || cues.isEmpty) return (cues: cues, start: 0);
+  final at = cues.indexWhere((c) => c.lines.any((l) => l.index >= anchor));
+  return (cues: cues, start: at < 0 ? cues.length - 1 : at);
+}
+
 /// [cues] with each row of cues inside one of [runs] folded into one cue
 /// (two or more lines; a range may cut a run): an own one's pause is the
 /// sum of theirs, so it is said, revealed and graded as one; a partner one

@@ -186,6 +186,7 @@ class ScenePick:
     cues: int
     partner_before_mine: int
     mine_text: str  # first line of the first own step
+    before_lines: int  # lines of the partner step right before it
 
 
 def pick_scene(script: Json, roles: set[str]) -> ScenePick:
@@ -207,6 +208,7 @@ def pick_scene(script: Json, roles: set[str]) -> ScenePick:
             len(cues),
             mine[0],
             cues[mine[0]][0]["text"],
+            len(cues[mine[0] - 1]),
         )
         if best is None or pick.partner_before_mine < best.partner_before_mine:
             best = pick

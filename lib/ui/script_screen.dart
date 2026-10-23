@@ -114,7 +114,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
     LineRange range,
     String label, {
     bool missedOnly = false,
-    int startAt = 0,
+    ResumePoint? from,
   }) async {
     final script = _script!;
     if (_prefs.roles.isEmpty) {
@@ -122,7 +122,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       return;
     }
     final recorded = await _svc.library.recordingSeconds(_prefs);
-    var cues = buildCues(
+    final plain = buildCues(
       script,
       _prefs.roles,
       range,
@@ -131,10 +131,13 @@ class _ScriptScreenState extends State<ScriptScreen> {
       recordingSeconds: recorded,
       pace: secondsPerSyllable(script, recorded),
     );
-    if (_settings.wholeRuns) {
-      cues = mergeRuns(cues, rehearsalRuns(script, _prefs.roles));
-    }
-    if (missedOnly) cues = onlyMissed(cues, _prefs.missed);
+    final (:cues, :start) = rehearsalWalk(
+      plain,
+      runs: _settings.wholeRuns ? rehearsalRuns(script, _prefs.roles) : null,
+      missed: missedOnly ? _prefs.missed : null,
+      line: from?.line,
+      position: from?.position ?? 0,
+    );
     if (!mounted) return;
     if (cues.isEmpty) {
       showError(context, 'Nie ma tu kwestii do powtórki');
@@ -144,7 +147,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       label: label,
       start: range.start,
       end: range.end,
-      position: startAt.clamp(0, cues.length - 1),
+      position: start,
       missedOnly: missedOnly,
     );
     // The rehearsal screen saves [resume] (and every position reached).
@@ -167,24 +170,20 @@ class _ScriptScreenState extends State<ScriptScreen> {
       LineRange(r.start, r.end),
       r.label,
       missedOnly: r.missedOnly,
-      startAt: r.position,
+      from: r,
     ),
   );
 
-  void _record(LineRange range, String label) {
-    final lines = ownLines(_script!, _prefs, range);
-    final runs = findRuns(_script!, _prefs.roles);
-    unawaited(
-      _push(
-        TimingSessionScreen(
-          scriptId: _id,
-          title: label,
-          lines: lines,
-          runs: runs,
-        ),
+  void _record(LineRange range, String label) => unawaited(
+    _push(
+      TimingSessionScreen(
+        scriptId: _id,
+        title: label,
+        lines: ownLines(_script!, _prefs, range),
+        runs: findRuns(_script!, _prefs.roles),
       ),
-    );
-  }
+    ),
+  );
 
   Future<void> _pick(PickMode mode) async {
     final range = await Navigator.of(context).push(

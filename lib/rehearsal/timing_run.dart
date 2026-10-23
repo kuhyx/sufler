@@ -45,11 +45,12 @@ extension WholeRun on TimingSession {
 
   Future<void> _whole() async {
     _wantRun = false;
-    final w = whole!;
+    final n = runHere;
+    if (n == 0) return;
     final take = runTake = RunTake(
-      lines: lines.sublist(position, position + runHere),
-      mic: w.mic,
-      hasRecording: w.hasRecording,
+      lines: lines.sublist(position, position + n),
+      mic: whole!.mic,
+      hasRecording: whole!.hasRecording,
     );
     state = TakeState.run;
     _notify();

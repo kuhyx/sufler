@@ -149,7 +149,7 @@ by `test/desktop/gdoc_contract_test.dart`.
  "lineSeconds": {"<line-index>": 4.2}, "recordings": {"<line-index>": "<path>"},
  "knowledge": {"<line-index>": [false, true]},
  "resume": {"label": "Scena 3", "start": 120, "end": 240, "position": 7,
-            "mode": "range"},
+            "mode": "range", "line": 131},
  "rolesAsked": true, "pureRuns": ["scena-3"]}
 ```
 
@@ -160,7 +160,11 @@ by `test/desktop/gdoc_contract_test.dart`.
 - `pureRuns`: scene/song ids walked whole with every own line ✓ first try
   ("Czysty przebieg" badge); never cleared, omitted when empty, kept on re-parse.
 - `resume`: the last rehearsal (line range, `mode` `range` or `missed`) and
-  the cue position reached; the app offers to continue there.
+  the cue position reached; the app offers to continue there. `line` is
+  the script line of that cue (its first line, for a run) and is what
+  resumes: the position shifts when runs fold into one cue or the setting
+  changes. Without `line` (older prefs) the position is read against the
+  walk with no runs folded.
 - `rolesAsked`: the roles screen was shown once for this script.
 - A per-line pause set with −/+ during rehearsal or measured by "Nagraj
   czasy" without audio is a `lineSeconds` entry; a measured take with audio

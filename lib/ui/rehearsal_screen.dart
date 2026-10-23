@@ -116,7 +116,9 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
     unawaited(
       _svc.library.updatePrefs(
         _id,
-        (p) => p.copyWith(resume: widget.resume.at(at)),
+        (p) => p.copyWith(
+          resume: widget.resume.at(at, line: s.cues[at].line.index),
+        ),
       ),
     );
   }

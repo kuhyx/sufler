@@ -205,4 +205,35 @@ void main() {
     expect(find.text('Twoja kwestia'), findsOneWidget);
     await leaveRehearsal(tester);
   });
+
+  testWidgets('a resume point saved line by line lands on the same line', (
+    tester,
+  ) async {
+    // Saved before runs: cue 5 of the unfolded walk is line 7.
+    final rig = await _hub(
+      tester,
+      'runs-resume',
+      seed: (rig) => rig.library.updatePrefs(
+        'run123',
+        (p) => p.copyWith(
+          resume: const ResumePoint(label: 'Scena 1', start: 0, end: 11).at(5),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('learn')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    String header() =>
+        tester.widget<Text>(find.textContaining('Przebieg').first).data!;
+    expect(header(), contains('kwestia 4/6'));
+    expect(find.text('Twoja kwestia'), findsOneWidget);
+    await tester.tap(find.text('Gotowe'));
+    await tester.pump();
+    await tester.tap(find.text('Dobrze'));
+    await tester.pump();
+    await leaveRehearsal(tester);
+    final prefs = await tester.io(() => rig.library.loadPrefs('run123'));
+    expect(prefs.resume!.position, 4);
+    expect(prefs.resume!.line, 8, reason: 'the song, by its first line');
+  });
 }

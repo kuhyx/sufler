@@ -17,6 +17,7 @@ class ResumePoint {
     required this.end,
     this.position = 0,
     this.missedOnly = false,
+    this.line,
   });
 
   /// Parses [json] produced by [toJson].
@@ -26,6 +27,7 @@ class ResumePoint {
     end: json['end']! as int,
     position: json['position'] as int? ?? 0,
     missedOnly: json['mode'] == 'missed',
+    line: json['line'] as int?,
   );
 
   /// Shown title ("Scena 3", "Kwestie 4–9").
@@ -43,6 +45,11 @@ class ResumePoint {
   /// "Only lines I missed" practice over the range.
   final bool missedOnly;
 
+  /// Script line of the cue reached: what resumes, since the cue
+  /// [position] shifts when runs are folded (or unfolded) into one cue.
+  /// Null in points saved before it was kept.
+  final int? line;
+
   /// JSON form.
   Json toJson() => {
     'label': label,
@@ -50,15 +57,17 @@ class ResumePoint {
     'end': end,
     'position': position,
     'mode': missedOnly ? 'missed' : 'range',
+    'line': ?line,
   };
 
-  /// Copy at another [position].
-  ResumePoint at(int position) => ResumePoint(
+  /// Copy at another [position] (of script [line]).
+  ResumePoint at(int position, {int? line}) => ResumePoint(
     label: label,
     start: start,
     end: end,
     position: position,
     missedOnly: missedOnly,
+    line: line,
   );
 }
 

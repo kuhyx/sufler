@@ -135,7 +135,8 @@ def f3_rehearse(run: Run) -> None:
     run.cdp.wait_for(f"kwestia {k}/{pick.cues}", 10)
     run.step("that partner line ends by itself; the role's countdown starts")
     try:
-        run.cdp.wait_for("Twoja kwestia", 25)
+        # A partner song before it is one step: all its lines play first.
+        run.cdp.wait_for("Twoja kwestia", 25 + 10 * (pick.before_lines - 1))
     except Exception as e:
         log = audio_log(run)
         raise TimeoutError(
