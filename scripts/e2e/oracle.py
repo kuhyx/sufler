@@ -22,6 +22,12 @@ def is_spoken(line: Json) -> bool:
     return any(ch.isalnum() for ch in line["text"])
 
 
+def speaker_names(script: Json, line: Json) -> str:
+    """lib/ui/labels.dart `speakerNames`: names joined, "Chór" when none."""
+    names = {c["id"]: c["name"] for c in script["characters"]}
+    return ", ".join(names.get(i, i) for i in line["speakers"]) or "Chór"
+
+
 def _html(text: str) -> str:
     """lib/anki/sufler_cards.dart `_html`: escape &, <, > and break lines."""
     escaped = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

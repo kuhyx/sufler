@@ -41,12 +41,15 @@ class FakeRecorder implements Recorder {
   }
 }
 
-/// TTS that "speaks" for one second of (fake) time.
+/// TTS that "speaks" for one second of (fake) time; with [fail] it has no
+/// voice and every utterance fails at once.
 class FakeSpeech implements Speech {
   final said = <String>[];
+  bool fail = false;
   @override
   Future<void> speak(String text, Voice voice, double speed) {
     said.add(text);
+    if (fail) return Future.error(const SpeechFailure('synthesis-failed'));
     return Future.delayed(const Duration(seconds: 1));
   }
 

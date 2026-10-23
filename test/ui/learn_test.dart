@@ -50,11 +50,13 @@ void main() {
     expect(prefs.missed, {2});
 
     // "Only lines I missed": line 2 with its prompt, line 1.
+    final saidBefore = rig.speech.said.length;
     await tester.tapVisible(find.text('Tylko nieumiane (1)'));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Tylko nieumiane'), findsOneWidget);
     expect(_header(tester), contains('/2'));
-    expect(find.text('Dzień dobry, Wilku!'), findsOneWidget);
+    expect(rig.speech.said.skip(saidBefore), ['Dzień dobry, Wilku!']);
+    expect(find.text('Dzień dobry, Wilku!'), findsNothing);
     await leaveRehearsal(tester);
   });
 

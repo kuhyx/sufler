@@ -175,6 +175,8 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         bindings: {
           const SingleActivator(LogicalKeyboardKey.space): ctl.done,
           const SingleActivator(LogicalKeyboardKey.enter): _confirmSuggestion,
+          const SingleActivator(LogicalKeyboardKey.arrowLeft): ctl.back,
+          const SingleActivator(LogicalKeyboardKey.arrowRight): ctl.skip,
         },
         child: Focus(
           autofocus: true,
@@ -202,6 +204,7 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
             script: widget.script,
             controller: ctl,
             visibility: widget.settings.visibility,
+            partnerText: widget.settings.partnerText,
             hasRecording: widget.recordings.containsKey,
             onPlayRecording: _playRecording,
             onGrade: _grade,

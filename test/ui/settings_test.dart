@@ -28,6 +28,7 @@ void main() {
     await tester.tapVisible(find.byTooltip('Więcej przebiegów'));
     await tester.tapVisible(find.text('Czytanie'));
     await tester.tapVisible(find.text('Słuchaj mnie (mikrofon)'));
+    await tester.tapVisible(find.text('Pokaż tekst partnerów'));
 
     // Reopen from a brand-new library over the same IndexedDB.
     final fresh = ScriptLibrary(IdbStore(idbFactoryMemory, dbName: 'settings'));
@@ -41,6 +42,7 @@ void main() {
     expect(settings.cleanTarget, 4);
     expect(settings.visibility, TextVisibility.show);
     expect(settings.listen, isTrue);
+    expect(settings.partnerText, isTrue);
     expect(settings.lastScriptId, rig.script.id);
 
     await tester.tap(find.text('Moje role'));

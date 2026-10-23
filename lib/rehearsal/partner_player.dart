@@ -66,7 +66,7 @@ class PartnerPlayer implements LinePlayer {
   final double speed;
 
   @override
-  Future<void> play(ScriptLine line) async {
+  Future<void> play(ScriptLine line, {void Function()? onHeld}) async {
     final clip = pack?.clip(line.index);
     if (clip != null) {
       await clips.play(clip, 'audio/ogg');
@@ -76,6 +76,7 @@ class PartnerPlayer implements LinePlayer {
       } on SpeechFailure {
         // No voice: keep the partner's text on screen for about as long as
         // saying it would take, so the cue can be read instead of heard.
+        onHeld?.call();
         final hold = defaultPauseSeconds(line.text, speed: speed);
         await Future<void>.delayed(
           Duration(milliseconds: (hold * 1000).round()),

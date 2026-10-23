@@ -201,12 +201,15 @@ stays, silently, and "Narzędzia" offers "Odśwież parsowanie: wskaż plik".
 
 ```json
 {"version": 2, "visibility": "revealAfter", "selfGrade": false, "loop": false,
- "cleanTarget": 3, "listen": false, "lastScriptId": "<script id>"}
+ "cleanTarget": 3, "listen": false, "partnerText": false,
+ "lastScriptId": "<script id>"}
 ```
 
 `visibility`: `revealAfter` (learning: hidden while said, then shown and
 graded), `hide`, `show` (read-through). Settings without `version` (v1) stored
-the old default `show`; it loads as `revealAfter` once. The app opens
+the old default `show`; it loads as `revealAfter` once. `partnerText` (show
+partner lines as text while they play) was added without a version bump:
+absent means `false`, so older settings keep partner text hidden. The app opens
 `lastScriptId` on start (or the only script, when none is remembered).
 
 ## Transcription (TTS service, speech-to-text)

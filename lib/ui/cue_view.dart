@@ -12,13 +12,16 @@ import 'package:sufler/ui/pause_control.dart';
 /// The current cue (partner line, my countdown, or my self-grade), with the
 /// previous line above it for context. My own text stays hidden while I
 /// say it unless the read-through mode shows it. After a ✗ the line is
-/// hidden again and its prompt (the cue before it) replayed.
+/// hidden again and its prompt (the cue before it) replayed. A partner
+/// line shows only who speaks unless [partnerText] is on or it could not
+/// be voiced; its stage directions always show.
 class CueView extends StatelessWidget {
   /// Creates the view.
   const new({
     required this.script,
     required this.controller,
     required this.visibility,
+    required this.partnerText,
     required this.hasRecording,
     required this.onPlayRecording,
     required this.onGrade,
@@ -34,6 +37,9 @@ class CueView extends StatelessWidget {
 
   /// Own-line text visibility.
   final TextVisibility visibility;
+
+  /// Show partner lines as text, not just the speaker's name.
+  final bool partnerText;
 
   /// Whether line index has an own recording.
   final bool Function(int index) hasRecording;
@@ -93,18 +99,23 @@ class CueView extends StatelessWidget {
     );
   }
 
+  /// Whether a partner [cue]'s text is on screen.
+  bool _partnerShown(Cue cue) =>
+      partnerText || controller.unvoiced.contains(cue.line.index);
+
   Widget _previous(BuildContext context, Cue prev) {
-    final hidden = prev.mine && visibility == TextVisibility.hide;
     final style = Theme.of(context).textTheme.bodyMedium
         ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
+    final text = prev.mine
+        ? (visibility == TextVisibility.hide
+              ? '(twoja kwestia)'
+              : prev.line.text)
+        : (_partnerShown(prev)
+              ? prev.line.text
+              : '(${speakerNames(script, prev.line)})');
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            hidden ? '(twoja kwestia)' : prev.line.text,
-            style: style,
-          ),
-        ),
+        Expanded(child: Text(text, style: style)),
         if (prev.mine && hasRecording(prev.line.index)) _playButton(prev),
       ],
     );
@@ -129,14 +140,27 @@ class CueView extends StatelessWidget {
     children: [
       _label(context, speakerNames(script, cue.line)),
       const SizedBox(height: AppSpacing.sm),
-      _text(
-        context,
-        hide && visibility == TextVisibility.hide
-            ? '(twoja kwestia)'
-            : cue.line.text,
-      ),
+      if (hide)
+        _text(
+          context,
+          visibility == TextVisibility.hide ? '(twoja kwestia)' : cue.line.text,
+        )
+      else if (_partnerShown(cue))
+        _text(context, cue.line.text)
+      else
+        _speaking(context),
       for (final d in cue.line.directions)
         Text(d, style: const TextStyle(fontStyle: FontStyle.italic)),
+    ],
+  );
+
+  /// Stands in for a partner's text: it is heard, not read.
+  Widget _speaking(BuildContext context) => Row(
+    key: const Key('partner-speaking'),
+    children: [
+      Icon(controller.paused ? Icons.pause : Icons.record_voice_over),
+      const SizedBox(width: AppSpacing.sm),
+      _text(context, controller.paused ? 'pauza' : 'mówi…'),
     ],
   );
 

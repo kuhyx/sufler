@@ -10,8 +10,9 @@ import 'package:sufler/rehearsal/similarity.dart';
 /// Plays a partner line aloud (pack clip or device TTS). The future
 /// completes when the line has finished playing.
 abstract interface class LinePlayer {
-  /// Plays [line]; completes when done.
-  Future<void> play(ScriptLine line);
+  /// Plays [line]; completes when done. [onHeld] fires when it cannot be
+  /// voiced and is held silently instead (its text should then show).
+  Future<void> play(ScriptLine line, {void Function()? onHeld});
 
   /// Stops whatever is playing.
   Future<void> stop();
@@ -64,6 +65,10 @@ class RehearsalController extends ChangeNotifier {
   bool? suggestion;
 
   bool _listening = false;
+
+  /// Partner lines (script indices) that could not be voiced this
+  /// rehearsal: their text is shown even when partner text is off.
+  final unvoiced = <int>{};
 
   /// Begins at the session's current cue.
   void start() => _enter();
@@ -126,10 +131,17 @@ class RehearsalController extends ChangeNotifier {
   }
 
   Future<void> _playPartner(ScriptLine line, int gen) async {
+    void unheard() {
+      if (gen != _generation || _disposed) return;
+      unvoiced.add(line.index);
+      _notify();
+    }
+
     try {
-      await player.play(line);
+      await player.play(line, onHeld: unheard);
     } on Object catch (e) {
       debugPrint('partner line ${line.index} failed: $e');
+      unheard();
     }
     if (gen != _generation || paused || _disposed) return;
     session.partnerDone();

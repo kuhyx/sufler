@@ -61,7 +61,9 @@ void main() {
     expect(s.visibility, TextVisibility.revealAfter);
     expect(s.grades, isTrue);
     expect(s.cleanTarget, 3);
+    expect(s.partnerText, isFalse);
     final t = s.copyWith(
+      partnerText: true,
       visibility: TextVisibility.revealAfter,
       selfGrade: true,
       loop: true,
@@ -72,6 +74,7 @@ void main() {
     expect(back.selfGrade, isTrue);
     expect(back.loop, isTrue);
     expect(back.cleanTarget, 5);
+    expect(back.partnerText, isTrue);
     expect(AppSettings.fromJson(const {}).loop, isFalse);
   });
 
@@ -89,6 +92,7 @@ void main() {
     expect(s.loop, isTrue);
     expect(s.cleanTarget, 4);
     expect(s.lastScriptId, isNull);
+    expect(s.partnerText, isFalse);
     expect(
       AppSettings.fromJson({...v1, 'visibility': 'hide'}).visibility,
       TextVisibility.hide,
@@ -100,6 +104,15 @@ void main() {
     expect(AppSettings.fromJson({...chosen, 'loop': false}).grades, isFalse);
     final last = AppSettings.fromJson(s.copyWith(lastScriptId: 'x').toJson());
     expect(last.lastScriptId, 'x');
+  });
+
+  test('settings saved before "partnerText" keep partner text hidden', () {
+    const v2 = {'version': 2, 'visibility': 'show', 'listen': true};
+    final s = AppSettings.fromJson(v2);
+    expect(s.partnerText, isFalse);
+    // Read-through chosen under v2 is not migrated again.
+    expect(s.visibility, TextVisibility.show);
+    expect(s.listen, isTrue);
   });
 
   test('prefs from v1 load; knowledge and resume round trip', () {

@@ -20,7 +20,7 @@ class FakePlayer implements LinePlayer {
   int stops = 0;
 
   @override
-  Future<void> play(ScriptLine line) {
+  Future<void> play(ScriptLine line, {void Function()? onHeld}) {
     played.add(line.index);
     if (fail) return Future.error(StateError('no tts'));
     return Future.delayed(Duration(milliseconds: (seconds * 1000).round()));

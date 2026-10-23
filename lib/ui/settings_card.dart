@@ -71,6 +71,15 @@ class SettingsCard extends StatelessWidget {
         }, style: Theme.of(context).textTheme.bodySmall),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
+          title: const Text('Pokaż tekst partnerów'),
+          subtitle: const Text(
+            'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
+          ),
+          value: s.partnerText,
+          onChanged: (v) => onSettings(s.copyWith(partnerText: v)),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
           title: const Text('Oceniaj się ✓/✗'),
           value: s.grades,
           onChanged: s.grades && !s.selfGrade
