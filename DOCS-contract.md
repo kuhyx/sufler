@@ -61,6 +61,11 @@ this file together.
   `direction` with empty `text`, never the last speaker's line.
 - Stage directions `( … )` are removed from `text` and kept in `directions`.
   The ellipsis pause marker `/.../` is removed from `text` and NOT kept.
+- A structural word on its own line is a `heading` line, never part of the
+  speech above it: "Finał", "Epilog", "Prolog" (any case, a trailing `.`/`:`
+  dropped) open a scene section titled as written, like `Scena <n>`;
+  "Wstęp", "Antrakt", "Akt <n>" (arabic or roman) are headings inside the
+  current scene. Inside a sentence ("Finał!", "Akt odwagi") they stay text.
 - Scene numbering is kept as written: duplicates and gaps are legal.
 - Character and section ids are ASCII slugs (Polish letters folded), unique
   within the script; a duplicate title gets `-2`, `-3` suffixes.

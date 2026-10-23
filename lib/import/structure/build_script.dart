@@ -63,7 +63,7 @@ class _Structurer {
 
   int firstStructural(List<String> texts, int from) {
     for (var i = from; i < texts.length; i++) {
-      if (isSceneHeading(texts[i]) ||
+      if (sectionHeading(texts[i]) != null ||
           _heading(texts[i], record: false) != null) {
         return i;
       }
@@ -114,11 +114,13 @@ class _Structurer {
       return;
     }
     final song = out.song;
-    if (isSceneHeading(text)) {
+    final section = sectionHeading(text);
+    if (section != null) {
+      // "Finał" glued under a speech is a section, not the speech's text.
       _flush();
-      out.startScene(squash(text));
+      out.heading(section.title, scene: section.scene);
       speakers = const [];
-      _scene.clear();
+      if (section.scene) _scene.clear();
       _runTint = null;
       return;
     }

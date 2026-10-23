@@ -34,7 +34,16 @@ void main() {
       'Scena 7',
       'Scena 8',
       'Scena 9',
+      'Finał',
     ]);
+    // "Finał" stands alone between "/światło/" and "Piosenka Krasnali 2"
+    // (`pdftotext -layout`): a scene heading, not the end of Żagiewka's line.
+    final finale = s.scenes.last;
+    expect(s.lines[finale.start].kind, LineKind.heading);
+    expect(s.lines[finale.start - 1].speakers, ['zagiewka']);
+    expect(s.lines.where((l) => l.text.contains('Finał')), hasLength(1));
+    expect(s.songs.last.start, finale.start + 1);
+    expect(finale.end, s.lines.length - 1);
     // 11 "Piosenka …" headings + 2 red runs with no heading, each opened by
     // a red "… śpiewa(ją) piosenkę" line (counted from the red fontspecs of
     // `pdftohtml -xml -i -stdout`: 14 red runs = legend + 11 + 2).
@@ -57,7 +66,8 @@ void main() {
       expect(song.title.length, lessThanOrEqualTo(42));
     }
     // The duet's 3 singer tags are unspoken directions, not dropped.
-    expect(s.lines, hasLength(863));
+    // ... and so is the "Finał" heading.
+    expect(s.lines, hasLength(864));
     expect(s.lines.where((l) => l.isSpoken), hasLength(825));
 
     final ids = s.characters.map((c) => c.id).toSet();

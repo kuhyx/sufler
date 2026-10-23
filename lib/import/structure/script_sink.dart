@@ -101,6 +101,14 @@ class ScriptSink {
     emit(LineKind.heading, const [], title);
   }
 
+  /// A section marker: opens a scene titled [title], or (`scene` false,
+  /// "Akt 2") is a heading line inside the current one.
+  void heading(String title, {required bool scene}) {
+    if (scene) return startScene(title);
+    closeSong();
+    emit(LineKind.heading, const [], title);
+  }
+
   /// Starts a song section with its heading line.
   void startSong(String title, List<String> speakers) {
     closeSong();

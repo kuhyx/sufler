@@ -29,6 +29,23 @@ bool isSceneHeading(String line) {
       !RegExp(r'[.!?,]$').hasMatch(t);
 }
 
+/// A section marker on its own line: `Scena 3`, or a structural word
+/// ("Finał", "EPILOG.", "Prolog:", "Wstęp", "Antrakt", "Akt 2", "Akt II";
+/// trailing `.`/`:` dropped from the title). `scene`: it opens a scene
+/// section (Scena, Finał, Epilog, Prolog); the others are headings inside
+/// the current one.
+({String title, bool scene})? sectionHeading(String line) {
+  final t = squash(line);
+  if (isSceneHeading(t)) return (title: t, scene: true);
+  final title = t.replaceFirst(RegExp(r'\s*[.:]$'), '');
+  final m = RegExp(
+    r'^(?:(finał|epilog|prolog)|wstęp|antrakt|akt\s+(?:\d+|[ivxlc]+))$',
+    caseSensitive: false,
+    unicode: true,
+  ).firstMatch(title);
+  return m == null ? null : (title: title, scene: m[1] != null);
+}
+
 /// The title of a `Piosenka ...` heading (quotes around it removed), or
 /// null. Mid-sentence mentions of a song are not headings.
 String? songTitle(String line) {
