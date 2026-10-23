@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
+import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/rehearsal/voices.dart';
 
 import '../storage/pack_zip_test.dart' show fixturePackZip;
@@ -16,6 +19,15 @@ class _Speech implements Speech {
       said.add((text, voice, speed));
   @override
   Future<void> stop() async => stops++;
+}
+
+/// A device with no usable voice (Chromium without speech-dispatcher).
+class _Mute implements Speech {
+  @override
+  Future<void> speak(String text, Voice voice, double speed) async =>
+      throw const SpeechFailure('synthesis-failed');
+  @override
+  Future<void> stop() async {}
 }
 
 class _Clips implements ClipPlayer {
@@ -58,5 +70,25 @@ void main() {
     final p = PartnerPlayer(script: script, speech: speech, clips: _Clips());
     await p.play(script.lines[1]);
     expect(speech.said.single.$1, 'Dzień dobry, Wilku!');
+  });
+
+  test('when speech fails, the partner text is held for its reading time '
+      'instead of being skipped at once', () {
+    fakeAsync((clock) {
+      final line = script.lines[5];
+      final p = PartnerPlayer(
+        script: script,
+        speech: _Mute(),
+        clips: _Clips(),
+        speed: 2,
+      );
+      var done = false;
+      unawaited(p.play(line).then((_) => done = true));
+      final hold = defaultPauseSeconds(line.text, speed: 2);
+      clock.elapse(Duration(milliseconds: (hold * 1000).round() - 50));
+      expect(done, isFalse);
+      clock.elapse(const Duration(milliseconds: 100));
+      expect(done, isTrue);
+    });
   });
 }

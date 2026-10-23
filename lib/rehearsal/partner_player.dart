@@ -3,11 +3,26 @@ import 'dart:typed_data';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/controller.dart';
+import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/rehearsal/voices.dart';
+
+/// The device could not say a line, e.g. Chromium on Linux without
+/// speech-dispatcher has no voices and fails every utterance.
+class SpeechFailure implements Exception {
+  /// Creates the failure with the engine's [reason].
+  const new(this.reason);
+
+  /// Engine error, e.g. `synthesis-failed`.
+  final String reason;
+
+  @override
+  String toString() => 'SpeechFailure: $reason';
+}
 
 /// Device text-to-speech in Polish. Completes when the utterance ends.
 abstract interface class Speech {
-  /// Says [text] with [voice] at global [speed].
+  /// Says [text] with [voice] at global [speed]. Throws [SpeechFailure] when
+  /// the engine reports an error, rather than never completing.
   Future<void> speak(String text, Voice voice, double speed);
 
   /// Interrupts speech.
@@ -56,7 +71,16 @@ class PartnerPlayer implements LinePlayer {
     if (clip != null) {
       await clips.play(clip, 'audio/ogg');
     } else {
-      await speech.speak(line.text, voiceFor(script, line), speed);
+      try {
+        await speech.speak(line.text, voiceFor(script, line), speed);
+      } on SpeechFailure {
+        // No voice: keep the partner's text on screen for about as long as
+        // saying it would take, so the cue can be read instead of heard.
+        final hold = defaultPauseSeconds(line.text, speed: speed);
+        await Future<void>.delayed(
+          Duration(milliseconds: (hold * 1000).round()),
+        );
+      }
     }
   }
 
