@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+  xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+  office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.text">
+ <!-- Synthetic play written for tests (no third-party text). PDF made with:
+      soffice headless convert-to pdf, see test/import/pdf_reader_test.dart -->
+ <office:automatic-styles>
+  <style:style style:name="Red" style:family="paragraph">
+   <style:text-properties fo:color="#c9211e"/>
+  </style:style>
+  <style:style style:name="Blue" style:family="paragraph">
+   <style:text-properties fo:color="#2a6099"/>
+  </style:style>
+  <style:style style:name="Ink" style:family="text">
+   <style:text-properties fo:color="#111111"/>
+  </style:style>
+ </office:automatic-styles>
+ <office:body>
+  <office:text>
+   <text:p>Jan Testowy</text:p>
+   <text:p>"Zegar na strychu"</text:p>
+   <text:p>Bohaterowie:</text:p>
+   <text:p>•    Stary Zegar (Opowieść o czasie)</text:p>
+   <text:p>•    Myszka Ćma (Opowieść o czasie)</text:p>
+   <text:p>•    Kot Łatek (Bajka o kocie)</text:p>
+   <text:p/>
+   <text:p>Scena 1</text:p>
+   <text:p>/Ciemność/</text:p>
+   <text:p>Stary Zegar</text:p>
+   <text:p>Tik tak, kto chodzi po strychu? (ziewa) Pokaż się!</text:p>
+   <text:p>Myszka</text:p>
+   <text:p>To tylko ja, <text:span text:style-name="Ink">mała myszka</text:span>.</text:p>
+   <text:p>Stray Zegar</text:p>
+   <text:p>Myszko, nie bój się /.../ ja nie gryzę.</text:p>
+   <text:p>Piosenka Zegara</text:p>
+   <text:p text:style-name="Red">Tik tak, tik tak, mija noc</text:p>
+   <text:p text:style-name="Red">Wskazówki kręcą się w krąg</text:p>
+   <text:p>Kot Łatek, Myszka Ćma</text:p>
+   <text:p>Brawo!</text:p>
+   <text:p>(Kot wskakuje na skrzynię)</text:p>
+   <text:p>Scena 4</text:p>
+   <text:p>Kot Łatek</text:p>
+   <text:p>Myszko, czy wiesz która godzina?</text:p>
+   <text:p text:style-name="Blue">Gwiazdy świecą nad dachem</text:p>
+   <text:p text:style-name="Blue">Scena pogrążona w ciszy</text:p>
+   <text:p>Stary Zegar</text:p>
+   <text:p>Północ.</text:p>
+  </office:text>
+ </office:body>
+</office:document>
