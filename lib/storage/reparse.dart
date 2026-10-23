@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import 'package:sufler/import/parser_version.dart';
 import 'package:sufler/model/json.dart';
@@ -6,27 +6,24 @@ import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/align.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/storage/migrate.dart';
+import 'package:sufler/storage/pack_zip.dart';
 
 /// Parse bookkeeping of a stored script: [parserVersion] that made it (0:
 /// before versions) and the fingerprint of that raw parse (before manual
 /// corrections), null when unknown.
 typedef ParseMeta = ({int version, String? fingerprint});
 
-/// What a re-parse did to the user's data.
-typedef ParseUpdate = ({int moved, int lost, int corrections});
-
-/// One line for the user, e.g. "Zaktualizowano parsowanie: 2 kwestie
-/// przeniesione, 0 utraconych".
-String parseSummary(ParseUpdate u) {
-  final moved = switch (u.moved) {
-    1 => 'kwestia przeniesiona',
-    final n when n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) =>
-      'kwestie przeniesione',
-    _ => 'kwestii przeniesionych',
-  };
-  return 'Zaktualizowano parsowanie: ${u.moved} $moved, ${u.lost} utraconych'
-      '${u.corrections > 0 ? ', ${u.corrections} poprawek ponowionych' : ''}';
-}
+/// What a re-parse did to the user's data: lines whose data moved / was
+/// lost, corrections replayed, aligned spoken lines whose speakers or kind
+/// now differ from the stored script (parser changes, or manual fixes from
+/// before the correction log), voice clips dropped (their line changed).
+typedef ParseUpdate = ({
+  int moved,
+  int lost,
+  int corrections,
+  int changed,
+  int clipsDropped,
+});
 
 /// Source documents, parse metadata and the correction log, next to the
 /// library's scripts (keys `source/<id>`, `meta/<id>`, `edits/<id>`,
@@ -113,6 +110,12 @@ extension ParseStore on ScriptLibrary {
       keys[e.key] = 'rec/$id/${e.key}';
       await store.writeBytes(keys[e.key]!, e.value);
     }
+    final changed = map.entries.where((e) {
+      final (a, b) = (old.lines[e.key], replay.script.lines[e.value]);
+      return a.isSpoken &&
+          (a.kind != b.kind || !listEquals(a.speakers, b.speakers));
+    }).length;
+    final clipsDropped = await _movePack(old, replay.script, map);
     await saveScript(replay.script);
     await savePrefs(id, move.prefs.copyWith(recordings: keys));
     await store.writeJson('edits/$id', {'edits': replay.log});
@@ -121,6 +124,33 @@ extension ParseStore on ScriptLibrary {
       moved: move.moved.length,
       lost: move.lost.length,
       corrections: replay.applied,
+      changed: changed,
+      clipsDropped: clipsDropped,
     );
+  }
+
+  /// Keeps the clips of lines whose text and speakers are unchanged, under
+  /// their new indices and stamped for [fresh]; returns how many went.
+  /// A pack not stamped for [old] is dropped whole.
+  /// Without this an old pack would play clip N for a different line N.
+  Future<int> _movePack(Script old, Script fresh, Map<int, int> map) async {
+    final pack = await loadPack(old.id);
+    if (pack == null) return 0;
+    final keep = <int, int>{};
+    // Only a pack stamped for the stored parse says which line a clip is
+    // for; an unstamped one may come from yet another parse: drop it.
+    final known = pack.fingerprint == old.fingerprint;
+    for (final i in known ? pack.indices : const <int>[]) {
+      final to = map[i];
+      if (to == null || i >= old.lines.length) continue;
+      final (a, b) = (old.lines[i], fresh.lines[to]);
+      if (a.text == b.text && listEquals(a.speakers, b.speakers)) keep[i] = to;
+    }
+    if (keep.isEmpty) {
+      await store.delete('pack/${old.id}');
+    } else {
+      await savePack(old.id, rekeyPack(pack, keep, fresh.fingerprint));
+    }
+    return pack.length - keep.length;
   }
 }

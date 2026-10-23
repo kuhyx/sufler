@@ -70,7 +70,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(
-      find.text('Śpiewa: Ala, Bolek, Cela, Chór · 4 wersów'),
+      find.text('Śpiewa: Ala, Bolek, Cela, Chór · 4 wersy'),
       findsOneWidget,
     );
     expect(find.text('Hej ho idziemy'), findsOneWidget);

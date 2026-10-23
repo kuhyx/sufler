@@ -31,8 +31,15 @@ class VadCapture implements SpeechCapture {
   @override
   Future<CaptureResult?> listen() async {
     if (!await _rec.hasPermission()) return null;
+    // What the platform really delivers may differ from the request; the
+    // take is rebuilt from the raw chunks if it changes mid-way.
     var rate = _rate;
-    await _rec.setOnConfigChanged((c) => rate = c.sampleRate);
+    var channels = 1;
+    await _rec.setOnConfigChanged((c) {
+      rate = c.sampleRate;
+      channels = c.numChannels;
+    });
+    final raw = <Uint8List>[];
     final stop = _stop = Completer<void>();
     _cancelled = false;
     VadTake? take;
@@ -48,7 +55,12 @@ class VadCapture implements SpeechCapture {
     }
 
     final sub = stream.listen((chunk) {
-      final t = take ??= VadTake(rate);
+      raw.add(chunk);
+      var t = take;
+      if (t == null || t.sampleRate != rate || t.channels != channels) {
+        t = take = VadTake(rate, channels: channels);
+        raw.take(raw.length - 1).forEach(t.add);
+      }
       final over = t.add(chunk);
       level.value = t.endpoint.level;
       if (over) end();

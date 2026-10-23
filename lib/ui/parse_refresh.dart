@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:sufler/import/parser_version.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/reparse.dart';
+import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/services.dart';
 
 /// Shown on opening a script stored before parse versions were kept: it
@@ -10,6 +11,38 @@ import 'package:sufler/ui/services.dart';
 const String reimportHint =
     'Ten skrypt ma starszą wersję parsowania: zaimportuj plik ponownie, '
     'a czasy, nagrania i oceny przejdą do nowych kwestii.';
+
+/// One line for the user, e.g. "Zaktualizowano parsowanie: 2 kwestie
+/// przeniesione, 0 utraconych", plus what else changed.
+String parseSummary(ParseUpdate u) {
+  const reassigned =
+      'z innym przypisaniem (sprawdź „Popraw tekst”; poprzednia wersja jest '
+      'w kopii)';
+  String n(int count, String one, String few, String many) =>
+      '$count ${plural(count, one, few, many)}';
+  final moved = n(
+    u.moved,
+    'kwestia przeniesiona',
+    'kwestie przeniesione',
+    'kwestii przeniesionych',
+  );
+  final parts = [
+    moved,
+    '${u.lost} utraconych',
+    if (u.corrections > 0)
+      n(
+        u.corrections,
+        'poprawka ponowiona',
+        'poprawki ponowione',
+        'poprawek ponowionych',
+      ),
+    if (u.changed > 0)
+      '${n(u.changed, 'kwestia', 'kwestie', 'kwestii')} $reassigned',
+    if (u.clipsDropped > 0)
+      '${n(u.clipsDropped, 'głos', 'głosy', 'głosów')} do wygenerowania',
+  ];
+  return 'Zaktualizowano parsowanie: ${parts.join(', ')}';
+}
 
 /// Stores a just-imported [fresh] parse (with its document [bytes]). A
 /// re-import of a stored script replaces its parse when it differs, moving

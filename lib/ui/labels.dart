@@ -28,3 +28,11 @@ String seconds(double s) => '${s.toStringAsFixed(1).replaceAll('.', ',')} s';
 
 /// Breakpoint between phone (one column) and desktop (two columns).
 const double wideLayout = 840;
+
+/// Polish plural: [one] for 1, [few] for 2-4 (not 12-14), else [many].
+String plural(int n, String one, String few, String many) {
+  if (n == 1) return one;
+  final ten = n % 10;
+  final hundred = n % 100;
+  return ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14) ? few : many;
+}

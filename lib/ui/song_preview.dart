@@ -47,12 +47,13 @@ class _SongPreviewState extends State<SongPreview> {
     final lyrics = songLyrics(widget.script, widget.song);
     final shown = _open ? lyrics : lyrics.take(previewLines).toList();
     final small = Theme.of(context).textTheme.bodySmall;
+    final verses = plural(lyrics.length, 'wers', 'wersy', 'wersów');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Śpiewa: ${songSingers(widget.script, widget.song)} · '
-          '${lyrics.length} wersów',
+          '${lyrics.length} $verses',
           style: small,
         ),
         const SizedBox(height: AppSpacing.xs),

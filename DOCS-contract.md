@@ -181,7 +181,10 @@ subsequence of normalised texts, then similar lines inside each gap);
 and the `resume` range move to the new indices; corrections are replayed (for
 scripts stored before the log: merges inferred from aliases); data of lines
 that no longer exist is dropped from prefs but kept, with the old script and
-prefs, under `backup/<id>/…`. The app shows one line, e.g. "Zaktualizowano
+prefs, under `backup/<id>/…`. A voice pack stamped for the old parse keeps
+only the clips of lines whose text and speakers are unchanged, re-keyed and
+re-stamped; an unstamped pack is dropped. Aligned spoken lines whose speakers
+or kind now differ are counted in the summary. The app shows one line, e.g. "Zaktualizowano
 parsowanie: 2 kwestie przeniesione, 0 utraconych". A script stored before
 versions without its document asks for a re-import.
 
