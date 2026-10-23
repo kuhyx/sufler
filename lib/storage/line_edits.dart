@@ -59,7 +59,10 @@ extension LineEdits on ScriptLibrary {
   /// an unstamped one loses those clips and stays unstamped; one stamped
   /// for another parse (already refused) is left alone. Returns the pack
   /// as stored now.
-  Future<AudioPack?> restampPack(Script old, Script fresh) async {
+  Future<AudioPack?> restampPack(Script old, Script fresh) =>
+      changePack(old.id, () => _restamp(old, fresh));
+
+  Future<AudioPack?> _restamp(Script old, Script fresh) async {
     final pack = await loadPack(old.id);
     final print = pack?.fingerprint;
     if (pack == null || (print != null && print != old.fingerprint)) {
@@ -80,20 +83,17 @@ extension LineEdits on ScriptLibrary {
   /// Stores [clip], rendered for line [index] of [script] as it is now, in
   /// the script's pack in place of the old clip. Null (nothing stored) when
   /// there is no pack or it belongs to another parse.
-  Future<AudioPack?> storeLineClip(
-    Script script,
-    int index,
-    Uint8List clip,
-  ) async {
-    final pack = await loadPack(script.id);
-    final print = pack?.fingerprint;
-    if (pack == null || (print != null && print != script.fingerprint)) {
-      return null;
-    }
-    final zip = packWithClip(pack, index, clip);
-    await savePack(script.id, zip);
-    return AudioPack.fromZip(zip);
-  }
+  Future<AudioPack?> storeLineClip(Script script, int index, Uint8List clip) =>
+      changePack(script.id, () async {
+        final pack = await loadPack(script.id);
+        final print = pack?.fingerprint;
+        if (pack == null || (print != null && print != script.fingerprint)) {
+          return null;
+        }
+        final zip = packWithClip(pack, index, clip);
+        await savePack(script.id, zip);
+        return AudioPack.fromZip(zip);
+      });
 
   /// Lines of script [id] corrected by hand ("zmieniono").
   Future<Set<int>> editedLines(String id) async => {

@@ -92,7 +92,11 @@ class LineVoices extends ChangeNotifier {
       final stale =
           now.text != asked.text || !listEquals(now.speakers, asked.speakers);
       if (clip == null || stale || _disposed) return;
-      final pack = await library.storeLineClip(script, index, clip);
+      final at = script;
+      final pack = await library.storeLineClip(at, index, clip);
+      // Another line was corrected meanwhile (the pack is stamped anew):
+      // render this one again for the script as it is now.
+      if (pack == null && !identical(at, script)) _again.add(index);
       if (pack == null || _disposed) return;
       pending.remove(index);
       onPack(pack);

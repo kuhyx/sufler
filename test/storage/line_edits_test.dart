@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idb_shim/idb_client_memory.dart';
 import 'package:sufler/audio/pack_check.dart';
+import 'package:sufler/rehearsal/edits.dart';
 import 'package:sufler/storage/idb_store.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/storage/line_edits.dart';
@@ -69,6 +70,22 @@ void main() {
     expect(stored.clip(1), [7]);
     expect(stored.clip(2), [2, 2, 2]);
     expect(checkPack(r.script, stored).message, isNull);
+  });
+
+  test('a clip landing while another line is corrected never leaves the '
+      'pack stamped for the older text', () async {
+    final lib = await _stored();
+    final r = await lib.correctLine(fixtureScript(), 1, text: _edited);
+    // The render of line 1 returns just as line 2's correction re-stamps.
+    final s2 = editLine(r.script, 2, speakers: [elf]);
+    await Future.wait([
+      lib.storeLineClip(r.script, 1, Uint8List.fromList([7])),
+      lib.restampPack(r.script, s2),
+    ]);
+    final pack = (await lib.loadPack('abc123'))!;
+    expect(checkPack(s2, pack).pack, isNotNull);
+    expect(pack.clip(1), [7]);
+    expect(pack.clip(2), isNull);
   });
 
   test('a re-parse keeps a reworded line: edit replayed, its note and new '
