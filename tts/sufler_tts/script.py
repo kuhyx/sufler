@@ -27,8 +27,12 @@ class Line:
 
     @property
     def is_spoken(self) -> bool:
-        """Mirror of Dart `ScriptLine.isSpoken`."""
-        return self.kind not in UNSPOKEN_KINDS and self.text != ""
+        r"""Mirror of Dart `ScriptLine.isSpoken`.
+
+        Not a direction/heading and the text has a letter or digit: Dart's
+        `[\p{L}\p{N}]` is exactly `str.isalnum` (categories L* and N*).
+        """
+        return self.kind not in UNSPOKEN_KINDS and any(c.isalnum() for c in self.text)
 
 
 @dataclass(frozen=True)

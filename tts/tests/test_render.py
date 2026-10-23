@@ -7,11 +7,13 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from sufler_tts.audio import read_opus_head
 from sufler_tts.cache import ClipCache, clip_key
 from sufler_tts.engine import FakeEngine
 from sufler_tts.render import pack_name, render_script, spoken_lines
-from sufler_tts.script import parse_script
+from sufler_tts.script import Line, parse_script
 from sufler_tts.voices import get_voice
 
 SPOKEN = [1, 3, 4, 5]  # 6 is direction-only text: empty after clean-up
@@ -102,3 +104,19 @@ def test_long_line_is_split_and_concatenated(
     assert len(chunks) > 1
     assert all(len(c) <= 250 for c in chunks)
     assert " ".join(chunks) == script_json["lines"][1]["text"]
+
+
+@pytest.mark.parametrize(
+    ("text", "kind", "spoken"),
+    [
+        ("Żółw!", "dialogue", True),
+        ("7", "song", True),  # \p{N}
+        ("…?! — (  )", "dialogue", False),  # punctuation only: no letter/digit
+        ("", "dialogue", False),
+        ("Wychodzą.", "direction", False),
+        ("Scena 1", "heading", False),
+    ],
+)
+def test_is_spoken_needs_a_letter_or_digit(text: str, kind: str, spoken: bool) -> None:
+    # Mirrors Dart: kind not direction/heading AND text matches [\p{L}\p{N}].
+    assert Line(0, ("a",), text, kind).is_spoken is spoken
