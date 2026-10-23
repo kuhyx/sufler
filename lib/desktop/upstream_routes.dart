@@ -3,6 +3,7 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 /// Writes `{"error": message}` with [status].
 void sendJsonError(HttpResponse response, int status, String message) {
@@ -95,10 +96,20 @@ class UpstreamRoutes {
     );
     final HttpClientResponse upstream;
     try {
+      // Buffer the body and send it with a Content-Length: the voice service
+      // is Python's http.server, which reads exactly Content-Length bytes and
+      // cannot read a chunked body (it saw an empty POST, answered 400 and
+      // hung up mid-forward). Bodies are a script's JSON, well under 1 MB.
+      final body = await request.fold<BytesBuilder>(
+        BytesBuilder(copy: false),
+        (b, chunk) => b..add(chunk),
+      );
       final out = await _client.openUrl(request.method, url);
       final type = request.headers.contentType;
       if (type != null) out.headers.contentType = type;
-      await out.addStream(request);
+      out
+        ..contentLength = body.length
+        ..add(body.takeBytes());
       upstream = await out.close();
     } on IOException catch (e) {
       return sendJsonError(

@@ -81,6 +81,18 @@ void main() {
       expect(up.seen, ['GET /jobs/j1?x=1']);
     });
 
+    test('POST bodies reach the voice service with a Content-Length', () async {
+      // The service is Python's http.server, which reads exactly
+      // Content-Length bytes and knows nothing of chunked bodies: a chunked
+      // forward reads as an empty body, the service answers 400 and hangs
+      // up, and the wrapper reported a broken pipe as "not running" (503).
+      // The harness posts chunked, the worst case a client can send.
+      final r = await h.post('/api/tts/render', '{"id":"s1"}');
+      await r.drain<void>();
+      expect(up.lengths, [11]);
+      expect(up.chunked, [false]);
+    });
+
     test('forwards POST bodies and binary answers', () async {
       final r = await h.post('/api/tts/render', '{"id":"s1"}');
       expect(await jsonOf(r), {'jobId': 'j1', 'echo': 11});

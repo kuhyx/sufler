@@ -70,6 +70,10 @@ class FakeUpstream {
     final fake = FakeUpstream._(server);
     server.listen((request) async {
       fake.seen.add('${request.method} ${request.uri}');
+      if (request.method == 'POST') {
+        fake.lengths.add(request.headers.contentLength);
+        fake.chunked.add(request.headers.chunkedTransferEncoding);
+      }
       await handler(request);
       await request.response.close();
     });
@@ -78,6 +82,12 @@ class FakeUpstream {
 
   final HttpServer _server;
   final List<String> seen = [];
+
+  /// Content-Length (-1 = none) and chunkedness of each POST, in order.
+  final List<int> lengths = [];
+
+  /// Whether each POST arrived chunked.
+  final List<bool> chunked = [];
 
   Uri get base => Uri.parse('http://127.0.0.1:${_server.port}');
 
