@@ -26,9 +26,9 @@ concurrency:
 # This job is NOT gated on the test suite (see test.yml, a separate
 # workflow so a red test does not hide whether the APK still builds).
 #
-# Signing: android/app/build.gradle.kts must read android/key.properties for
-# the release signingConfig; until it does, the "release-signed" check below
-# fails closed rather than publishing a debug-signed APK.
+# Signing: android/app/build.gradle.kts reads android/key.properties (written
+# below from the ANDROID_* secrets: kuhy's shared key, ~/.android/release) for
+# the release signingConfig. Without the secrets this job fails closed.
 jobs:
   release:
     name: release (APK)
