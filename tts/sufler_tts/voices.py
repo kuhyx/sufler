@@ -41,11 +41,11 @@ class Voice:
 
 BANK: tuple[Voice, ...] = (
     # A pitch ladder ~2.6 semitones apart, 80-270 Hz. Base F0s measured
-    # pre-DSP: darkman ~112, mc_speech ~117, default ~150, gosia ~205 Hz.
+    # pre-DSP: darkman ~116, mc_speech ~112, default ~137 (unsteady), gosia ~205 Hz.
     Voice("m1", "Bas", "male", "piper-darkman", -5.8),
     Voice("m2", "Baryton", "male", "piper-darkman", -3.2),
-    Voice("m3", "Tenor", "male", "piper-mc_speech", -1.3),
-    Voice("m4", "Tenor jasny", "male", "piper-mc_speech", 1.4),
+    Voice("m3", "Tenor", "male", "piper-mc_speech", -0.3),
+    Voice("m4", "Tenor jasny", "male", "piper-mc_speech", 2.0),
     Voice(NARRATOR, "Narrator", "neutral", "default", 0.0),
     Voice("f1", "Alt", "female", "piper-gosia", -3.0),
     Voice("f2", "Mezzosopran", "female", "piper-gosia", -0.5),
