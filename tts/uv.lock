@@ -474,6 +474,14 @@ wheels = [
 ]
 
 [[package]]
+name = "crdt-sync"
+version = "0.9.2"
+source = { git = "https://github.com/kuhyx/utils?subdirectory=crdt-sync&rev=crdt-sync-v0.9.2#223b57eb875524b3c2994e6c811d5f6d0cc146f0" }
+dependencies = [
+    { name = "requests" },
+]
+
+[[package]]
 name = "ctranslate2"
 version = "4.8.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2510,6 +2518,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "chatterbox-tts" },
+    { name = "crdt-sync" },
     { name = "faster-whisper" },
     { name = "librosa" },
     { name = "numpy" },
@@ -2528,6 +2537,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "chatterbox-tts", specifier = "==0.1.7" },
+    { name = "crdt-sync", git = "https://github.com/kuhyx/utils?subdirectory=crdt-sync&rev=crdt-sync-v0.9.2" },
     { name = "faster-whisper", specifier = "==1.2.1" },
     { name = "librosa", specifier = "==0.11.0" },
     { name = "numpy", specifier = "==2.5.4" },

@@ -5,6 +5,8 @@ description = "Local Chatterbox Multilingual voice service for sufler"
 requires-python = ">=3.14"
 dependencies = [
   "chatterbox-tts==0.1.7",
+  # The relay's Firebase session + device id (relay/setup.py), tutor's pin.
+  "crdt-sync @ git+https://github.com/kuhyx/utils@crdt-sync-v0.9.2#subdirectory=crdt-sync",
   "faster-whisper==1.2.1",
   "librosa==0.11.0",
   "numpy==2.5.4",
@@ -34,6 +36,12 @@ ignore = ["D203", "D213", "D401", "PLR2004", "PLR0913", "PLR0917"]
 [tool.mypy]
 strict = true
 python_version = "3.14"
+
+# crdt-sync ships no py.typed: its names are Any here, checked in its own repo.
+[[tool.mypy.overrides]]
+module = ["crdt_sync", "crdt_sync.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.ruff.lint.isort]
 known-first-party = ["sufler_tts"]

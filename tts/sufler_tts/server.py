@@ -6,6 +6,8 @@ POST /render[?voices=c:v,...]  bare Script JSON -> {jobId}
 GET  /jobs/<id>         {done, total, state[, error]}
 GET  /packs/<id>.zip    the audio pack (DOCS-contract.md)
 POST /transcribe[?lang=pl]  audio bytes -> transcript (DOCS-contract.md)
+POST /explain           {selection, line, before, after} -> {text}
+POST /render_line       {script, index} -> audio/ogg (that one line's clip)
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
+from sufler_tts.assist import Assist, AssistError
 from sufler_tts.jobs import JobRunner
 from sufler_tts.pack import pack_name
 from sufler_tts.transcribe import Transcriber, decode_audio
@@ -83,6 +86,7 @@ def _handler(
     runner: JobRunner,
     gpu: Callable[[], str | None],
     transcriber: Transcriber | None,
+    assist: Assist,
 ) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:
@@ -142,9 +146,28 @@ def _handler(
                 return
             self._json(HTTPStatus.OK, result.public())
 
+        def _assist(self, path: str, raw: bytes) -> None:
+            try:
+                body = json.loads(raw)
+                if path == "/explain":
+                    self._json(HTTPStatus.OK, {"text": assist.explain(body)})
+                    return
+                clip = assist.render_line(body)
+            except ValueError:  # JSONDecodeError
+                self._json(HTTPStatus.BAD_REQUEST, {"error": "body must be JSON"})
+                return
+            except AssistError as exc:
+                self._json(exc.status, {"error": exc.message})
+                return
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "audio/ogg")
+            self.send_header("Content-Length", str(len(clip)))
+            self.end_headers()
+            self.wfile.write(clip)
+
         def do_POST(self) -> None:
             path, _, query = self.path.partition("?")
-            if path not in {"/render", "/transcribe"}:
+            if path not in {"/render", "/transcribe", "/explain", "/render_line"}:
                 self._not_found()
                 return
             length = int(self.headers.get("Content-Length") or 0)
@@ -153,6 +176,9 @@ def _handler(
                 return
             if path == "/transcribe":
                 self._transcribe(self.rfile.read(length), query)
+                return
+            if path in {"/explain", "/render_line"}:
+                self._assist(path, self.rfile.read(length))
                 return
             try:
                 script, voices = parse_render_request(
@@ -173,8 +199,15 @@ def make_server(
     port: int = PORT,
     gpu: Callable[[], str | None] = gpu_name,
     transcriber: Transcriber | None = None,
+    assist: Assist | None = None,
 ) -> ThreadingHTTPServer:
-    """A server bound to 127.0.0.1 only; call `serve_forever()` on it."""
-    server = ThreadingHTTPServer((HOST, port), _handler(runner, gpu, transcriber))
+    """A server bound to 127.0.0.1 only; call `serve_forever()` on it.
+
+    Without `assist`, /render_line uses the runner's engine and cache and
+    /explain answers 503 (no explainer).
+    """
+    assist = assist or Assist(runner.engine, runner.cache, runner.packs, None)
+    handler = _handler(runner, gpu, transcriber, assist)
+    server = ThreadingHTTPServer((HOST, port), handler)
     server.daemon_threads = True
     return server
