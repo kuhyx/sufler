@@ -1,5 +1,6 @@
-// Integration test against the real (copyrighted, never committed) script.
-// Run with: SUFLER_SCRIPT_PDF=/path/to/krasnale.pdf flutter test \
+// Integration test against the real (copyrighted, never committed) script,
+// final version of 2026-10-20 (56 pages; the 2026-10-15 draft had a Róża /
+// Lis scene that was cut). Run with: SUFLER_SCRIPT_PDF=/path/to/krasnale.pdf flutter test \
 //   test/import/krasnale_test.dart
 // Counts below were verified by hand against `pdftotext -layout` (songs:
 // `pdftohtml -xml -i -stdout` font colours).
@@ -28,7 +29,6 @@ void main() {
     expect(s.scenes.map((x) => x.title), [
       'Scena 1',
       'Scena 3',
-      'Scena 3',
       'Scena 5',
       'Scena 6',
       'Scena 7',
@@ -44,13 +44,13 @@ void main() {
     expect(s.lines.where((l) => l.text.contains('Finał')), hasLength(1));
     expect(s.songs.last.start, finale.start + 1);
     expect(finale.end, s.lines.length - 1);
-    // 11 "Piosenka …" headings + 2 red runs with no heading, each opened by
-    // a red "… śpiewa(ją) piosenkę" line (counted from the red fontspecs of
-    // `pdftohtml -xml -i -stdout`: 14 red runs = legend + 11 + 2).
+    // 11 "Piosenka …" headings + 1 red run with no heading, opened by a red
+    // "Śmierć - śpiewa piosenkę" line (counted from the red fontspecs of
+    // `pdftohtml -xml -i -stdout`: 13 red runs = legend + 11 + 1).
     final headed = s.songs.where((x) => !x.title.startsWith('♪ ')).toList();
     final unheaded = s.songs.where((x) => x.title.startsWith('♪ ')).toList();
     expect(headed, hasLength(11));
-    expect(unheaded, hasLength(2));
+    expect(unheaded, hasLength(1));
     expect(headed.first.title, 'Piosenka Krasnali');
     expect(headed.last.title, 'Piosenka Krasnali 2');
     for (final song in unheaded) {
@@ -65,10 +65,9 @@ void main() {
       );
       expect(song.title.length, lessThanOrEqualTo(42));
     }
-    // The duet's 3 singer tags are unspoken directions, not dropped.
-    // ... and so is the "Finał" heading.
-    expect(s.lines, hasLength(864));
-    expect(s.lines.where((l) => l.isSpoken), hasLength(825));
+    // The "Finał" heading is an unspoken heading, not dropped.
+    expect(s.lines, hasLength(799));
+    expect(s.lines.where((l) => l.isSpoken), hasLength(769));
 
     final ids = s.characters.map((c) => c.id).toSet();
     expect(
@@ -106,16 +105,16 @@ void main() {
   }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
 
   test('Żagiewka: one dialogue line per heading, plus group songs', () {
-    // 86 standalone "Żagiewka" headings (cast-list bullet excluded); no
+    // 91 standalone "Żagiewka" headings (cast-list bullet excluded); no
     // multi-speaker heading names her. The closing "Koniec;)" after the
     // finale is not hers.
     final blocks = s.lines.where(
       (l) => l.kind == LineKind.dialogue && l.speakers.contains('zagiewka'),
     );
-    expect(blocks, hasLength(86));
+    expect(blocks, hasLength(91));
     expect(blocks.where((l) => l.speakers.length > 1), isEmpty);
     // Sung: all 24 + 20 lyrics of both "Piosenka Krasnali" (she is in the
-    // cast-list group "1. Krasnale"), plus 6 more; 86 + 50 = 136 lines.
+    // cast-list group "1. Krasnale"), plus 6 more; 91 + 50 = 141 lines.
     for (final song in s.songs.where((x) => x.title.contains('Krasnali'))) {
       final lyrics = s.lines.where((l) => l.songId == song.id && l.isSpoken);
       expect(lyrics.map((l) => l.speakers.length).toSet(), {5});
@@ -128,29 +127,25 @@ void main() {
     final hers = s.lines.where(
       (l) => l.isSpoken && l.speakers.contains('zagiewka'),
     );
-    expect(hers, hasLength(136));
+    expect(hers, hasLength(141));
     expect(blocks.map((l) => l.text), contains('Achh ci celebryci....'));
     expect(s.lines.last.isSpoken, isFalse);
   }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
 
-  test('the Róża / Lis duet follows its R. / L. / Razem tags', () {
-    // Scena 3 (pdftotext -layout): "R." 4 lyric lines, "L." 4, "Razem" 1.
-    final duet = s.songs.singleWhere(
-      (x) => s.lines[x.start - 1].directions.contains('R.'),
+  test('the cut Róża / Lis scene leaves them in the cast list only', () {
+    // "• Lis i Róża (Mały Książe)" is still in the cast list, but the final
+    // version has no "Róża"/"Lis" heading and no R. / L. / Razem singer tags
+    // (`pdftotext -layout`). Singer tags are covered by singer_tags_test.dart.
+    for (final id in ['roza', 'lis']) {
+      expect(s.characters.map((c) => c.id), contains(id));
+      expect(s.lines.where((l) => l.speakers.contains(id)), isEmpty);
+    }
+    expect(
+      s.lines.where(
+        (l) => l.directions.any((d) => ['R.', 'L.', 'Razem'].contains(d)),
+      ),
+      isEmpty,
     );
-    final lyrics = s.lines
-        .sublist(duet.start, duet.end + 1)
-        .where((l) => l.isSpoken)
-        .map((l) => l.speakers.join('+'));
-    expect(lyrics, [
-      ...List.filled(4, 'roza'),
-      ...List.filled(4, 'lis'),
-      'roza+lis',
-    ]);
-    final tags = s.lines
-        .sublist(duet.start - 1, duet.end + 1)
-        .where((l) => l.kind == LineKind.direction);
-    expect(tags.map((l) => l.directions.single), ['R.', 'L.', 'Razem']);
     expect(s.songs.where((x) => x.title.length <= 5), isEmpty);
   }, skip: _path == null ? 'set SUFLER_SCRIPT_PDF to run' : false);
 
