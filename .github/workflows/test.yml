@@ -1,0 +1,27 @@
+name: test
+
+# analyze + format + the unit suite on every push. Separate from release-apk
+# so a failing test is visible on its own and does not mask build health.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: analyze, format, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: dart format --output=none --set-exit-if-changed lib bin test
+      - run: flutter test --reporter=compact

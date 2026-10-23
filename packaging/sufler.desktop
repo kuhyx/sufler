@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Sufler
+Comment=Learn your lines: partner lines read aloud, Anki export
+Exec=/usr/bin/sufler
+Icon=sufler
+Terminal=false
+Categories=Education;
+StartupWMClass=sufler
