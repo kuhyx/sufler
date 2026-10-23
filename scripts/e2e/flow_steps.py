@@ -14,7 +14,6 @@ import oracle
 if TYPE_CHECKING:
     from flows import Run
 
-WOLF = "piaskowy-wilk"
 _HERE = Path(__file__).parent
 
 
@@ -63,11 +62,11 @@ def f1_import(run: Run) -> None:
 
 
 def f2_roles(run: Run) -> None:
-    """F2: the role picker lists Piaskowy Wilk with its line count, and the songs."""
+    """F2: the role picker lists the role with its line count, and the songs."""
     run.step("open the imported script")
     run.boot()
     _script, facts = run.open_script()
-    run.step(f"chip '{facts.name} (n)' shows the Wolf spoken-line count")
+    run.step(f"chip '{facts.name} (n)' shows its spoken-line count")
     chip = run.chip(facts)
     want = f"{facts.name} ({len(facts.spoken)})"
     run.check(chip["text"] == want, f"chip {chip['text']!r}, expected {want!r}")
@@ -93,12 +92,12 @@ def _audio(run: Run) -> list[dict[str, Any]]:
 
 
 def f3_rehearse(run: Run) -> None:
-    """F3: Wolf + a scene: partner text and audio, countdown, Space advances."""
-    run.step("open the script, select only Piaskowy Wilk")
+    """F3: the role + a scene: partner text and audio, countdown, Space advances."""
+    run.step(f"open the script, select only {run.role}")
     run.boot()
     script, facts = run.open_script()
-    run.select_only_wolf(facts)
-    pick = oracle.pick_scene(script, WOLF)
+    run.select_only_role(facts)
+    pick = oracle.pick_scene(script, run.role)
     run.step(f"start scene '{pick.title}' (lines {pick.start}-{pick.end})")
     run.cdp.tap(f"kwestie {pick.start}–{pick.end}")
     run.cdp.wait_for(f"kwestia 1/{pick.cues}", 10)
@@ -113,12 +112,12 @@ def f3_rehearse(run: Run) -> None:
     run.check(log, "no speechSynthesis.speak / media play within 2 s")
     run.note(f"audio: {json.dumps(log[0])}")
     k = pick.partner_before_mine
-    run.step(f'"Dalej" x{k - 1} to the last partner line before Wolf\'s')
+    run.step(f'"Dalej" x{k - 1} to the last partner line before the role\'s')
     skip = run.cdp.wait_for("Dalej", 5)
     for _ in range(k - 1):
         run.cdp.click(skip)
     run.cdp.wait_for(f"kwestia {k}/{pick.cues}", 10)
-    run.step("that partner line ends by itself; Wolf's countdown starts")
+    run.step("that partner line ends by itself; the role's countdown starts")
     try:
         run.cdp.wait_for("Twoja kwestia", 25)
     except Exception as e:
@@ -144,11 +143,11 @@ def f3_rehearse(run: Run) -> None:
 
 
 def f4_anki(run: Run) -> None:
-    """F4: export the Wolf deck; notes == Wolf spoken lines, cue -> line."""
-    run.step("open the script, select only Piaskowy Wilk")
+    """F4: export the role's deck; notes == its spoken lines, cue -> line."""
+    run.step(f"open the script, select only {run.role}")
     run.boot()
     script, facts = run.open_script()
-    run.select_only_wolf(facts)
+    run.select_only_role(facts)
     run.step("allow downloads into the artefact dir")
     downloads = run.dir / "downloads"
     downloads.mkdir()
@@ -178,22 +177,24 @@ def f4_anki(run: Run) -> None:
     )
     run.check(out.returncode == 0, f"apkg_check: {out.stderr.strip()[-300:]}")
     notes: list[list[str]] = json.loads(out.stdout)
-    run.step("note count == Wolf spoken lines; fronts are cues, backs Wolf lines")
-    want = oracle.expected_cards(script, WOLF)
+    run.step("note count == role spoken lines; fronts are cues, backs role lines")
+    want = oracle.expected_cards(script, run.role)
     run.check(
         len(notes) == len(want) == len(facts.spoken),
         f"{len(notes)} notes, {len(want)} expected cards, "
-        f"{len(facts.spoken)} Wolf spoken lines",
+        f"{len(facts.spoken)} {facts.name} spoken lines",
     )
     backs = sorted(n[1] for n in notes)
-    run.check(backs == sorted(b for _, b in want), "backs differ from Wolf lines")
+    run.check(
+        backs == sorted(b for _, b in want), f"backs differ from {facts.name} lines"
+    )
     unmatched = [
         oracle.unescape(b)[:30]
         for f, b in want
         if not any(n[1] == b and f in n[0] for n in notes)
     ]
     run.check(not unmatched, f"front lacks its cue for {unmatched}")
-    run.note(f"{len(notes)} notes == {len(facts.spoken)} Wolf spoken lines")
+    run.note(f"{len(notes)} notes == {len(facts.spoken)} {facts.name} spoken lines")
 
 
 def f5_voices(run: Run) -> None:

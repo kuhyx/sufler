@@ -47,6 +47,14 @@
     };
   },
 
+  // Labels of selected role chips (`<name> (<count>)`), e.g. to deselect.
+  selectedChips() {
+    const on = (e) => [e.getAttribute('aria-checked'), e.getAttribute('aria-selected')]
+      .includes('true');
+    return [...new Set(this.nodes().filter(on).map((e) => this.label(e))
+      .filter((t) => /^.+ \(\d+\)$/.test(t)))];
+  },
+
   // Every non-empty label on the page, one per line.
   text() {
     return [...new Set(this.nodes().map((e) => this.label(e)).filter((t) => t))].join('\n');

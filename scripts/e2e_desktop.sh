@@ -14,7 +14,8 @@
 # CDP port. Artefacts (screenshots, downloads; they show copyrighted script
 # text) go to private/e2e/, which is gitignored.
 #
-# Env: SUFLER_SCRIPT_PDF (default private/krasnale.pdf), SUFLER_BROWSER
+# Env: SUFLER_SCRIPT_PDF (default private/krasnale.pdf), E2E_ROLE (character
+# id kuhy plays, default zagiewka; piaskowy-wilk also kept green), SUFLER_BROWSER
 # (default: first of chromium / google-chrome-stable), E2E_DISPLAY (:79).
 # Needs: Xephyr (xorg-server-xephyr), python3 websocket-client, sqlite (python).
 
@@ -114,7 +115,7 @@ down() {
 flow() {
     local pdf="${SUFLER_SCRIPT_PDF:-$REPO_DIR/private/krasnale.pdf}"
     python3 "$REPO_DIR/scripts/e2e/flows.py" "$1" --port "$CDP_PORT" \
-        --out "$E2E_DIR" --pdf "$pdf" --display "$DISPLAY_NUM"
+        --out "$E2E_DIR" --pdf "$pdf" --display "$DISPLAY_NUM" --role "${E2E_ROLE:-zagiewka}"
 }
 
 main() {

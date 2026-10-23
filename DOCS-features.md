@@ -15,6 +15,8 @@
 - **Run:** `scripts/e2e_desktop.sh build` (once per change), `up`, then
   `F1` .. `F5` (one per call, each < 60 s, F2-F5 need F1's import), `down`.
   After a wrapper-only rebuild: `scripts/e2e_desktop.sh wrapper`.
+- **Role:** `E2E_ROLE` = character id kuhy plays, default `zagiewka`
+  (Żagiewka); `E2E_ROLE=piaskowy-wilk` is kept green too.
 - **Input:** a real play, `SUFLER_SCRIPT_PDF` (default `private/krasnale.pdf`,
   never committed). Expected counts are computed from the stored script
   (`scripts/e2e/oracle.py`), not hard-coded.
@@ -43,11 +45,11 @@
 
 | id | goal | command | last green |
 |---|---|---|---|
-| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 @ 9d61c23 |
-| F2 | role picker: Piaskowy Wilk chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 @ 9d61c23 |
-| F3 | Wolf + a scene: partner text shown and audio started; a partner line ends by itself; Wolf's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 @ 9d61c23 |
-| F4 | Anki export downloads an .apkg whose notes == Wolf spoken lines, fronts carry the cue, backs the Wolf line | `scripts/e2e_desktop.sh F4` | 2026-10-23 @ 9d61c23 |
-| F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper | `scripts/e2e_desktop.sh F5` | 2026-10-23 @ 9d61c23 |
+| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 @ 344de2a (828 spoken) |
+| F2 | role picker: the role's chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 @ 344de2a: Żagiewka (112) = 86 dialogue + 26 song lines; Piaskowy Wilk (39) = 18 + 21 |
+| F3 | the role + a scene where it speaks: partner text shown and audio started; a partner line ends by itself; the role's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 @ 344de2a: Żagiewka in Scena 8, Wolf in Scena 1 |
+| F4 | Anki export downloads an .apkg whose notes == the role's spoken lines, fronts carry the cue, backs the role's line | `scripts/e2e_desktop.sh F4` | 2026-10-23 @ 344de2a: Żagiewka 112 notes, Wolf 39 |
+| F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper | `scripts/e2e_desktop.sh F5` | 2026-10-23 @ 344de2a |
 
 On failure every flow prints `FAIL F<n> step <i>/<total>: <step> -> <why>;
 shot: <path>` and exits 1.

@@ -24,7 +24,6 @@ from cdp import Cdp, CdpError
 from flow_steps import f1_import, f2_roles, f3_rehearse, f4_anki, f5_voices
 
 Json = dict[str, Any]
-WOLF = "piaskowy-wilk"
 
 
 class FlowError(Exception):
@@ -41,6 +40,7 @@ class Run:
         self.dir.mkdir(parents=True, exist_ok=True)
         self.index, self.what = 0, ""
         self.display = ":79"
+        self.role = "zagiewka"
         self.evidence: list[str] = []
 
     def step(self, what: str) -> None:
@@ -83,27 +83,30 @@ class Run:
         return got if isinstance(got, dict) else None
 
     def open_script(self) -> tuple[Json, oracle.RoleFacts]:
-        """Open the imported script; returns it and the Wolf facts."""
+        """Open the imported script; returns it and the role's facts."""
         script = self.stored()
         self.check(script, f"{self.pdf.name} not in the library; run F1 first")
         assert script is not None  # for the type checker
         self.cdp.tap(script["title"], 15)
         self.cdp.wait_for("Twoje role", 15)
-        return script, oracle.role_facts(script, WOLF)
+        return script, oracle.role_facts(script, self.role)
 
     def chip(self, facts: oracle.RoleFacts) -> Json:
-        """The Wolf role chip: ``<name> (<count>)``."""
+        """The role chip: ``<name> (<count>)``."""
         return self.cdp.wait_for(f"{facts.name} (", 10)
 
-    def select_only_wolf(self, facts: oracle.RoleFacts) -> None:
-        """Make the Wolf chip the one selected role."""
-        for _ in range(3):
-            hit = self.chip(facts)
-            if hit["checked"] == "true":
+    def select_only_role(self, facts: oracle.RoleFacts) -> None:
+        """Make the role's chip the one selected role (deselect the rest)."""
+        mine = self.chip(facts)["text"]
+        for _ in range(6):
+            on = self.cdp.helper("selectedChips()")
+            on = on if isinstance(on, list) else []
+            if on == [mine]:
                 return
-            self.cdp.click(hit)
+            other = [t for t in on if t != mine]
+            self.cdp.click(self.cdp.wait_for(other[0] if other else mine, 5))
             self.cdp.page.pump(0.5)
-        self.check(False, f"chip {facts.name} would not select")
+        self.check(False, f"could not make {mine!r} the only selected role")
 
     def header(self) -> tuple[int, int] | None:
         """Rehearsal header ``kwestia <n>/<m>``, if shown."""
@@ -128,11 +131,13 @@ def main() -> int:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--pdf", type=Path, required=True)
     ap.add_argument("--display", default=":79")
+    ap.add_argument("--role", default="zagiewka", help="character id to play")
     args = ap.parse_args()
     total, body = FLOWS[args.flow]
     cdp = Cdp(args.port)
     run = Run(args.flow, cdp, args.out.resolve(), args.pdf.resolve(), total)
     run.display = args.display
+    run.role = args.role
     try:
         body(run)
     except (FlowError, CdpError, TimeoutError) as e:
