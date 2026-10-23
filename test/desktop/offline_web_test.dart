@@ -6,6 +6,8 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/ui/fonts.dart';
 
+import 'font_cmap.dart';
+
 void main() {
   test('every web build skips the CanvasKit CDN', () {
     final files = [
@@ -45,5 +47,30 @@ void main() {
       expect(style.fontFamily, bundledFont);
       expect(style.fontFamilyFallback, [symbolFont]);
     }
+  });
+
+  test('every non-ASCII character in UI text has a bundled glyph', () {
+    // One the bundled fonts lack ("✓" in a switch title) makes the web
+    // engine fetch a Noto font from fonts.gstatic.com.
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final covered = <int>{
+      for (final m in RegExp(r'asset: (fonts/\S+\.ttf)').allMatches(pubspec))
+        ...bmpCoverage(m[1]!),
+    };
+    final missing = <String>[];
+    final sources = Directory('lib/ui').listSync(recursive: true);
+    for (final f in sources.whereType<File>()) {
+      final lines = f.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].trimLeft().startsWith('//')) continue;
+        for (final r in lines[i].runes.where((r) => r > 0x7F)) {
+          if (!covered.contains(r)) {
+            missing.add('${f.path}:${i + 1} U+${r.toRadixString(16)}');
+          }
+        }
+      }
+    }
+    expect(covered, containsAll('Żółć♪'.runes));
+    expect(missing, isEmpty);
   });
 }

@@ -46,10 +46,10 @@
 
 | id | goal | command | last green |
 |---|---|---|---|
-| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 @ 4b38694 (864 lines, 825 spoken) |
-| F2 | role picker: the role's chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 @ 4b38694: Żagiewka (136) = 86 dialogue + 50 song lines; Piaskowy Wilk (39) = 18 + 21; 11 headed + 2 unheaded songs |
-| F3 | the role + a scene where it speaks: partner text shown and audio started; a partner line ends by itself; the role's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 @ 4b38694: Żagiewka, 100 cues; without a pack device TTS fails (no voices) and the text is held; with the pack, two media clips play, the second ends by itself (3.23 s clip, `ended` 3.21 s after `playing`) |
-| F4 | Anki export downloads an .apkg whose notes == the role's spoken lines, fronts carry the cue, backs the role's line | `scripts/e2e_desktop.sh F4` | 2026-10-23 @ 4b38694: Żagiewka 136 notes |
+| F1 | import the PDF through the real file picker; library lists it with its spoken-line count | `scripts/e2e_desktop.sh F1` | 2026-10-23 @ 4b38694 + font fix (864 lines, 825 spoken; non-loopback requests: none) |
+| F2 | role picker: the role's chip shows all its spoken lines; every song (headed and unheaded ♪) has a chip | `scripts/e2e_desktop.sh F2` | 2026-10-23 @ 4b38694: Żagiewka (136) = 86 dialogue + 50 song lines; Piaskowy Wilk (39) = 18 + 21 (dialogue blocks per krasnale_test); 11 headed + 2 unheaded songs |
+| F3 | the role + a scene where it speaks: partner text shown and audio started; a partner line ends by itself; the role's countdown runs; Space advances | `scripts/e2e_desktop.sh F3` | 2026-10-23 @ 4b38694: Żagiewka, 100 cues; without a pack device TTS fails (no voices) and the text is held; with the pack, two media clips play, the second ends by itself (3.23 s clip, `ended` 3.21 s after `playing`); Wolf (pack) at kwestia 159/242 |
+| F4 | Anki export downloads an .apkg whose notes == the role's spoken lines, fronts carry the cue, backs the role's line | `scripts/e2e_desktop.sh F4` | 2026-10-23 @ 4b38694: Żagiewka 136 notes, Wolf 39 |
 | F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper (notes when the pack is stored: only a warm clip cache makes it in time) | `scripts/e2e_desktop.sh F5` | 2026-10-23 @ 4b38694: warm cache, "Głosy zapisane (825 kwestii)" 1.4 s after the first progress answer |
 | F6 | "Importuj paczkę audio (.zip)" through the real file picker stores the pack; after a reload the role's scene plays its first partner line from it: an `HTMLMediaElement` clip (no device speech) whose duration equals that line's pack clip | `scripts/e2e_desktop.sh F6` | 2026-10-23 @ 4b38694: 825-clip pack; Żagiewka 2.71 s clip == pack, Wolf 3.09 s == pack |
 

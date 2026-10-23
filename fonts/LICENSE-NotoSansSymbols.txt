@@ -1,7 +1,8 @@
 Copyright 2022 The Noto Project Authors (https://github.com/notofonts/symbols)
 
-NotoSansSymbols-Music.ttf is NotoSansSymbols-Regular.ttf (Arch noto-fonts
-1:2026.10.01-1) subset to U+2669-266F with fontTools.subset.
+SuflerSymbols.ttf is NotoSansSymbols-Regular.ttf subset to U+2669-266F,
+merged (fontTools.merge) with NotoSansSymbols2-Regular.ttf subset to
+U+2713,U+2717 (fontTools.subset; both Arch noto-fonts 1:2026.10.01-1).
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

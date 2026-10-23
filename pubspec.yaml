@@ -54,7 +54,7 @@ flutter:
           weight: 700
     - family: SuflerSymbols
       fonts:
-        - asset: fonts/NotoSansSymbols-Music.ttf
+        - asset: fonts/SuflerSymbols.ttf
 
 # PYTHONPATH=~/src/testsAndMisc python3 -m python_pkg.app_icons generate --app sufler
 # then: dart run flutter_launcher_icons

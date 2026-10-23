@@ -8,8 +8,9 @@ import 'package:flutter/material.dart';
 /// unless a family of exactly this name is bundled.
 const bundledFont = 'Roboto';
 
-/// Fallback for glyphs Roboto lacks ("♪" in unheaded song titles); without
-/// it the web engine fetches a Noto font for them. Its own family name, so
+/// Fallback for glyphs Roboto lacks ("♪" in unheaded song titles, "✓/✗" in
+/// the self-grading switch); without it the web engine fetches a Noto font
+/// for them. Its own family name, so
 /// it never shadows the full "Noto Sans Symbols" the engine may download.
 const symbolFont = 'SuflerSymbols';
 
