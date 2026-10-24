@@ -9,8 +9,9 @@
   build in a Chrome `--app` window, served by the loopback wrapper on
   `127.0.0.1:8792`, `/api/tts/*` proxied to the voice service on `:8791`).
   The flows below cover the **desktop** target.
-- **Driver:** nested Xephyr `:79` + scratch Chromium over CDP
-  (`scripts/e2e_desktop.sh`, helpers in `scripts/e2e/`). Never kuhy's `:0`,
+- **Driver:** invisible Xvfb `:79` + scratch Chromium (`--mute-audio`) over
+  CDP (`scripts/e2e_desktop.sh`, helpers in `scripts/e2e/`). Never a window
+  on kuhy's `:0`, never sound on his speakers (the clip stream is silent),
   never the real profile `~/.local/share/sufler/chrome-profile`.
 - **Run:** `scripts/e2e_desktop.sh build` (once per change), `up`, then
   `F1` .. `F7` (one per call, each < 60 s, F2-F7 need F1's import; F1 needs

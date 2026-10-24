@@ -1,9 +1,10 @@
 #!/bin/bash
 # End-to-end check of the DESKTOP app (web build + loopback wrapper + Chrome)
-# in a nested Xephyr display, never kuhy's live screens. Flows: DOCS-features.md.
+# on an invisible Xvfb display with a muted browser: never a window on kuhy's
+# screens, never sound on his speakers. Flows: DOCS-features.md.
 #
 #   scripts/e2e_desktop.sh build      # flutter build web + dart build cli
-#   scripts/e2e_desktop.sh up         # Xephyr :79, wrapper :8792, scratch browser
+#   scripts/e2e_desktop.sh up         # Xvfb :79, wrapper :8792, scratch browser
 #   scripts/e2e_desktop.sh wrapper    # restart only the wrapper (after a rebuild)
 #   scripts/e2e_desktop.sh F1 .. F7   # one flow per call (each < 60 s)
 #   scripts/e2e_desktop.sh down       # stop all three units
@@ -18,7 +19,7 @@
 # id kuhy plays, default zagiewka; piaskowy-wilk also kept green),
 # SUFLER_AUDIO_PACK (F6, F7; default: the PDF path with .sufler-audio.zip), SUFLER_BROWSER
 # (default: first of chromium / google-chrome-stable), E2E_DISPLAY (:79).
-# Needs: Xephyr (xorg-server-xephyr), python3 websocket-client, sqlite (python),
+# Needs: Xvfb (xorg-server-xvfb), python3 websocket-client, sqlite (python),
 # ffmpeg (F6 clip durations, F7 WAV).
 
 set -euo pipefail
@@ -30,7 +31,7 @@ readonly DISPLAY_NUM="${E2E_DISPLAY:-:79}"
 readonly CDP_PORT="${E2E_CDP_PORT:-9479}"
 readonly APP_URL="http://127.0.0.1:8792"
 readonly UNIT_PREFIX="sufler-e2e"
-readonly UNITS=("$UNIT_PREFIX-browser" "$UNIT_PREFIX-wrapper" "$UNIT_PREFIX-xephyr")
+readonly UNITS=("$UNIT_PREFIX-browser" "$UNIT_PREFIX-wrapper" "$UNIT_PREFIX-xvfb")
 readonly CAPPED="$HOME/.claude/scripts/capped.sh"
 
 die() { echo "e2e: $*" >&2; exit 1; }
@@ -41,7 +42,7 @@ capped() {
 }
 
 install_deps() {
-    command -v Xephyr >/dev/null || sudo pacman -S --needed --noconfirm xorg-server-xephyr
+    command -v Xvfb >/dev/null || sudo pacman -S --needed --noconfirm xorg-server-xvfb
     python3 -c 'import websocket' 2>/dev/null ||
         sudo pacman -S --needed --noconfirm python-websocket-client
 }
@@ -88,9 +89,9 @@ up() {
     rm -rf "$profile"
     mkdir -p "$profile" "$E2E_DIR/downloads"
 
-    systemd-run --user --collect --quiet --unit="$UNIT_PREFIX-xephyr" \
-        Xephyr "$DISPLAY_NUM" -screen 1280x900 -glamor -nolisten tcp -noreset
-    wait_for 10 test -S "/tmp/.X11-unix/X${DISPLAY_NUM#:}" || die "Xephyr did not start"
+    systemd-run --user --collect --quiet --unit="$UNIT_PREFIX-xvfb" \
+        Xvfb "$DISPLAY_NUM" -screen 0 1280x900x24 -nolisten tcp -noreset
+    wait_for 10 test -S "/tmp/.X11-unix/X${DISPLAY_NUM#:}" || die "Xvfb did not start"
 
     start_wrapper
 
@@ -101,7 +102,7 @@ up() {
         --setenv=DISPLAY="$DISPLAY_NUM" \
         "$browser" "--app=$APP_URL" "--user-data-dir=$profile" --class=sufler \
         --no-first-run --password-store=basic --no-default-browser-check \
-        --disable-extensions "--remote-debugging-port=$CDP_PORT" \
+        --disable-extensions --mute-audio "--remote-debugging-port=$CDP_PORT" \
         --window-position=0,0 --window-size=1280,900
     wait_for 15 curl -sf "http://127.0.0.1:$CDP_PORT/json/version" || die "browser CDP not up"
     echo "e2e: up (display $DISPLAY_NUM, app $APP_URL, cdp $CDP_PORT, profile $profile)"

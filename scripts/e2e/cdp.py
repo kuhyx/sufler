@@ -1,7 +1,7 @@
 """Chrome DevTools Protocol client for the sufler desktop E2E flows.
 
 Attaches over ``--remote-debugging-port`` to the scratch browser that
-``scripts/e2e_desktop.sh up`` started on the nested Xephyr display, so the
+``scripts/e2e_desktop.sh up`` started on the invisible Xvfb display, so the
 browser outlives each flow (one flow per < 60 s call). Flutter web exposes
 its semantics tree as DOM nodes once enabled; :meth:`Cdp.find` locates a node
 by label and :meth:`Cdp.click` taps it with real (trusted) mouse events.
