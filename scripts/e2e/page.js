@@ -39,6 +39,8 @@
     return {
       x: visible ? (left + right) / 2 : r.x + r.width / 2,
       y: visible ? (top + bottom) / 2 : r.y + r.height / 2,
+      left: r.left,
+      top: r.top,
       visible,
       below: r.top >= innerHeight,
       disabled: hit.getAttribute('aria-disabled') === 'true',

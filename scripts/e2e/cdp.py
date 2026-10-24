@@ -232,6 +232,26 @@ class Cdp:
         msg = f'"{label}" not found after scrolling'
         raise CdpError(msg)
 
+    def long_press(self, x: float, y: float, hold: float = 0.9) -> None:
+        """Press the left button at (x, y), hold ``hold`` s, release there
+        (no move in between: that would trip the long-press slop check)."""
+        point = {"x": x, "y": y}
+        self.page.call("Input.dispatchMouseEvent", type="mouseMoved", **point)
+        press = {"button": "left", "clickCount": 1, **point}
+        self.page.call("Input.dispatchMouseEvent", type="mousePressed", **press)
+        self.page.pump(hold)
+        self.page.call("Input.dispatchMouseEvent", type="mouseReleased", **press)
+
+    def key(self, key: str, code: int) -> None:
+        """Press and release a non-text key, e.g. ``key("End", 35)``."""
+        down = {"key": key, "code": key, "windowsVirtualKeyCode": code}
+        self.page.call("Input.dispatchKeyEvent", type="rawKeyDown", **down)
+        self.page.call("Input.dispatchKeyEvent", type="keyUp", **down)
+
+    def insert_text(self, text: str) -> None:
+        """Type ``text`` into the focused field (an IME commit)."""
+        self.page.call("Input.insertText", text=text)
+
     def key_space(self) -> None:
         """Press and release Space (the rehearsal's "done" shortcut)."""
         key = {"key": " ", "code": "Space", "windowsVirtualKeyCode": 32}

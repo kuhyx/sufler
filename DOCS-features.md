@@ -14,13 +14,14 @@
   on kuhy's `:0`, never sound on his speakers (the clip stream is silent),
   never the real profile `~/.local/share/sufler/chrome-profile`.
 - **Run:** `scripts/e2e_desktop.sh build` (once per change), `up`, then
-  `F1` .. `F7` (one per call, each < 60 s, F2-F7 need F1's import; F1 needs
-  the fresh profile `up` makes), `down`.
+  `F1` .. `F9` (one per call, each < 60 s, F2-F9 need F1's import, F9 also
+  F6's pack; F1 needs the fresh profile `up` makes), `down`. F9 appends to
+  a line of the E2E profile's script each run (the next `up` resets it).
   After a wrapper-only rebuild: `scripts/e2e_desktop.sh wrapper`.
 - **Role:** `E2E_ROLE` = character id kuhy plays, default `zagiewka`
   (Żagiewka); `E2E_ROLE=piaskowy-wilk` is kept green too.
 - **Input:** a real play, `SUFLER_SCRIPT_PDF` (default `private/krasnale.pdf`,
-  never committed), and for F6/F7 its rendered voice pack, `SUFLER_AUDIO_PACK`
+  never committed), and for F6/F7/F9 its rendered voice pack, `SUFLER_AUDIO_PACK`
   (default: the PDF path with `.sufler-audio.zip`). Expected counts are computed from the stored script
   (`scripts/e2e/oracle.py`), not hard-coded.
 - **Artefacts:** `private/e2e/F<n>/<timestamp>/` (gitignored: screenshots show
@@ -64,6 +65,8 @@
 | F5 | with the voice service up, "Generuj głosy" gets a job and >= 1 progress answer through the wrapper (notes when the pack is stored: only a warm clip cache makes it in time) | `scripts/e2e_desktop.sh F5` | 2026-10-24 @ 5188c73: warm cache, "Głosy zapisane (825 kwestii)" 1.5 s (Wolf 1.4 s) after the first progress answer |
 | F6 | "Importuj paczkę audio (.zip)" through the real file picker stores the pack; after a reload the role's scene plays its first partner line from it: an `HTMLMediaElement` clip (no device speech) whose duration equals that line's pack clip, with that line's text hidden ("mówi…" shown) | `scripts/e2e_desktop.sh F6` | 2026-10-24 @ 5188c73: 825-clip pack; Żagiewka 3.09 s clip == pack, Wolf 4.05 s == pack; text hidden for both |
 | F7 | speech recognition through the wrapper: `/api/tts/health` reports an `stt`; the first partner line's pack clip, as the mono 16 kHz PCM16 WAV the app's capture sends, POSTed like `TranscribeClient` (`/api/tts/transcribe?lang=pl`, `content-type: audio/wav`) returns 200 + a non-empty transcript similar (>= 0.6) to the stored line, and `words` with ordered times inside the clip | `scripts/e2e_desktop.sh F7` | 2026-10-24 @ 5188c73: faster-whisper@1.2.1 large-v3-turbo; Żagiewka line 2 (99 kB WAV) 200 in 2.4 s (cold model), 6 words 0.0-1.26 s of 3.08 s, similarity 1.00; Wolf line 318 (129 kB) 200 in 0.3 s, 7 words 0.0-3.6 s of 4.04 s, similarity 1.00 |
+| F8 | look a word up: the role's first own step revealed (Space), a long-press on a word of its text opens the sheet „<word>” with "Słownik" / "Wikisłownik"; "Zapytaj Claude" leaves a spinner and POSTs `/api/tts/explain` through the wrapper; a 200 brings a Polish answer, shown in the sheet and stored as a note `{about: <word>}` on the line (prefs `notes`) | `scripts/e2e_desktop.sh F8` | 2026-10-24 @ 9bde662: Żagiewka „bajka” 200 in 6.2 s, answer in Polish with mnemonics ("Obraz", "Rytm", "Łańcuch"); Wolf „Uważaj” 200 in 6.1 s |
+| F9 | correct a line on the go: ✎ "Popraw kwestię" on the scene's first partner step (picked in "Którą kwestię poprawić?" when it is a run), text appended, "Zapisz": "zmieniono" + "głos: syntezator do czasu wygenerowania"; `/api/tts/render_line` answers 200 with a clip of another length; back on that step ("Wstecz") it plays as a media clip of exactly the new length, no device speech, the note gone | `scripts/e2e_desktop.sh F9` | 2026-10-24 @ 9bde662: Żagiewka line 2 3.09 s → 5.09 s clip (render 17 s cold, then cached), replayed 5.09 s; Wolf line 318 → 13.69 s (8.8 s render), replayed 13.69 s. Found 9bde662: a step change skipped the step's first pack clip |
 
 On failure every flow prints `FAIL F<n> step <i>/<total>: <step> -> <why>;
 shot: <path>` and exits 1.

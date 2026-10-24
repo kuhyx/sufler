@@ -1,4 +1,4 @@
-"""Core desktop flows F1-F7 (DOCS-features.md), one per invocation.
+"""Core desktop flows F1-F9 (DOCS-features.md), one per invocation.
 
 Usage (normally via scripts/e2e_desktop.sh F<n>, after `up`):
     flows.py F<n> --port 9479 --out private/e2e --pdf private/krasnale.pdf
@@ -21,6 +21,7 @@ from typing import Any
 
 import oracle
 from cdp import Cdp, CdpError
+from flow_assist import f8_lookup, f9_correct
 from flow_pack import f6_pack
 from flow_rehearse import f3_rehearse
 from flow_steps import f1_import, f2_roles, f4_anki, f5_voices
@@ -176,6 +177,8 @@ FLOWS: dict[str, tuple[int, Callable[[Run], None]]] = {
     "F5": (4, f5_voices),
     "F6": (6, f6_pack),
     "F7": (4, f7_transcribe),
+    "F8": (5, f8_lookup),
+    "F9": (5, f9_correct),
 }
 
 
@@ -188,7 +191,7 @@ def main() -> int:
     ap.add_argument("--pdf", type=Path, required=True)
     ap.add_argument("--display", default=":79")
     ap.add_argument("--role", default="zagiewka", help="character id to play")
-    ap.add_argument("--pack", type=Path, help="voice pack zip (F6, F7)")
+    ap.add_argument("--pack", type=Path, help="voice pack zip (F6, F7, F9)")
     args = ap.parse_args()
     total, body = FLOWS[args.flow]
     cdp = Cdp(args.port)

@@ -6,7 +6,7 @@
 #   scripts/e2e_desktop.sh build      # flutter build web + dart build cli
 #   scripts/e2e_desktop.sh up         # Xvfb :79, wrapper :8792, scratch browser
 #   scripts/e2e_desktop.sh wrapper    # restart only the wrapper (after a rebuild)
-#   scripts/e2e_desktop.sh F1 .. F7   # one flow per call (each < 60 s)
+#   scripts/e2e_desktop.sh F1 .. F9   # one flow per call (each < 60 s)
 #   scripts/e2e_desktop.sh down       # stop all three units
 #
 # Long-lived processes run as transient `systemd-run --user` units: anything
@@ -17,7 +17,7 @@
 #
 # Env: SUFLER_SCRIPT_PDF (default private/krasnale.pdf), E2E_ROLE (character
 # id kuhy plays, default zagiewka; piaskowy-wilk also kept green),
-# SUFLER_AUDIO_PACK (F6, F7; default: the PDF path with .sufler-audio.zip), SUFLER_BROWSER
+# SUFLER_AUDIO_PACK (F6, F7, F9; default: the PDF path with .sufler-audio.zip), SUFLER_BROWSER
 # (default: first of chromium / google-chrome-stable), E2E_DISPLAY (:79).
 # Needs: Xvfb (xorg-server-xvfb), python3 websocket-client, sqlite (python),
 # ffmpeg (F6 clip durations, F7 WAV).
@@ -129,8 +129,8 @@ main() {
         up) up ;;
         wrapper) start_wrapper ;;
         down) down ;;
-        F[1-7]) flow "$1" ;;
-        *) die "usage: $0 build|up|wrapper|F1..F7|down" ;;
+        F[1-9]) flow "$1" ;;
+        *) die "usage: $0 build|up|wrapper|F1..F9|down" ;;
     esac
 }
 
