@@ -16,7 +16,7 @@ exceeds the 2 GiB `capped.sh` ceiling and a flutter_tester is OOM-killed
 - Never commit a real script (PDF/DOCX/ODT) or text extracted from one: plays are
   copyrighted and this repo is public. Integration tests read a local path from
   `SUFLER_SCRIPT_PDF`; in-repo fixtures are synthetic.
-- `lib/model/` + `DOCS-contract.md` are the contract between importers,
+- `lib/model/` + `DOCS-contract*.md` are the contract between importers,
   rehearsal, TTS and Anki export. Change both together.
 - `lib/assist/firebase_local.dart` is generated and gitignored: run
   `dart run tool/write_firebase_config.dart` once per checkout (`--placeholder`
