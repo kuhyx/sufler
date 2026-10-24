@@ -88,7 +88,11 @@ class PartnerPlayer implements LinePlayer {
 
   @override
   Future<void> stop() async {
+    // The clip stop is issued at once, not after the speech stop's platform
+    // round trip: a play right after this stop (a jump to another step)
+    // would otherwise be superseded by it and its first clip skipped.
+    final clipsStopped = clips.stop();
     await speech.stop();
-    await clips.stop();
+    await clipsStopped;
   }
 }

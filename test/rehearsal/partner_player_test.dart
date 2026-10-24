@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/audio/audio_pack.dart';
+import 'package:sufler/audio/latest_clip.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/rehearsal/voices.dart';
@@ -40,8 +41,44 @@ class _Clips implements ClipPlayer {
   Future<void> stop() async => stops++;
 }
 
+/// Device TTS whose stop takes a platform round trip (flutter_tts on web).
+class _SlowStopSpeech implements Speech {
+  @override
+  Future<void> speak(String text, Voice voice, double speed) async {}
+  @override
+  Future<void> stop() => Future<void>.delayed(Duration.zero);
+}
+
+/// A clip output that logs what it is told and never finishes a clip.
+class _LogOutput implements ClipOutput {
+  final log = <String>[];
+  @override
+  Future<void> start(Uint8List bytes, String mimeType) async =>
+      log.add('start ${bytes.join(',')}');
+  @override
+  Future<void> halt() async => log.add('halt');
+  @override
+  Stream<void> get completed => const Stream.empty();
+}
+
 void main() {
   final script = fixtureScript();
+
+  test('a stop followed at once by a play (a jump to another step) plays '
+      'that clip: the stop never cancels the play after it', () async {
+    final out = _LogOutput();
+    final p = PartnerPlayer(
+      script: script,
+      speech: _SlowStopSpeech(),
+      clips: LatestClipPlayer(out),
+      pack: AudioPack.fromZip(fixturePackZip()),
+    );
+    // What RehearsalController._jump does: halt (unawaited), then enter.
+    unawaited(p.stop());
+    unawaited(p.play(script.lines[1]));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(out.log.last, 'start 1,1');
+  });
 
   test('uses the pack clip when there is one, TTS otherwise', () async {
     final speech = _Speech();
