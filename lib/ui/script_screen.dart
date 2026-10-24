@@ -188,11 +188,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
   );
 
   Future<void> _pick(PickMode mode) async {
-    final range = await Navigator.of(context).push(
-      MaterialPageRoute<LineRange>(
-        builder: (_) => LinePickerScreen(script: _script!, mode: mode),
-      ),
-    );
+    final range = await LinePickerScreen.pick(context, _script!, mode);
     if (range == null) return;
     await _start(range, 'Kwestie ${range.start}–${range.end}');
   }

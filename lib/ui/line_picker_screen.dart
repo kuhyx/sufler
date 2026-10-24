@@ -18,6 +18,17 @@ class LinePickerScreen extends StatefulWidget {
   /// Creates the picker.
   const new({required this.script, required this.mode, super.key});
 
+  /// Pushes the picker; the chosen range, or null when backed out.
+  static Future<LineRange?> pick(
+    BuildContext context,
+    Script script,
+    PickMode mode,
+  ) => Navigator.of(context).push(
+    MaterialPageRoute<LineRange>(
+      builder: (_) => LinePickerScreen(script: script, mode: mode),
+    ),
+  );
+
   /// The script.
   final Script script;
 

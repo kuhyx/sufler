@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sufler/audio/audio_pack.dart';
@@ -239,18 +238,6 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
             onGrade: _grade,
             onAdjust: _adjust,
           );
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: kProseMaxWidth),
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          children: [
-            RehearsalHeader(session: session),
-            const Divider(),
-            content,
-          ],
-        ),
-      ),
-    );
+    return RehearsalBody(session: session, child: content);
   }
 }

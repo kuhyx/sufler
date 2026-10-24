@@ -66,3 +66,30 @@ class RehearsalHeader extends StatelessWidget {
     );
   }
 }
+
+/// A rehearsal page: [RehearsalHeader] over [child], in a prose-width list.
+class RehearsalBody extends StatelessWidget {
+  /// Creates the page of [session] around [child].
+  const new({required this.session, required this.child, super.key});
+
+  /// The rehearsal.
+  final RehearsalSession session;
+
+  /// The current cue or the summary.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: kProseMaxWidth),
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: [
+          RehearsalHeader(session: session),
+          const Divider(),
+          child,
+        ],
+      ),
+    ),
+  );
+}
