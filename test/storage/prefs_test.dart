@@ -145,6 +145,23 @@ void main() {
     expect(back.copyWith(clearResume: true).resume, isNull);
     const missed = ResumePoint(label: 'x', start: 1, end: 2, missedOnly: true);
     expect(ResumePoint.fromJson(missed.toJson()).missedOnly, isTrue);
+    // A ✗ being retried is kept; older points (no key) are not retries.
+    expect(back.resume!.retry, isFalse);
+    expect(missed.toJson().containsKey('retry'), isFalse);
+    final retry = missed.at(1, line: 2, retry: true);
+    final r = ResumePoint.fromJson(retry.toJson());
+    expect((r.retry, r.position, r.line), (true, 1, 2));
+    expect(r.at(2).retry, isFalse);
+  });
+
+  test('tapped times: optional, round trip, omitted when empty', () {
+    final old = RehearsalPrefs.fromJson(const {
+      'lineSeconds': {'4': 4.2},
+    });
+    expect(old.tapSeconds, isEmpty);
+    expect(old.toJson().containsKey('tapSeconds'), isFalse);
+    final p = old.copyWith(tapSeconds: {4: 4.2, 7: 1.5});
+    expect(RehearsalPrefs.fromJson(p.toJson()).tapSeconds, {4: 4.2, 7: 1.5});
   });
 
   test('pure runs: optional, round trip, kept through a re-parse', () {

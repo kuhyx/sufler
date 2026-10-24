@@ -55,6 +55,7 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
       end: start < end ? end : start,
       position: r.position,
       missedOnly: r.missedOnly,
+      retry: r.retry,
     );
   }
   return (
@@ -62,6 +63,7 @@ PrefsMove movePrefs(RehearsalPrefs p, Map<int, int> map, int newLength) {
       roles: p.roles,
       speed: p.speed,
       lineSeconds: move(p.lineSeconds),
+      tapSeconds: move(p.tapSeconds),
       recordings: move(p.recordings),
       knowledge: move(p.knowledge),
       resume: resume,

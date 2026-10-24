@@ -46,15 +46,20 @@ class PassScore {
 /// again until ✓. Only the first attempt of a pass counts.
 class RehearsalSession {
   /// Starts pass 1 at cue [startAt] (0: the beginning; a resumed walk
-  /// passes where it stopped).
+  /// passes where it stopped). [retry]: that cue was left mid-retry, so
+  /// its first-attempt ✗ is restored (only for an own cue).
   new(
     this.cues, {
     bool selfGrade = false,
     this.loop = false,
     this.cleanTarget = 3,
     int startAt = 0,
+    bool retry = false,
   }) : grades = selfGrade || loop {
     position = startAt.clamp(0, cues.length);
+    if (retry && grades && position < cues.length && cues[position].mine) {
+      results[position] = false;
+    }
     _enter();
   }
 

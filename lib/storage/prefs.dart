@@ -21,6 +21,7 @@ class ResumePoint {
     this.position = 0,
     this.missedOnly = false,
     this.line,
+    this.retry = false,
   });
 
   /// Parses [json] produced by [toJson].
@@ -31,6 +32,7 @@ class ResumePoint {
     position: json['position'] as int? ?? 0,
     missedOnly: json['mode'] == 'missed',
     line: json['line'] as int?,
+    retry: json['retry'] as bool? ?? false,
   );
 
   /// Shown title ("Scena 3", "Kwestie 4–9").
@@ -53,6 +55,11 @@ class ResumePoint {
   /// Null in points saved before it was kept.
   final int? line;
 
+  /// The cue reached was graded ✗ on its first try and is being asked
+  /// again: on resume that ✗ stands, so the next ✓ is not a first attempt
+  /// (not stored as knowledge, the pass not clean).
+  final bool retry;
+
   /// JSON form.
   Json toJson() => {
     'label': label,
@@ -61,16 +68,20 @@ class ResumePoint {
     'position': position,
     'mode': missedOnly ? 'missed' : 'range',
     'line': ?line,
+    // Only when set, so points without a retry keep their old shape.
+    if (retry) 'retry': true,
   };
 
-  /// Copy at another [position] (of script [line]).
-  ResumePoint at(int position, {int? line}) => ResumePoint(
+  /// Copy at another [position] (of script [line]); [retry]: its cue is
+  /// being asked again after a ✗.
+  ResumePoint at(int position, {int? line, bool retry = false}) => ResumePoint(
     label: label,
     start: start,
     end: end,
     position: position,
     missedOnly: missedOnly,
     line: line,
+    retry: retry,
   );
 }
 
@@ -84,6 +95,7 @@ class RehearsalPrefs {
     this.roles = const {},
     this.speed = 1,
     this.lineSeconds = const {},
+    this.tapSeconds = const {},
     this.recordings = const {},
     this.knowledge = const {},
     this.resume,
@@ -103,6 +115,7 @@ class RehearsalPrefs {
       roles: {for (final r in stringList(json['roles'])) Role.parse(r)},
       speed: (json['speed'] as num? ?? 1).toDouble(),
       lineSeconds: byLine('lineSeconds', (v) => (v! as num).toDouble()),
+      tapSeconds: byLine('tapSeconds', (v) => (v! as num).toDouble()),
       recordings: byLine('recordings', (v) => v! as String),
       knowledge: byLine(
         'knowledge',
@@ -124,6 +137,11 @@ class RehearsalPrefs {
 
   /// Manual per-line pause overrides, seconds.
   final Map<int, double> lineSeconds;
+
+  /// Line index -> seconds timed by a tap in "Nagraj czasy" (line shown to
+  /// "Skończyłem"): a pace sample like a recording. The pause itself is
+  /// the [lineSeconds] entry the tap also wrote.
+  final Map<int, double> tapSeconds;
 
   /// Line index -> storage key of the actor's own recording.
   final Map<int, String> recordings;
@@ -182,6 +200,8 @@ class RehearsalPrefs {
     'roles': [for (final r in roles) r.toString()],
     'speed': speed,
     'lineSeconds': {for (final e in lineSeconds.entries) '${e.key}': e.value},
+    if (tapSeconds.isNotEmpty)
+      'tapSeconds': {for (final e in tapSeconds.entries) '${e.key}': e.value},
     'recordings': {for (final e in recordings.entries) '${e.key}': e.value},
     'knowledge': {for (final e in knowledge.entries) '${e.key}': e.value},
     'resume': ?resume?.toJson(),
@@ -200,6 +220,7 @@ class RehearsalPrefs {
     Set<Role>? roles,
     double? speed,
     Map<int, double>? lineSeconds,
+    Map<int, double>? tapSeconds,
     Map<int, String>? recordings,
     Map<int, List<bool>>? knowledge,
     ResumePoint? resume,
@@ -211,6 +232,7 @@ class RehearsalPrefs {
     roles: roles ?? this.roles,
     speed: speed ?? this.speed,
     lineSeconds: lineSeconds ?? this.lineSeconds,
+    tapSeconds: tapSeconds ?? this.tapSeconds,
     recordings: recordings ?? this.recordings,
     knowledge: knowledge ?? this.knowledge,
     resume: clearResume ? null : resume ?? this.resume,

@@ -1,8 +1,10 @@
-/// The actor's own speaking pace, learned from his recordings.
+/// The actor's own speaking pace, learned from his recordings and tapped
+/// times.
 ///
 /// Seconds per syllable over every recorded line (speech only: a walk take
-/// is trimmed to its speech span), median so one slow or botched take does
-/// not drag it. Computed on the fly from the recordings, never stored.
+/// is trimmed to its speech span) and every line timed by a tap in "Nagraj
+/// czasy" (line shown to "Skończyłem"), median so one slow or botched take
+/// does not drag it. Computed on the fly, never stored.
 library;
 
 import 'package:sufler/model/script.dart';
@@ -36,11 +38,18 @@ double median(List<double> values) {
 }
 
 /// Median seconds per syllable over [recordingSeconds] (line index ->
-/// speech length) of [script], or null below [minPaceSamples] usable
-/// recordings (empty takes, vowel-less lines and stale indices skipped).
-double? secondsPerSyllable(Script script, Map<int, double> recordingSeconds) {
+/// speech length) and [tapSeconds] (line index -> tapped time) of
+/// [script], or null below [minPaceSamples] usable samples (empty takes,
+/// vowel-less lines and stale indices skipped). A line with both counts
+/// once, by its recording.
+double? secondsPerSyllable(
+  Script script,
+  Map<int, double> recordingSeconds, {
+  Map<int, double> tapSeconds = const {},
+}) {
   final rates = <double>[];
-  for (final MapEntry(key: i, value: s) in recordingSeconds.entries) {
+  final samples = {...tapSeconds, ...recordingSeconds};
+  for (final MapEntry(key: i, value: s) in samples.entries) {
     if (s <= 0 || i < 0 || i >= script.lines.length) continue;
     final n = spokenSyllables(script.lines[i].text);
     if (n > 0) rates.add(s / n);

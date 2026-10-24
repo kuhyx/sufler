@@ -88,11 +88,12 @@ void main() {
             .copyWith(
               roles: {const Role.character(wolf)},
               lineSeconds: {4: 9},
+              tapSeconds: {4: 2.5},
               resume: const ResumePoint(
                 label: 'Scena 2',
                 start: 6,
                 end: 10,
-              ).at(2),
+              ).at(2, retry: true),
             )
             .graded(2, ok: false)
             .graded(9, ok: true),
@@ -126,6 +127,7 @@ void main() {
 
       final p = await lib.loadPrefs('abc123');
       expect(p.lineSeconds, {5: 9.0});
+      expect(p.tapSeconds, {5: 2.5});
       expect(p.knowledge, {
         2: [false],
       });
@@ -133,6 +135,7 @@ void main() {
       expect(p.resume!.start, 7);
       expect(p.resume!.end, 10);
       expect(p.resume!.position, 2);
+      expect(p.resume!.retry, isTrue);
       // Lines 7 and 8 keep their own clips at 8 and 9 (old key 8 was reused).
       final secs = await lib.recordingSeconds(p);
       expect(secs.keys.toSet(), {8, 9});

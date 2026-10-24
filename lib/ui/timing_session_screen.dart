@@ -57,10 +57,14 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         seconds: take.durationSeconds,
         audio: take.audio,
       ),
-      // A tapped time is a manual pause; any recording stays as it is.
+      // A tapped time is a manual pause and a pace sample; any recording
+      // stays as it is.
       saveTime: (line, pause) => svc.library.updatePrefs(
         widget.scriptId,
-        (p) => p.copyWith(lineSeconds: {...p.lineSeconds, line.index: pause}),
+        (p) => p.copyWith(
+          lineSeconds: {...p.lineSeconds, line.index: pause},
+          tapSeconds: {...p.tapSeconds, line.index: pause},
+        ),
       ),
       whole: WholeRuns(
         runs: widget.runs,

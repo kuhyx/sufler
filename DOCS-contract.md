@@ -178,10 +178,11 @@ by `test/desktop/gdoc_contract_test.dart`.
 
 ```json
 {"roles": ["character:piaskowy-wilk", "group:blystek+zagiewka"], "speed": 1.0,
- "lineSeconds": {"<line-index>": 4.2}, "recordings": {"<line-index>": "<path>"},
+ "lineSeconds": {"<line-index>": 4.2}, "tapSeconds": {"<line-index>": 3.1},
+ "recordings": {"<line-index>": "<path>"},
  "knowledge": {"<line-index>": [false, true]},
  "resume": {"label": "Scena 3", "start": 120, "end": 240, "position": 7,
-            "mode": "range", "line": 131},
+            "mode": "range", "line": 131, "retry": true},
  "rolesAsked": true, "pureRuns": ["scena-3"],
  "notes": {"<line-index>": [{"about": "Wilku", "text": "<explanation>"}]}}
 ```
@@ -202,10 +203,18 @@ by `test/desktop/gdoc_contract_test.dart`.
   the script line of that cue (its first line, for a run) and is what
   resumes: the position shifts when runs fold into one cue or the setting
   changes. Without `line` (older prefs) the position is read against the
-  walk with no runs folded.
+  walk with no runs folded. `retry: true` (omitted otherwise; older prefs
+  have none = false): that cue was graded ✗ on its first try and left while
+  being asked again; on resume the ✗ stands, so the next ✓ is a retry (not
+  stored in `knowledge`, the pass is not clean for `pureRuns`). Kept on
+  re-parse.
 - `rolesAsked`: the roles screen was shown once for this script.
 - A per-line pause set with −/+ during rehearsal or measured by "Nagraj
-  czasy" without audio is a `lineSeconds` entry; a measured take with audio
+  czasy" without audio is a `lineSeconds` entry. A time tapped in "Nagraj
+  czasy" ("Skończyłem", line shown to tap) is ALSO kept in `tapSeconds` (same
+  seconds, same shape; omitted when empty) as a pace sample: −/+, "Ustaw
+  pauzę" or "Automatycznie" later change `lineSeconds` only, as they leave a
+  recording's sample alone. A measured take with audio
   is stored as the recording (speech only, so its length + 1 s is the pause)
   and drops that line's `lineSeconds`.
 - A whole run recorded in one take ("Nagraj w całości") is stored as one
@@ -217,8 +226,9 @@ by `test/desktop/gdoc_contract_test.dart`.
 - A run learnt as one unit (setting `wholeRuns`) stores its one
   first-attempt grade in `knowledge` for every line of the run.
 - Pause precedence: `lineSeconds` > recording (+ 1 s) > estimate > formula.
-  The estimate (median seconds per syllable over the recordings, needs >= 3,
-  `lib/rehearsal/pace.dart`) is derived on the fly and never stored.
+  The estimate (median seconds per syllable over the recordings and the
+  `tapSeconds` taps, a line with both counted once by its recording, needs
+  >= 3, `lib/rehearsal/pace.dart`) is derived on the fly and never stored.
 
 ## Re-parse (stored scripts after a parser change)
 
@@ -236,7 +246,7 @@ parse replaces the old one: lines are aligned old → new (longest common
 subsequence of normalised texts, then similar lines inside each gap; text
 corrections are undone through their `was`, newest first, before aligning, so
 a reworded line still meets its parsed self);
-`lineSeconds`, `recordings` (re-keyed to `rec/<id>/<new index>`), `knowledge`,
+`lineSeconds`, `tapSeconds`, `recordings` (re-keyed to `rec/<id>/<new index>`), `knowledge`,
 `notes` and the `resume` range move to the new indices; corrections are replayed (for
 scripts stored before the log: merges inferred from aliases); data of lines
 that no longer exist is dropped from prefs but kept, with the old script and
@@ -330,7 +340,7 @@ uses the system recognizer (`speech_to_text`, `pl_PL`) instead; after an
 error meaning it cannot work there (network, server, language, audio,
 permission) that run falls back to the recorder with VAD only (no
 transcript). A take neither path heard is timed by a tap in the walk
-(`lineSeconds`, never a recording). A whole-run take is recorded with the
+(`lineSeconds` + `tapSeconds`, never a recording). A whole-run take is recorded with the
 plain recorder (ended by "Skończyłem", never by silence) and, on desktop,
 posted the same way (2 min timeout) for its `words`; Android has no route to
 the service (it listens on the PC's loopback only), so there a run is always

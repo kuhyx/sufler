@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/rehearsal/wav.dart';
@@ -23,6 +24,12 @@ Future<void> Function(TestRig) _seed(Map<int, double> takes) => (rig) async {
 };
 
 const _three = {1: 2.0, 4: 1.2, 5: 1.2};
+
+Future<void> _settle(WidgetTester t) async {
+  for (var i = 0; i < 5; i++) {
+    await t.pump(const Duration(milliseconds: 50));
+  }
+}
 
 void main() {
   testWidgets('own lines without a time are "szacowane" from his pace', (
@@ -89,5 +96,42 @@ void main() {
     await tester.tapVisible(find.text('Czasy i nagrania'));
     expect(find.text('Pauza 5,9 s · ręcznie'), findsOneWidget);
     expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);
+  });
+  testWidgets('a time tapped in "Nagraj czasy" counts toward his pace', (
+    tester,
+  ) async {
+    tester.usePhone();
+    final rig = await openHub(
+      tester,
+      'estimate-tap',
+      roles: _wolf,
+      // Two recordings only: not enough for an estimate on their own.
+      seed: _seed(const {1: 2.0, 5: 1.2}),
+    );
+    await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
+    await _settle(tester);
+    await tester.tap(find.byKey(const Key('manual-walk')));
+    await _settle(tester);
+    // Real time must pass the tap guard (DateTime.now is not faked).
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 600)),
+    );
+    await tester.tap(find.text('Skończyłem'));
+    await _settle(tester);
+    expect(find.text('Kwestia 2/2'), findsOneWidget);
+    await tester.tap(find.text('Stop'));
+    await _settle(tester);
+    await tester.tap(find.text('Zamknij'));
+    await tester.pumpAndSettle();
+    final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
+    expect(prefs.lineSeconds.keys, [2]);
+    expect(prefs.recordings.keys, unorderedEquals([1, 5]));
+
+    await openTab(tester, 'Narzędzia');
+    await tester.tapVisible(find.text('Czasy i nagrania'));
+    // The tap (line 2) is a third sample; the median stays 0.4 s/syllable.
+    expect(find.text('Pauza 2,2 s · szacowane'), findsOneWidget);
+    expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);
+    expect(find.textContaining('automatycznie'), findsNothing);
   });
 }

@@ -30,7 +30,8 @@ class _TimingScreenState extends State<TimingScreen> {
   RehearsalPrefs _prefs = const RehearsalPrefs();
   Map<int, double> _recorded = const {};
 
-  /// His pace, recomputed on every load (recordings may have changed).
+  /// His pace, recomputed on every load (recordings and taps may have
+  /// changed).
   double? _pace;
 
   Services get _svc => ServicesScope.of(context);
@@ -51,7 +52,9 @@ class _TimingScreenState extends State<TimingScreen> {
       _script = script;
       _prefs = prefs;
       _recorded = recorded;
-      _pace = script == null ? null : secondsPerSyllable(script, recorded);
+      _pace = script == null
+          ? null
+          : secondsPerSyllable(script, recorded, tapSeconds: prefs.tapSeconds);
     });
   }
 
