@@ -36,6 +36,10 @@ void main() {
     expect(kWrapperPort, 8792);
   });
 
+  test('args: no extension, so none can open a second browser window', () {
+    expect(browserArgs('/home/u'), contains('--disable-extensions'));
+  });
+
   test('a browser that returns at once is a handoff', () async {
     String? ran;
     final owned = await launchBrowser(
