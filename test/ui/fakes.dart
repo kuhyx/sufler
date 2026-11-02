@@ -122,6 +122,13 @@ extension StorageIo on WidgetTester {
         // Not in that direction.
       }
     }
+    // A paged grid (FitGrid): swipe to the page that builds it.
+    for (var i = 0; i < 10 && finder.evaluate().isEmpty; i++) {
+      final pages = find.byType(PageView);
+      if (pages.evaluate().isEmpty) break;
+      await drag(pages.first, const Offset(-400, 0));
+      await pumpAndSettle();
+    }
     await ensureVisible(finder);
     await pumpAndSettle();
     await tap(finder);

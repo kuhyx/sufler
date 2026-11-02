@@ -4,13 +4,11 @@ import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/labels.dart';
-import 'package:sufler/ui/learn_card.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
-import 'package:sufler/ui/pc_session_tile.dart';
+import 'package:sufler/ui/practice_tab.dart';
+import 'package:sufler/ui/scenes_header.dart';
 import 'package:sufler/ui/sections_tab.dart';
-import 'package:sufler/ui/services.dart';
-import 'package:sufler/ui/settings_card.dart';
-import 'package:sufler/ui/tools_card.dart';
+import 'package:sufler/ui/tools_tab.dart';
 
 /// The script hub's tabs: "Sceny", "Piosenki", "Ustawienia próby",
 /// "Narzędzia". A bottom navigation bar on a phone, a side rail on a wide
@@ -103,40 +101,6 @@ const List<({String label, IconData icon})> _tabs = [
 class _ScriptTabsState extends State<ScriptTabs> {
   int _tab = 0;
 
-  List<Widget> get _scenesHeader {
-    final w = widget;
-    final missed = w.prefs.missed.length;
-    return [
-      LearnCard(
-        script: w.script,
-        prefs: w.prefs,
-        onResume: w.onResume,
-        onStart: w.onStart,
-        onRoles: w.onRoles,
-      ),
-      if (missed > 0)
-        ListTile(
-          leading: const Icon(Icons.replay),
-          title: Text('Tylko nieumiane ($missed)'),
-          subtitle: const Text('kwestie, przy których dałeś ✗'),
-          onTap: w.onMissed,
-        ),
-      ListTile(
-        leading: const Icon(Icons.straighten),
-        title: const Text('Własny zakres…'),
-        subtitle: const Text('od kwestii do kwestii'),
-        onTap: () => w.onPick(PickMode.custom),
-      ),
-      ListTile(
-        leading: const Icon(Icons.trending_up),
-        title: const Text('Narastająco…'),
-        subtitle: const Text('od początku (lub sceny) do wybranej kwestii'),
-        onTap: () => w.onPick(PickMode.cumulative),
-      ),
-      const Divider(),
-    ];
-  }
-
   Widget _page(int tab) {
     final w = widget;
     Widget list(Widget child) => Center(
@@ -153,7 +117,7 @@ class _ScriptTabsState extends State<ScriptTabs> {
         prefs: w.prefs,
         onStart: w.onStart,
         onRecord: w.onRecord,
-        header: _scenesHeader,
+        header: scenesHeader(w),
       ),
       1 => SectionsTab(
         script: w.script,
@@ -164,35 +128,8 @@ class _ScriptTabsState extends State<ScriptTabs> {
         onRecord: w.onRecord,
         songs: true,
       ),
-      2 => ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          SettingsCard(
-            speed: w.prefs.speed,
-            settings: w.settings,
-            onSpeed: w.onSpeed,
-            onSettings: w.onSettings,
-          ),
-          if (ServicesScope.maybeOf(context)?.pcSession case final s?)
-            PcSessionTile(session: s),
-        ],
-      ),
-      _ => ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          ToolsCard(
-            script: w.script,
-            roles: w.prefs.roles,
-            notes: w.prefs.notes,
-            pack: w.pack,
-            canRender: w.canRender,
-            onPack: w.onPack,
-            onCorrect: w.onCorrect,
-            onTimings: w.onTimings,
-            onRefreshParse: w.onRefreshParse,
-          ),
-        ],
-      ),
+      2 => PracticeTab(tabs: w),
+      _ => ToolsTab(tabs: w),
     });
   }
 
