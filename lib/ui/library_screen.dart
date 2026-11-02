@@ -5,6 +5,8 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/ui/import_panel.dart';
+import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/library_grid.dart';
 import 'package:sufler/ui/parse_refresh.dart';
 import 'package:sufler/ui/script_screen.dart';
 import 'package:sufler/ui/services.dart';
@@ -132,6 +134,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final scripts = _scripts;
+    final wide = MediaQuery.sizeOf(context).width >= wideLayout;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sufler'),
@@ -146,44 +149,51 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: kProseMaxWidth),
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            children: [
-              const SectionHeader('Twoje skrypty'),
-              if (_busy) const LinearProgressIndicator(),
-              if (scripts == null)
-                const Center(child: CircularProgressIndicator())
-              else if (scripts.isEmpty) ...[
-                const EmptyState(
-                  icon: Icons.theater_comedy_outlined,
-                  title: 'Brak skryptów',
-                  message: 'Zaimportuj sztukę z pliku albo z Google Docs.',
-                ),
-                ImportPanel(
-                  busy: _busy,
-                  onFile: _importFile,
-                  onLink: _importLink,
-                ),
-              ] else
-                for (final s in scripts) _tile(s),
-            ],
+          constraints: BoxConstraints(
+            maxWidth: wide ? double.infinity : kProseMaxWidth,
           ),
+          child: scripts != null && scripts.isNotEmpty
+              ? _library(scripts)
+              : _emptyOrLoading(scripts),
         ),
       ),
     );
   }
 
-  Widget _tile(Script s) => ListTile(
-    title: Text(s.title),
-    subtitle: Text(
-      '${s.source} · ${s.lines.where((l) => l.isSpoken).length} kwestii',
-    ),
-    onTap: () => _open(s.id),
-    trailing: IconButton(
-      tooltip: 'Usuń',
-      icon: const Icon(Icons.delete_outline),
-      onPressed: () => _delete(s),
-    ),
+  Widget _library(List<Script> scripts) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Padding(
+        padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, 0, 0),
+        child: SectionHeader('Twoje skrypty'),
+      ),
+      if (_busy) const LinearProgressIndicator(),
+      Expanded(
+        child: LibraryGrid(
+          scripts: scripts,
+          onOpen: (id) => unawaited(_open(id)),
+          onDelete: (s) => unawaited(_delete(s)),
+        ),
+      ),
+    ],
+  );
+
+  /// Loading spinner or the import prompt; short enough to stay a list.
+  Widget _emptyOrLoading(List<Script>? scripts) => ListView(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    children: [
+      const SectionHeader('Twoje skrypty'),
+      if (_busy) const LinearProgressIndicator(),
+      if (scripts == null)
+        const Center(child: CircularProgressIndicator())
+      else ...[
+        const EmptyState(
+          icon: Icons.theater_comedy_outlined,
+          title: 'Brak skryptów',
+          message: 'Zaimportuj sztukę z pliku albo z Google Docs.',
+        ),
+        ImportPanel(busy: _busy, onFile: _importFile, onLink: _importLink),
+      ],
+    ],
   );
 }
