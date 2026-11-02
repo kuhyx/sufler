@@ -10,6 +10,7 @@ import '../rehearsal/fake_capture.dart';
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'sections_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
 
@@ -31,7 +32,9 @@ void main() {
     expect(find.text('Tempo'), findsNothing);
     await openTab(tester, 'Piosenki');
     expect(find.text('Scena 2'), findsNothing);
+    await openSectionDetails(tester, 'Piosenka');
     expect(find.textContaining('śpiewa: Chór, Błystek'), findsOneWidget);
+    await closeSectionDetails(tester);
     await openTab(tester, 'Ustawienia próby');
     expect(find.text('Tempo'), findsOneWidget);
     await openTab(tester, 'Narzędzia');
@@ -52,6 +55,7 @@ void main() {
   ) async {
     tester.usePhone();
     final rig = await openHub(tester, 'rec-walk', roles: _wolf);
+    await openSectionDetails(tester, 'Scena 1');
     await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
     await _settle(tester);
     expect(find.text('Kwestia 1/2'), findsOneWidget);

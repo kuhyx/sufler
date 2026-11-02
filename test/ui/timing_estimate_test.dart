@@ -8,6 +8,7 @@ import 'package:sufler/rehearsal/wav.dart';
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'sections_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
 
@@ -108,6 +109,7 @@ void main() {
       // Two recordings only: not enough for an estimate on their own.
       seed: _seed(const {1: 2.0, 5: 1.2}),
     );
+    await openSectionDetails(tester, 'Scena 1');
     await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
     await _settle(tester);
     await tester.tap(find.byKey(const Key('manual-walk')));

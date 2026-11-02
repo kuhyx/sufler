@@ -55,6 +55,8 @@ class LearnCard extends StatelessWidget {
         icon: const Icon(Icons.play_arrow),
         label: Text(
           'Ucz się dalej: ${resume.label} · kwestia ${resume.position + 1}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       );
     } else if (first != null) {
@@ -62,13 +64,17 @@ class LearnCard extends StatelessWidget {
         key: const Key('learn'),
         onPressed: () => onStart(LineRange.section(first), first.title),
         icon: const Icon(Icons.play_arrow),
-        label: Text('Zacznij naukę: ${first.title}'),
+        label: Text(
+          'Zacznij naukę: ${first.title}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
       );
     } else {
       action = const Text('Twoje role nie mają kwestii w scenach.');
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: action,
     );
   }
