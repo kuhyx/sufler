@@ -36,3 +36,15 @@ String plural(int n, String one, String few, String many) {
   final hundred = n % 100;
   return ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14) ? few : many;
 }
+
+/// Option-tab groups ("Ustawienia próby" and "Narzędzia" chips).
+const String groupTempoText = 'Tempo i tekst';
+
+/// "Ustawienia próby": the learning-mode toggles.
+const String groupModes = 'Tryby nauki';
+
+/// "Narzędzia": parse, corrections, timings, Anki.
+const String groupScript = 'Skrypt';
+
+/// "Narzędzia": voice pack generation and import.
+const String groupVoices = 'Głosy';

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/rehearsal/capture.dart';
 import 'package:sufler/rehearsal/wav.dart';
+import 'package:sufler/ui/labels.dart';
 
 import '../rehearsal/fake_capture.dart';
 import '../rehearsal/fixture.dart';
@@ -28,12 +29,12 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
     expect(find.text('Scena 2'), findsOneWidget);
-    expect(find.text('Tempo'), findsNothing);
+    expect(find.text(groupTempoText), findsNothing);
     await openTab(tester, 'Piosenki');
     expect(find.text('Scena 2'), findsNothing);
     expect(find.textContaining('śpiewa: Chór, Błystek'), findsOneWidget);
     await openTab(tester, 'Ustawienia próby');
-    expect(find.text('Tempo'), findsOneWidget);
+    expect(find.text(groupTempoText), findsOneWidget);
     await openTab(tester, 'Narzędzia');
     expect(find.text('Eksportuj talię Anki'), findsOneWidget);
   });
@@ -44,7 +45,7 @@ void main() {
     expect(find.byType(NavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
     await openTab(tester, 'Ustawienia próby');
-    expect(find.text('Tempo'), findsOneWidget);
+    expect(find.text(groupTempoText), findsOneWidget);
   });
 
   testWidgets('one tap records a scene: auto-advance, meter, saved', (

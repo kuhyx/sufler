@@ -1,4 +1,3 @@
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/ui/script_tabs.dart';
 import 'package:sufler/ui/tools_card.dart';
@@ -12,20 +11,15 @@ class ToolsTab extends StatelessWidget {
   final ScriptTabs tabs;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(AppSpacing.md),
-    children: [
-      ToolsCard(
-        script: tabs.script,
-        roles: tabs.prefs.roles,
-        notes: tabs.prefs.notes,
-        pack: tabs.pack,
-        canRender: tabs.canRender,
-        onPack: tabs.onPack,
-        onCorrect: tabs.onCorrect,
-        onTimings: tabs.onTimings,
-        onRefreshParse: tabs.onRefreshParse,
-      ),
-    ],
+  Widget build(BuildContext context) => ToolsCard(
+    script: tabs.script,
+    roles: tabs.prefs.roles,
+    notes: tabs.prefs.notes,
+    pack: tabs.pack,
+    canRender: tabs.canRender,
+    onPack: tabs.onPack,
+    onCorrect: tabs.onCorrect,
+    onTimings: tabs.onTimings,
+    onRefreshParse: tabs.onRefreshParse,
   );
 }

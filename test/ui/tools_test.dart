@@ -2,11 +2,13 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
+import 'package:sufler/ui/labels.dart';
 
 import '../rehearsal/fixture.dart';
 import '../storage/pack_zip_test.dart' show fixturePackZip;
 import 'fakes.dart';
 import 'hub.dart';
+import 'options_nav.dart';
 
 void main() {
   testWidgets('Anki export saves the deck for the picked roles', (
@@ -41,6 +43,7 @@ void main() {
       tab: 'Narzędzia',
       roles: {const Role.character(wolf)},
     );
+    await openSegment(tester, groupVoices);
     expect(find.text('Generuj głosy'), findsNothing);
     rig.files.next = (name: 'p.zip', bytes: fixturePackZip());
     await tester.tapVisible(find.text('Importuj paczkę audio (.zip)'));
@@ -56,6 +59,7 @@ void main() {
 
   testWidgets('a pack for another script is rejected', (tester) async {
     final rig = await openHub(tester, 'pack-bad', tab: 'Narzędzia');
+    await openSegment(tester, groupVoices);
     rig.script = fixtureScript();
     rig.files.next = (name: 'x.zip', bytes: Uint8List.fromList([1, 2]));
     await tester.tapVisible(find.text('Importuj paczkę audio (.zip)'));
@@ -72,6 +76,7 @@ void main() {
       tab: 'Narzędzia',
       renderable: true,
     );
+    await openSegment(tester, groupVoices);
     await tester.tapVisible(find.text('Generuj głosy'));
     expect(find.text('Paczka: test@1, 2 kwestii.'), findsOneWidget);
     final stored = await tester.io(() => rig.library.loadPack('abc123'));
@@ -80,6 +85,7 @@ void main() {
 
   testWidgets('cancelled pick does nothing', (tester) async {
     final rig = await openHub(tester, 'pick-cancel', tab: 'Narzędzia');
+    await openSegment(tester, groupVoices);
     await tester.tapVisible(find.text('Importuj paczkę audio (.zip)'));
     expect(find.textContaining('Brak paczki'), findsOneWidget);
     expect(rig.files.saved, isEmpty);

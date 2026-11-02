@@ -6,11 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/rehearsal/wav.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/labels.dart';
 
 import '../rehearsal/fixture.dart' show fixtureScript;
 import '../rehearsal/run_fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'options_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
 const _first = 'Raz dwa trzy cztery.';
@@ -66,9 +68,17 @@ void main() {
   ) async {
     final rig = await _hub(tester, 'runs-setting');
     await openTab(tester, 'Ustawienia próby');
+    await openSegment(tester, groupModes);
     final toggle = find.byKey(const Key('whole-runs'));
     await tester.ensureVisible(toggle);
-    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+    expect(
+      tester
+          .widget<Switch>(
+            find.descendant(of: toggle, matching: find.byType(Switch)),
+          )
+          .value,
+      isTrue,
+    );
     await tester.tapVisible(toggle);
     final s = await tester.io(() => rig.library.loadSettings());
     expect(s.wholeRuns, isFalse);
