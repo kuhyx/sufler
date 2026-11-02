@@ -5,10 +5,12 @@ import 'package:sufler/model/role.dart';
 import 'package:sufler/storage/idb_store.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/labels.dart';
 
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'options_nav.dart';
 
 void main() {
   testWidgets('roles and rehearsal settings persist across reopen', (
@@ -24,10 +26,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await openTab(tester, 'Ustawienia próby');
+    await openSegment(tester, groupModes);
     await tester.tapVisible(find.text('Powtarzaj do skutku'));
     await tester.tapVisible(find.byTooltip('Więcej przebiegów'));
-    await tester.tapVisible(find.text('Czytanie'));
     await tester.tapVisible(find.text('Słuchaj mnie (mikrofon)'));
+    await openSegment(tester, groupTempoText);
+    await tester.tapVisible(find.text('Czytanie'));
     await tester.tapVisible(find.text('Pokaż tekst partnerów'));
 
     // Reopen from a brand-new library over the same IndexedDB.
@@ -53,7 +57,17 @@ void main() {
     expect(chip.selected, isTrue);
     await tester.pageBack();
     await tester.pumpAndSettle();
+    await openSegment(tester, groupModes);
     expect(find.text('Czyste przebiegi: 4'), findsOneWidget);
+  });
+
+  testWidgets('a long press on a tile opens its explanation', (tester) async {
+    tester.usePhone();
+    await openHub(tester, 'tile-info', tab: 'Ustawienia próby');
+    await openSegment(tester, groupModes);
+    await tester.longPress(find.text('Powtarzaj do skutku'));
+    await tester.pumpAndSettle();
+    expect(find.text('aż do N czystych przebiegów z rzędu'), findsOneWidget);
   });
 
   testWidgets('speed slider persists per script', (tester) async {

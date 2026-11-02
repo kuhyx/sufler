@@ -7,6 +7,7 @@ import 'package:sufler/model/role.dart';
 import 'package:sufler/rehearsal/wav.dart';
 import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/app.dart';
+import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/parse_refresh.dart';
 
 import '../rehearsal/fixture.dart';
@@ -14,6 +15,7 @@ import '../storage/pack_zip_test.dart' show fixturePackZip;
 import '../storage/reparse_test.dart' show newerParse;
 import 'fakes.dart';
 import 'hub.dart';
+import 'options_nav.dart';
 
 Uint8List _wav() => pcmToWav(Uint8List(3200), sampleRate: 16000);
 
@@ -108,6 +110,7 @@ void main() {
     );
     expect(find.text(stalePackMessage), findsOneWidget);
     await openTab(tester, 'Narzędzia');
+    await openSegment(tester, groupVoices);
     expect(find.textContaining('Brak paczki'), findsOneWidget);
 
     rig.files.next = (
