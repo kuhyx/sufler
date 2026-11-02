@@ -11,6 +11,7 @@ import '../rehearsal/fixture.dart' show fixtureScript;
 import '../rehearsal/run_fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'sections_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
 const _first = 'Raz dwa trzy cztery.';
@@ -134,6 +135,7 @@ void main() {
   ) async {
     final rig = await _hub(tester, 'runs-rec');
     rig.recorder.result = _take();
+    await openSectionDetails(tester, 'Scena 1');
     await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
     await _settle(tester);
     expect(find.text('Kwestia 1/7'), findsOneWidget);
@@ -162,6 +164,7 @@ void main() {
       seed: (rig) => rig.library.saveRecording('run123', 4, old),
     );
     rig.recorder.result = _take();
+    await openSectionDetails(tester, 'Scena 1');
     await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
     await _settle(tester);
     await tester.tap(find.text('Nagraj w całości (3 kwestie)'));

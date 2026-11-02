@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/ui/learn_card.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
@@ -15,25 +16,53 @@ List<Widget> scenesHeader(ScriptTabs w) {
       onStart: w.onStart,
       onRoles: w.onRoles,
     ),
-    if (missed > 0)
-      ListTile(
-        leading: const Icon(Icons.replay),
-        title: Text('Tylko nieumiane ($missed)'),
-        subtitle: const Text('kwestie, przy których dałeś ✗'),
-        onTap: w.onMissed,
-      ),
-    ListTile(
-      leading: const Icon(Icons.straighten),
-      title: const Text('Własny zakres…'),
-      subtitle: const Text('od kwestii do kwestii'),
-      onTap: () => w.onPick(PickMode.custom),
+    Wrap(
+      spacing: AppSpacing.sm,
+      children: [
+        if (missed > 0)
+          _RangeChip(
+            leading: const Icon(Icons.replay),
+            title: Text('Tylko nieumiane ($missed)'),
+            subtitle: const Text('kwestie, przy których dałeś ✗'),
+            onTap: w.onMissed,
+          ),
+        _RangeChip(
+          leading: const Icon(Icons.straighten),
+          title: const Text('Własny zakres…'),
+          subtitle: const Text('od kwestii do kwestii'),
+          onTap: () => w.onPick(PickMode.custom),
+        ),
+        _RangeChip(
+          leading: const Icon(Icons.trending_up),
+          title: const Text('Narastająco…'),
+          subtitle: const Text('od początku (lub sceny) do wybranej kwestii'),
+          onTap: () => w.onPick(PickMode.cumulative),
+        ),
+      ],
     ),
-    ListTile(
-      leading: const Icon(Icons.trending_up),
-      title: const Text('Narastająco…'),
-      subtitle: const Text('od początku (lub sceny) do wybranej kwestii'),
-      onTap: () => w.onPick(PickMode.cumulative),
-    ),
-    const Divider(),
   ];
+}
+
+/// A range shortcut: a chip with an icon, the [title] and the [subtitle]
+/// as its tooltip.
+class _RangeChip extends StatelessWidget {
+  const new({
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final Widget leading;
+  final Text title;
+  final Text subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ActionChip(
+    avatar: leading,
+    label: title,
+    tooltip: subtitle.data,
+    onPressed: onTap,
+  );
 }

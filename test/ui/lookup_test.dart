@@ -10,6 +10,7 @@ import '../rehearsal/fixture.dart';
 import '../storage/reparse_test.dart' show newerParse;
 import 'fakes.dart';
 import 'hub.dart';
+import 'sections_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
 const _cue = 'Dzień dobry, Wilku!';
@@ -101,7 +102,9 @@ void main() {
     await _leave(tester);
 
     // The scene list counts it; the Anki export carries it.
+    await openSectionDetails(tester, 'Scena 1');
     expect(find.byTooltip('Notatki: Scena 1 (1)'), findsOneWidget);
+    await closeSectionDetails(tester);
     await openTab(tester, 'Narzędzia');
     await tester.tapVisible(find.text('Eksportuj talię Anki'));
     expect(rig.exportedNotes.last[1]!.single.text, rig.assistant.answer);
@@ -151,7 +154,9 @@ void main() {
         (p) => p.withNote(5, const LineNote(about: 'dobrze', text: 'zgoda')),
       ),
     );
+    await openSectionDetails(tester, 'Scena 1');
     expect(find.byTooltip('Notatki: Scena 1 (1)'), findsOneWidget);
+    await closeSectionDetails(tester);
     await tester.io(() => rig.library.replaceParse(rig.script, newerParse()));
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     // "No dobrze." moved from 5 to 6 (a heading appeared before it).

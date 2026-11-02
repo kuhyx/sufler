@@ -8,6 +8,7 @@ import 'package:sufler/rehearsal/wav.dart';
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'sections_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
 
@@ -44,6 +45,7 @@ Future<TestRig> _walk(WidgetTester tester, String db) async {
       );
     },
   );
+  await openSectionDetails(tester, 'Scena 1');
   await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
   await _settle(tester);
   return rig;
