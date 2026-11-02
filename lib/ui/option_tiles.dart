@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 const double _tileHeight = 88;
 const double _hintSize = 16;
+const double _iconRowHeight = 24;
 
 /// Marks the tiles an [OptionColumn] sets two to a row.
 abstract interface class OptionTile implements Widget;
@@ -106,6 +107,12 @@ class _Tile extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
+      // The surface is nearly the page colour and the shadow falls below, so
+      // an outline is what makes the top edge visible.
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       child: InkWell(
         onTap: onTap,
         onLongPress: info == null
@@ -114,21 +121,26 @@ class _Tile extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: _tileHeight),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm + AppSpacing.xs),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    ?leading,
-                    const Spacer(),
-                    if (info != null)
-                      Icon(
-                        Icons.info_outline,
-                        size: _hintSize,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                  ],
+                // Fixed height, so titles line up across a row even when only
+                // one tile has an icon.
+                SizedBox(
+                  height: _iconRowHeight,
+                  child: Row(
+                    children: [
+                      ?leading,
+                      const Spacer(),
+                      if (info != null)
+                        Icon(
+                          Icons.info_outline,
+                          size: _hintSize,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                    ],
+                  ),
                 ),
                 DefaultTextStyle.merge(
                   style: theme.textTheme.bodyLarge,

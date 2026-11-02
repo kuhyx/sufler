@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/line_note.dart';
@@ -70,6 +72,29 @@ class SectionTile extends StatelessWidget {
   /// Open the details.
   final VoidCallback onDetails;
 
+  /// The title in as many whole lines as the room below the number holds,
+  /// ellipsized only when it is longer than that: a fixed line count would
+  /// leave a clipped sliver of the last line.
+  Widget _title(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyMedium!;
+    final lineHeight = (TextPainter(
+      text: TextSpan(text: 'Ag', style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout()).height;
+    return LayoutBuilder(
+      builder: (context, box) => DefaultTextStyle.merge(
+        maxLines: math.max(1, (box.maxHeight / lineHeight).floor()),
+        overflow: TextOverflow.ellipsis,
+        style: style,
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SectionTitle(section: facts.section, pure: facts.pure),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -89,28 +114,23 @@ class SectionTile extends StatelessWidget {
                   Icon(icon, size: 18, color: theme.colorScheme.primary),
                   const SizedBox(width: AppSpacing.xs),
                   Text('${facts.number}', style: theme.textTheme.titleMedium),
+                  // Next to the number, so the title keeps the whole height
+                  // below instead of losing a line to a bottom counter.
+                  if (facts.mine > 0)
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '${facts.known}/${facts.mine}',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
-              Expanded(
-                child: DefaultTextStyle.merge(
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium,
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: SectionTitle(
-                      section: facts.section,
-                      pure: facts.pure,
-                    ),
-                  ),
-                ),
-              ),
-              if (facts.mine > 0)
-                Text(
-                  '${facts.known}/${facts.mine}',
-                  style: theme.textTheme.labelMedium,
-                ),
+              Expanded(child: _title(context)),
             ],
           ),
         ),

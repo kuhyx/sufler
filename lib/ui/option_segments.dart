@@ -71,7 +71,7 @@ class _OptionSegmentsState extends State<OptionSegments> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.md,
-                  0,
+                  AppSpacing.sm,
                   AppSpacing.md,
                   AppSpacing.md,
                 ),

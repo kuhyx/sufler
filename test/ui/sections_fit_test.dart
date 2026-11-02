@@ -1,5 +1,7 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
+import 'package:sufler/model/script.dart';
 
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
@@ -59,4 +61,38 @@ void main() {
       expectNoVerticalScroll(tester, screen: '$tab desktop');
     });
   }
+
+  testWidgets('a long song title shows whole lines, never a clipped sliver', (
+    tester,
+  ) async {
+    usePixel6a(tester);
+    const long = 'Piosenka o bardzo długim tytule która nie mieści się';
+    final base = bigScript(songs: 1);
+    final song = base.songs.single;
+    await openHub(
+      tester,
+      'sections-long-title',
+      script: Script(
+        id: base.id,
+        title: base.title,
+        source: base.source,
+        characters: base.characters,
+        scenes: base.scenes,
+        songs: [Section(id: song.id, title: long, start: 0, end: song.end)],
+        lines: base.lines,
+      ),
+      roles: {const Role.character(wolf)},
+      tab: 'Piosenki',
+    );
+    final p = tester.renderObject<RenderParagraph>(find.text(long));
+    final text = p.getBoxesForSelection(
+      const TextSelection(baseOffset: 0, extentOffset: long.length),
+    );
+    final needed = text.map((b) => b.bottom).reduce((a, b) => a > b ? a : b);
+    expect(needed, lessThanOrEqualTo(p.size.height + 0.5), reason: 'clipped');
+    expect(
+      text.map((b) => b.top.round()).toSet().length,
+      greaterThanOrEqualTo(3),
+    );
+  });
 }
