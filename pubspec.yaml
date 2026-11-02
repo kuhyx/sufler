@@ -7,22 +7,22 @@ environment:
   sdk: ^3.13.0
 
 dependencies:
-  archive: 4.5.2
+  archive: 4.6.0
   audioplayers: 6.8.1
   # The phone's relay to the PC (lib/assist/): Google sign-in -> Firebase
   # refresh token (keystore) -> ID tokens for RTDB REST. Tutor's pin.
   crdt_sync:
     git:
       url: https://github.com/kuhyx/utils
-      ref: crdt_sync_dart-v0.11.1
+      ref: crdt_sync_dart-v0.11.3
       path: crdt_sync_dart
-  crypto: 3.0.7
+  crypto: 3.0.8
   design_system:
     git:
       url: https://github.com/kuhyx/utils
-      ref: design_system-v0.2.1
+      ref: design_system-v0.3.0
       path: design_system
-  file_picker: 13.1.0
+  file_picker: 13.3.2
   flutter:
     sdk: flutter
   flutter_secure_storage: 11.2.0
@@ -33,7 +33,7 @@ dependencies:
   google_sign_in_android: 7.2.18
   google_sign_in_platform_interface: 3.1.0
   http: 1.6.0
-  idb_shim: 2.10.1+1
+  idb_shim: 2.11.1
   meta: 1.19.0
   path: 1.9.1
   path_provider: 2.1.6

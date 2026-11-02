@@ -104,7 +104,9 @@ void main() {
     await tester.pageBack(); // script
     await tester.pumpAndSettle();
     expect(find.text('Krasnale testowe'), findsOneWidget);
-    await tester.tap(find.byTooltip('Usuń'));
+    await tester.longPress(find.text('Krasnale testowe'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Usuń'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Usuń').last);
     await tester.pumpAndSettle();
