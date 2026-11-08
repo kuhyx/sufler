@@ -149,11 +149,11 @@ packages:
     dependency: "direct main"
     description:
       path: crdt_sync_dart
-      ref: "crdt_sync_dart-v0.11.3"
-      resolved-ref: a2e7334dfec5131170a084510d70361d53dc40bc
+      ref: "crdt_sync_dart-v0.12.0"
+      resolved-ref: "59b33949e4a130bb76c77e7434ddf4bbf8cde3a3"
       url: "https://github.com/kuhyx/utils"
     source: git
-    version: "0.11.3"
+    version: "0.12.0"
   cross_file:
     dependency: transitive
     description:
@@ -182,11 +182,11 @@ packages:
     dependency: "direct main"
     description:
       path: design_system
-      ref: "design_system-v0.3.0"
-      resolved-ref: b3c9611af212880301ca79ed21f909bc4640f81f
+      ref: "design_system-v0.3.1"
+      resolved-ref: "8dfc4fb55ff5f5091e34e118f3134138cc83b8a3"
       url: "https://github.com/kuhyx/utils"
     source: git
-    version: "0.3.0"
+    version: "0.3.1"
   fake_async:
     dependency: "direct dev"
     description:
@@ -398,10 +398,10 @@ packages:
     dependency: "direct main"
     description:
       name: idb_shim
-      sha256: "923c92ef88569de4ec1b257b6a6d10360dc3407179f61d0c73329701a7d7b12e"
+      sha256: "60965b556624f7018ec26205283e32670bc78c6fe1388d4b90bdfe6b2311b87b"
       url: "https://pub.dev"
     source: hosted
-    version: "2.11.1"
+    version: "2.11.2"
   image:
     dependency: transitive
     description:
@@ -710,10 +710,10 @@ packages:
     dependency: transitive
     description:
       name: sembast
-      sha256: "05da81104e6d4a1ecbeb9aa92062231620d360c8bd9303b82495842c4d92632b"
+      sha256: "35775a26edbdf0d891bab304929a712e103c9d9a6e2fb5ebbd8437bb3139615a"
       url: "https://pub.dev"
     source: hosted
-    version: "3.9.0"
+    version: "3.10.0"
   share_plus:
     dependency: "direct main"
     description:
@@ -771,10 +771,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3
-      sha256: "5340531ad17f386ae444873f643f281060b6238cc702edeee6b1e90bc4c6874e"
+      sha256: b1ec21d306ddbec59a88ae3682ad81728561f7105db78fea0fdd67f06911a519
       url: "https://pub.dev"
     source: hosted
-    version: "3.8.0"
+    version: "3.9.0"
   stack_trace:
     dependency: transitive
     description:
