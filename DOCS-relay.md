@@ -104,9 +104,9 @@ sufler/clients/{dev}    {"seen": <server ms>}   (the phone's server-clock probe)
   request): Google sign-in with the project's Web client id as audience,
   the expected-uid guard, the refresh token in the Android keystore
   (`flutter_secure_storage`), as tutor's app does. Through
-  `google_sign_in_android` + the platform interface, never the
-  `google_sign_in` app package: its web plugin loads Google's script at
-  startup, and the desktop build starts offline. Needs the Android OAuth
+  kuhy's `google_account_token` plugin (AccountManager, no Play Services
+  SDK in the APK); off Android it returns null, so the desktop build
+  starts offline and never signs in. Needs the Android OAuth
   client for `com.kuhy.sufler` + the release SHA-1:
   `scripts/register_oauth_client.sh` (no Google API exists for it).
   The device id is a uuid4 in the app's store (`device/id`).
