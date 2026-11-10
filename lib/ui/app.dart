@@ -17,9 +17,20 @@ class SuflerApp extends StatelessWidget {
     services: services,
     child: MaterialApp(
       title: 'Sufler',
-      theme: withBundledFonts(buildLightTheme()),
-      darkTheme: withBundledFonts(buildDarkTheme()),
+      theme: _quiet(withBundledFonts(buildLightTheme())),
+      darkTheme: _quiet(withBundledFonts(buildDarkTheme())),
       home: const LibraryScreen(),
     ),
   );
 }
+
+/// Framework tooltips ("Back" on hover, long-press labels) are painted words
+/// (textgate). They never trigger: no tap or long-press, and a hover delay
+/// nobody waits out. Unlike TooltipVisibility(false), the message stays the
+/// control's spoken name.
+ThemeData _quiet(ThemeData theme) => theme.copyWith(
+  tooltipTheme: theme.tooltipTheme.copyWith(
+    triggerMode: TooltipTriggerMode.manual,
+    waitDuration: const Duration(days: 1),
+  ),
+);

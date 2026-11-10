@@ -8,6 +8,7 @@ import 'package:sufler/ui/app.dart';
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'no_words.dart';
 
 Future<TestRig> _openCorrection(WidgetTester tester, String db) async {
   final rig = TestRig(db: db);
@@ -63,8 +64,10 @@ void main() {
     final rig = await _openCorrection(tester, 'edit');
     await tester.tap(find.text('Wilk siada.'));
     await tester.pumpAndSettle();
+    expectNoWords('line correction dialog', scriptContent(rig.script));
     await tester.tap(find.byKey(const Key('kind')));
     await tester.pumpAndSettle();
+    expectNoWords('line kind menu', scriptContent(rig.script));
     await tester.tap(bySpoken('dialog').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilterChip, 'Piaskowy Wilk'));

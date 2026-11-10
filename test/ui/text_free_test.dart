@@ -75,6 +75,11 @@ void main() {
     await tester.tap(bySpoken('Moje role'));
     await tester.pumpAndSettle();
     expectNoWords('roles', content);
+    // Framework tooltips never paint ("Back" on long-press).
+    await tester.longPress(find.byTooltip('Back'));
+    await tester.pump(const Duration(milliseconds: 500));
+    expectNoWords('back tooltip', content);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('timings screen', (tester) async {

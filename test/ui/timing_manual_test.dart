@@ -8,6 +8,7 @@ import 'package:sufler/rehearsal/wav.dart';
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'no_words.dart';
 import 'sections_nav.dart';
 
 final _wolf = {const Role.character(wolf)};
@@ -60,6 +61,7 @@ void main() {
     rig.capture.hear(null);
     await _settle(tester);
     expect(bySpoken('Nie słyszę mikrofonu'), findsOneWidget);
+    expectNoWords('timing walk, mic not heard', scriptContent(rig.script));
     // Own text hidden: said from memory, timed by the tap.
     expect(find.text(_first), findsNothing);
     final done = bySpoken('Skończyłem');
@@ -71,6 +73,7 @@ void main() {
     expect(tester.getSize(button.first).height, greaterThanOrEqualTo(72));
     await _finish(tester, done);
     expect(bySpoken('Kwestia 2/2'), findsOneWidget);
+    expectNoWords('timing walk, line saved', scriptContent(rig.script));
     expect(find.text('Naprawdę.'), findsOneWidget);
     expect(rig.capture.listening, isTrue);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
@@ -79,6 +82,7 @@ void main() {
     await tester.tap(bySpoken('Stop'));
     await _settle(tester);
     expect(bySpoken('Gotowe: zapisano 1 z 2'), findsOneWidget);
+    expectNoWords('timing walk done', scriptContent(rig.script));
   });
 
   testWidgets('"Bez mikrofonu" times the whole walk by taps', (tester) async {

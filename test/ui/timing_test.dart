@@ -8,6 +8,7 @@ import 'package:sufler/rehearsal/wav.dart';
 import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
+import 'no_words.dart';
 
 Future<TestRig> _openTimings(WidgetTester tester, String db) async {
   tester.usePhone();
@@ -30,6 +31,7 @@ void main() {
 
     await tester.tap(find.text('Naprawdę.'));
     await tester.pumpAndSettle();
+    expectNoWords('line timing sheet', scriptContent(rig.script));
     await tester.enterText(find.byKey(const Key('seconds')), '9,5');
     await tester.tap(bySpoken('Ustaw pauzę'));
     await tester.pumpAndSettle();
