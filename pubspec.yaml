@@ -14,7 +14,7 @@ dependencies:
   crdt_sync:
     git:
       url: https://github.com/kuhyx/utils
-      ref: crdt_sync_dart-v0.12.0
+      ref: crdt_sync_dart-v0.12.1
       path: crdt_sync_dart
   crypto: 3.0.8
   design_system:
@@ -22,7 +22,7 @@ dependencies:
       url: https://github.com/kuhyx/utils
       ref: design_system-v0.3.1
       path: design_system
-  file_picker: 13.3.2
+  file_picker: 13.3.3
   flutter:
     sdk: flutter
   flutter_secure_storage: 11.2.0
@@ -33,7 +33,7 @@ dependencies:
   google_sign_in_android: 7.2.18
   google_sign_in_platform_interface: 3.1.0
   http: 1.6.0
-  idb_shim: 2.11.2
+  idb_shim: 2.11.3
   meta: 1.19.0
   path: 1.9.1
   path_provider: 2.1.6
