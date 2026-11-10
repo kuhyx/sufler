@@ -157,7 +157,7 @@ class RehearsalAssist extends ChangeNotifier {
   /// 💡: the notes of [cue]'s lines.
   void showCueNotes(BuildContext context, Cue cue) => unawaited(
     _paused(
-      () => showNotes(context, 'Notatki', {
+      () => showNotes(context, null, {
         for (final l in cue.lines) script.lines[l.index]: ?notes[l.index],
       }),
     ),

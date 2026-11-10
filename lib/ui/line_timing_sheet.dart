@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/ui/feedback.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/services.dart';
+import 'package:sufler/ui/spoken.dart';
 
 /// Per-line pause: manual seconds, back to automatic, or "record me".
 ///
@@ -77,7 +79,7 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
   void _apply() {
     final v = double.tryParse(_field.text.trim().replaceAll(',', '.'));
     if (v == null || v <= 0) {
-      showError(context, 'Podaj liczbę sekund większą od zera');
+      showFailure(context, 'Podaj liczbę sekund większą od zera');
       return;
     }
     unawaited(_setOverride(v));
@@ -88,7 +90,7 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
       final ok = await _svc.recorder.start();
       if (!mounted) return;
       if (!ok) {
-        showError(context, 'Brak dostępu do mikrofonu');
+        showFailure(context, 'Brak dostępu do mikrofonu');
         return;
       }
       setState(() => _recording = true);
@@ -128,9 +130,18 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
       children: [
         Text(widget.line.text, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Teraz: ${seconds(widget.seconds)}'
-          '${widget.estimated ? ' · szacowane' : ''}',
+        Spoken(
+          semanticLabel:
+              'Teraz: ${seconds(widget.seconds)}'
+              '${widget.estimated ? ' · szacowane' : ''}',
+          child: Row(
+            spacing: AppSpacing.xs,
+            children: [
+              const Icon(Icons.hourglass_bottom, size: 16),
+              Text(seconds(widget.seconds)),
+              if (widget.estimated) const Icon(Icons.info_outline, size: 16),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         TextField(
@@ -163,8 +174,11 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
         const Divider(height: AppSpacing.xl),
         FilledButton.tonalIcon(
           onPressed: _toggleRecord,
-          icon: Icon(_recording ? Icons.stop : Icons.mic),
-          label: Text(_recording ? 'Zatrzymaj nagrywanie' : 'Nagraj mnie'),
+          icon: Icon(
+            _recording ? Icons.stop : Icons.mic,
+            semanticLabel: _recording ? 'Zatrzymaj nagrywanie' : 'Nagraj mnie',
+          ),
+          label: const SizedBox.shrink(),
         ),
         if (_hasRecording)
           Wrap(

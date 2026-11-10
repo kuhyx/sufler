@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/assist/pc_session.dart';
 import 'package:sufler/ui/pc_session_tile.dart';
 
+import 'hub.dart';
+
 class _Session implements PcSession {
   bool session = false;
   bool works = true;
@@ -32,11 +34,11 @@ void main() {
   testWidgets('signed out: one tap signs in and says so', (tester) async {
     final s = _Session();
     await _pump(tester, s);
-    expect(find.textContaining('Zaloguj się'), findsOneWidget);
+    expect(bySpokenContaining('Zaloguj się'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('Połącz'));
     await tester.pumpAndSettle();
     expect(s.signIns, 1);
-    expect(find.textContaining('Połączono'), findsOneWidget);
+    expect(bySpokenContaining('Połączono'), findsOneWidget);
     expect(find.bySemanticsLabel('Połącz'), findsNothing);
   });
 
@@ -46,12 +48,12 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Połącz'));
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel('Połącz'), findsOneWidget);
-    expect(find.textContaining('nie powiodło się'), findsOneWidget);
+    expect(bySpokenContaining('nie powiodło się'), findsOneWidget);
   });
 
   testWidgets('already signed in: no button', (tester) async {
     await _pump(tester, _Session()..session = true);
-    expect(find.textContaining('Połączono'), findsOneWidget);
+    expect(bySpokenContaining('Połączono'), findsOneWidget);
     expect(find.bySemanticsLabel('Połącz'), findsNothing);
   });
 }

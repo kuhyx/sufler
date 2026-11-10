@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/pack_check.dart';
@@ -11,6 +10,7 @@ import 'package:sufler/rehearsal/range.dart';
 import 'package:sufler/rehearsal/runs.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/correction_screen.dart';
+import 'package:sufler/ui/feedback.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
 import 'package:sufler/ui/parse_refresh.dart';
 import 'package:sufler/ui/rehearsal_screen.dart';
@@ -63,7 +63,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
       debugPrint('re-parse of $_id failed: $e');
     }
     await _load();
-    if (note != null && mounted) showToast(context, note);
+    if (note != null && mounted) showDone(context, note);
     await _svc.library.rememberScript(_id);
     // First visit with no roles: show the roles screen once.
     if (!mounted || _prefs.roles.isNotEmpty || _prefs.rolesAsked) return;
@@ -86,7 +86,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
     if (!mounted) return;
     if (pack == null && checked != null && !_packWarned) {
       _packWarned = true;
-      showError(context, checked.message!);
+      showFailure(context, checked.message!);
     }
     setState(() {
       _script = script;
@@ -118,7 +118,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
   }) async {
     final script = _script!;
     if (_prefs.roles.isEmpty) {
-      showError(context, 'Wybierz co najmniej jedną rolę');
+      showFailure(context, 'Wybierz co najmniej jedną rolę');
       return;
     }
     final recorded = await _svc.library.recordingSeconds(_prefs);
@@ -140,7 +140,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
     );
     if (!mounted) return;
     if (cues.isEmpty) {
-      showError(context, 'Nie ma tu kwestii do powtórki');
+      showFailure(context, 'Nie ma tu kwestii do powtórki');
       return;
     }
     final resume = ResumePoint(
@@ -190,7 +190,7 @@ class _ScriptScreenState extends State<ScriptScreen> {
   Future<void> _pick(PickMode mode) async {
     final range = await LinePickerScreen.pick(context, _script!, mode);
     if (range == null) return;
-    await _start(range, 'Kwestie ${range.start}–${range.end}');
+    await _start(range, '${range.start}–${range.end}');
   }
 
   Future<void> _refreshParse() async {
@@ -198,10 +198,10 @@ class _ScriptScreenState extends State<ScriptScreen> {
       final note = await refreshFromFile(_svc, _id);
       if (note == null) return;
       await _load();
-      if (mounted) showToast(context, note);
+      if (mounted) showDone(context, note);
     } on Object catch (e) {
       final why = e is FormatException ? e.message : '$e';
-      if (mounted) showError(context, 'Nie odświeżono parsowania: $why');
+      if (mounted) showFailure(context, 'Nie odświeżono parsowania: $why');
     }
   }
 

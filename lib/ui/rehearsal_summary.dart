@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/rehearsal/session.dart';
+import 'package:sufler/ui/spoken.dart';
 
 /// End of the rehearsal: per-pass scores and "again".
 class RehearsalSummary extends StatelessWidget {
@@ -69,9 +70,35 @@ class RehearsalHeader extends StatelessWidget {
       if (s.history.isNotEmpty && s.phase != Phase.finished)
         'ostatni wynik ${s.history.last}',
     ];
-    return Text(
-      parts.join(' · '),
-      style: Theme.of(context).textTheme.bodySmall,
+    final small = Theme.of(context).textTheme.bodySmall;
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    // Glyph + number pairs; the old words stay the spoken label.
+    Widget pair(IconData icon, String n) => Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: AppSpacing.xs,
+      children: [
+        Icon(icon, size: 16, color: color),
+        Text(n, style: small),
+      ],
+    );
+    return Spoken(
+      semanticLabel: parts.join(' · '),
+      child: Wrap(
+        key: const Key('rehearsal-header'),
+        spacing: AppSpacing.md,
+        children: [
+          pair(Icons.loop, '${s.pass}'),
+          if (s.phase != Phase.finished)
+            pair(Icons.flag_outlined, '${s.position + 1}/${s.cues.length}'),
+          if (s.loop)
+            pair(
+              Icons.check_circle_outline,
+              '${s.cleanStreak}/${s.cleanTarget}',
+            ),
+          if (s.history.isNotEmpty && s.phase != Phase.finished)
+            pair(Icons.scoreboard_outlined, '${s.history.last}'),
+        ],
+      ),
     );
   }
 }

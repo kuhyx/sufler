@@ -9,6 +9,7 @@ import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/pack_zip.dart';
+import 'package:sufler/ui/feedback.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/option_segments.dart';
 import 'package:sufler/ui/option_tiles.dart';
@@ -71,13 +72,13 @@ class _ToolsCardState extends State<ToolsCard> {
       await body();
     } on Object catch (e) {
       final why = e is FormatException ? e.message : '$e';
-      if (mounted) showError(context, '$what: $why');
+      if (mounted) showFailure(context, '$what: $why');
     }
   }
 
   Future<void> _exportAnki() => _guard('Eksport nie powiódł się', () async {
     if (widget.roles.isEmpty) {
-      showError(context, 'Wybierz co najmniej jedną rolę');
+      showFailure(context, 'Wybierz co najmniej jedną rolę');
       return;
     }
     final bytes = await _svc.exportApkg(
@@ -102,8 +103,8 @@ class _ToolsCardState extends State<ToolsCard> {
     );
     widget.onPack(pack);
     if (!mounted) return;
-    showToast(context, 'Głosy zapisane (${pack.length} kwestii)');
-    if (checked.message != null) showError(context, checked.message!);
+    showDone(context, 'Głosy zapisane (${pack.length} kwestii)');
+    if (checked.message != null) showFailure(context, checked.message!);
   }
 
   Future<void> _render() => _guard('Generowanie nie powiodło się', () async {
@@ -134,6 +135,7 @@ class _ToolsCardState extends State<ToolsCard> {
     final pack = widget.pack;
     final progress = _progress;
     final script = OptionGroup(
+      icon: Icons.description_outlined,
       label: groupScript,
       children: [
         if (widget.onRefreshParse case final refresh?)
@@ -144,10 +146,9 @@ class _ToolsCardState extends State<ToolsCard> {
               Icons.refresh,
               semanticLabel: 'Odśwież parsowanie: wskaż plik',
             ),
-            info: const Text(
-              'skrypt ma starszą wersję parsowania; czasy, nagrania i oceny '
-              'zostaną',
-            ),
+            info:
+                'skrypt ma starszą wersję parsowania; czasy, nagrania i oceny '
+                'zostaną',
             onTap: refresh,
           ),
         ActionTile(
@@ -177,12 +178,28 @@ class _ToolsCardState extends State<ToolsCard> {
       ],
     );
     final voices = OptionGroup(
+      icon: Icons.record_voice_over_outlined,
       label: groupVoices,
       children: [
-        Text(
-          pack == null
-              ? 'Brak paczki: partnerów czyta syntezator urządzenia.'
-              : 'Paczka: ${pack.engine}, ${pack.length} kwestii.',
+        Row(
+          key: const Key('pack-state'),
+          spacing: AppSpacing.sm,
+          children: pack == null
+              ? const [
+                  Icon(
+                    Icons.phone_android,
+                    semanticLabel:
+                        'Brak paczki: partnerów czyta syntezator urządzenia.',
+                  ),
+                ]
+              : [
+                  Icon(
+                    Icons.library_music_outlined,
+                    semanticLabel:
+                        'Paczka: ${pack.engine}, ${pack.length} kwestii.',
+                  ),
+                  Text('${pack.length}'),
+                ],
         ),
         if (progress != null)
           LinearProgressIndicator(

@@ -6,11 +6,12 @@ import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/session.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/grade_view.dart';
-import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/line_tools.dart';
 import 'package:sufler/ui/lookup_text.dart';
+import 'package:sufler/ui/mine_view.dart';
 import 'package:sufler/ui/pause_control.dart';
 import 'package:sufler/ui/rehearsal_assist.dart';
+import 'package:sufler/ui/who.dart';
 
 /// The current cue (partner line, my countdown, or my self-grade), with the
 /// previous line above it for context. My own text stays hidden while I
@@ -74,17 +75,23 @@ class CueView extends StatelessWidget {
         if (prev != null) _previous(context, prev),
         const SizedBox(height: AppSpacing.lg),
         if (s.retry) ...[
-          Text(
-            'Jeszcze raz — aż będzie dobrze',
+          Icon(
+            Icons.replay,
             key: const Key('retry'),
-            style: Theme.of(context).textTheme.labelLarge,
+            color: Theme.of(context).colorScheme.primary,
+            semanticLabel: 'Jeszcze raz — aż będzie dobrze',
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
         switch (s.phase) {
           Phase.partner => _partner(context, cue),
           Phase.prompt => _partner(context, prompt!, hide: prompt.mine),
-          Phase.mine => _mine(context, cue),
+          Phase.mine => MineView(
+            controller: controller,
+            cue: cue,
+            visibility: visibility,
+            textView: () => _lookable(context, cue, cue.text),
+          ),
           _ => GradeView(
             cue: cue,
             visibility: visibility,
@@ -114,15 +121,26 @@ class CueView extends StatelessWidget {
       cue.following.isEmpty && hasRecording(cue.line.index);
 
   /// Who says [cue]: every speaker of a run, and the song's title.
-  String _who(Cue cue) {
-    final names = {for (final l in cue.lines) speakerNames(script, l)};
+  Widget _who(BuildContext context, Cue cue) {
     final song = cue.following.isEmpty ? null : cue.line.songId;
     final title = [
       for (final s in script.songs)
         if (s.id == song) s.title,
     ];
-    return [names.join(', '), ...title].join(' · ');
+    return Who(
+      script,
+      cue.lines,
+      style: Theme.of(context).textTheme.labelLarge,
+      extra: title.firstOrNull,
+    );
   }
+
+  /// My own line while its text is hidden.
+  static const _hidden = Icon(
+    Icons.visibility_off_outlined,
+    size: 32,
+    semanticLabel: '(twoja kwestia)',
+  );
 
   /// Whether a partner [cue]'s text is on screen (a run's: when any of its
   /// lines could not be voiced).
@@ -136,14 +154,17 @@ class CueView extends StatelessWidget {
         ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
     final text = prev.mine
         ? (visibility == TextVisibility.hide
-              ? '(twoja kwestia)'
-              : prev.line.text)
+              ? const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _hidden,
+                )
+              : Text(prev.line.text, style: style))
         : (_partnerShown(prev)
-              ? prev.line.text
-              : '(${speakerNames(script, prev.line)})');
+              ? Text(prev.line.text, style: style)
+              : Who(script, [prev.line], style: style));
     return Row(
       children: [
-        Expanded(child: Text(text, style: style)),
+        Expanded(child: text),
         if (prev.mine && _recorded(prev)) _playButton(prev),
       ],
     );
@@ -153,12 +174,6 @@ class CueView extends StatelessWidget {
     icon: const Icon(Icons.hearing, semanticLabel: 'Odtwórz moje nagranie'),
     onPressed: () => onPlayRecording(cue.line.index),
   );
-
-  Widget _label(BuildContext context, String text) =>
-      Text(text, style: Theme.of(context).textTheme.labelLarge);
-
-  Widget _text(BuildContext context, String text) =>
-      Text(text, style: Theme.of(context).textTheme.headlineSmall);
 
   /// Visible text of [cue]: a long-pressed word opens the lookup sheet.
   Widget _lookable(
@@ -177,10 +192,10 @@ class CueView extends StatelessWidget {
   Widget _partner(BuildContext context, Cue cue, {bool hide = false}) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _label(context, _who(cue)),
+      _who(context, cue),
       const SizedBox(height: AppSpacing.sm),
       if (hide && visibility == TextVisibility.hide)
-        _text(context, '(twoja kwestia)')
+        const Align(alignment: AlignmentDirectional.centerStart, child: _hidden)
       else if (hide || _partnerShown(cue))
         _lookable(context, cue, cue.text)
       else
@@ -194,48 +209,11 @@ class CueView extends StatelessWidget {
   Widget _speaking(BuildContext context) => Row(
     key: const Key('partner-speaking'),
     children: [
-      Icon(controller.paused ? Icons.pause : Icons.record_voice_over),
-      const SizedBox(width: AppSpacing.sm),
-      _text(context, controller.paused ? 'pauza' : 'mówi…'),
+      Icon(
+        controller.paused ? Icons.pause : Icons.record_voice_over,
+        size: 32,
+        semanticLabel: controller.paused ? 'pauza' : 'mówi…',
+      ),
     ],
   );
-
-  Widget _mine(BuildContext context, Cue cue) {
-    final left = controller.remaining;
-    final listening = controller.capture != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _label(context, 'Twoja kwestia'),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          seconds(left),
-          key: const Key('countdown'),
-          style: Theme.of(context).textTheme.displaySmall,
-        ),
-        LinearProgressIndicator(
-          value: cue.seconds <= 0 ? 0 : (left / cue.seconds).clamp(0, 1),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        if (visibility == TextVisibility.show)
-          _lookable(context, cue, cue.text)
-        else
-          _text(
-            context,
-            listening ? 'Mów z pamięci… słucham' : 'Mów z pamięci…',
-          ),
-        const SizedBox(height: AppSpacing.lg),
-        FilledButton.icon(
-          onPressed: controller.done,
-          icon: const Icon(Icons.check, semanticLabel: 'Gotowe'),
-          label: const SizedBox.shrink(),
-        ),
-        Text(
-          'albo spacja',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
 }

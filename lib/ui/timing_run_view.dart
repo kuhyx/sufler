@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/rehearsal/run_take.dart';
 import 'package:sufler/rehearsal/timing_session.dart';
+import 'package:sufler/ui/spoken.dart';
 
 /// "Nagraj w całości (n kwestie)" at the first line of a run; null
 /// elsewhere.
@@ -28,9 +29,15 @@ List<Widget> runViews(BuildContext context, TimingSession s) {
   final theme = Theme.of(context).textTheme;
   if (s.state == TakeState.overwrite) {
     return [
-      Text(
-        '${s.runExisting} z tych kwestii ma już nagranie.',
-        style: theme.titleMedium,
+      Spoken(
+        semanticLabel: '${s.runExisting} z tych kwestii ma już nagranie.',
+        child: Row(
+          spacing: AppSpacing.sm,
+          children: [
+            const Icon(Icons.mic, size: 32),
+            Text('${s.runExisting}', style: theme.titleMedium),
+          ],
+        ),
       ),
       const SizedBox(height: AppSpacing.sm),
       Wrap(

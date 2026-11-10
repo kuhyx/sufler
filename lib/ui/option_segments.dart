@@ -7,10 +7,13 @@ const double _maxContentWidth = 640;
 
 /// One chip of an [OptionSegments] row and what it shows.
 class OptionGroup {
-  /// A group labelled [label] showing [child] while selected.
-  const new({required this.label, required this.children});
+  /// A group with chip glyph [icon] showing [children] while selected.
+  const new({required this.icon, required this.label, required this.children});
 
-  /// The chip text.
+  /// The chip glyph.
+  final IconData icon;
+
+  /// The chip's spoken name (never painted).
   final String label;
 
   /// The group's content, top to bottom; runs of tiles sit two to a row.
@@ -58,7 +61,7 @@ class _OptionSegmentsState extends State<OptionSegments> {
                 children: [
                   for (final (i, g) in groups.indexed)
                     ChoiceChip(
-                      label: Text(g.label),
+                      label: Icon(g.icon, semanticLabel: g.label),
                       selected: i == index,
                       onSelected: (_) => setState(() => _selected = i),
                     ),

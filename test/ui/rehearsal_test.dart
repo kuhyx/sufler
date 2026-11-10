@@ -10,8 +10,7 @@ import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'hub.dart';
 
-Text _header(WidgetTester t) =>
-    t.widget<Text>(find.textContaining('Przebieg').first);
+String _header(WidgetTester t) => rehearsalHeader(t);
 
 Future<void> _speakDone(WidgetTester t) async {
   await t.pump(const Duration(seconds: 1));
@@ -40,7 +39,7 @@ void main() {
     );
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsNothing);
 
     // Pass 1: one right, one wrong -> not clean, loop again.
@@ -50,31 +49,31 @@ void main() {
     await tester.tap(bySpoken('Odtwórz moje nagranie'));
     await tester.pumpAndSettle(); // no countdown runs while grading
     expect(rig.clips.played, ['audio/wav']);
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    await tester.tap(find.text('Źle'));
+    await tester.tap(bySpoken('Źle'));
     await tester.pump();
     // The prompt (my line before, hidden) is replayed; ✓ on the retry
     // does not lift the score.
-    expect(find.text('(twoja kwestia)'), findsOneWidget);
+    expect(bySpoken('(twoja kwestia)'), findsOneWidget);
     await _speakDone(tester);
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     await _speakDone(tester);
-    expect(_header(tester).data, contains('Przebieg 2'));
-    expect(_header(tester).data, contains('ostatni wynik 1/2'));
+    expect(_header(tester), contains('Przebieg 2'));
+    expect(_header(tester), contains('ostatni wynik 1/2'));
 
     // Pause / resume during a partner line replays it.
-    await tester.tap(find.byTooltip('Pauza'));
+    await tester.tap(bySpoken('Pauza'));
     await tester.pump();
-    expect(find.byTooltip('Wznów'), findsOneWidget);
-    await tester.tap(find.byTooltip('Wznów'));
+    expect(bySpoken('Wznów'), findsOneWidget);
+    await tester.tap(bySpoken('Wznów'));
     await _speakDone(tester);
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
 
     // Back to the partner line, then skip it.
     await tester.tap(bySpoken('Wstecz'));
@@ -88,7 +87,7 @@ void main() {
     for (var i = 0; i < 2; i++) {
       await tester.tap(bySpoken('Gotowe'));
       await tester.pump();
-      await tester.tap(find.text('Dobrze'));
+      await tester.tap(bySpoken('Dobrze'));
       await tester.pump();
     }
     await _speakDone(tester);
@@ -99,7 +98,7 @@ void main() {
 
     await tester.tap(bySpoken('Jeszcze raz'));
     await tester.pump();
-    expect(_header(tester).data, startsWith('Przebieg 1'));
+    expect(_header(tester), startsWith('Przebieg 1'));
     await leaveRehearsal(tester);
   });
 }

@@ -43,7 +43,7 @@ void main() {
     await _open(tester, rig);
     expect(rig.copyLookups, ['test.txt']);
     expect(rig.imported, ['test.txt']);
-    expect(find.text(_summary), findsOneWidget);
+    expect(bySpoken(_summary), findsOneWidget);
     await _expectMoved(tester, rig, 5);
     await openTab(tester, 'Narzędzia');
     expect(bySpoken(_tile), findsNothing);
@@ -52,7 +52,7 @@ void main() {
     await _open(tester, rig);
     expect(rig.copyLookups, hasLength(1));
     expect(rig.imported, hasLength(1));
-    expect(find.textContaining('Zaktualizowano parsowanie'), findsNothing);
+    expect(bySpokenContaining('Zaktualizowano parsowanie'), findsNothing);
   });
 
   testWidgets('no cached copy: silent, Narzędzia asks for the file', (
@@ -71,14 +71,14 @@ void main() {
       ..script = Script.fromJson({...fixtureScript().toJson(), 'id': 'zzz'})
       ..files.next = (name: 'inna.pdf', bytes: Uint8List.fromList([6]));
     await tester.tapVisible(bySpoken(_tile));
-    expect(find.textContaining('To inny plik niż ten skrypt'), findsOneWidget);
+    expect(bySpokenContaining('To inny plik niż ten skrypt'), findsOneWidget);
     expect(await tester.io(() => rig.library.loadSource('abc123')), isNull);
 
     rig
       ..script = newerParse()
       ..files.next = (name: 'test.txt', bytes: Uint8List.fromList([7]));
     await tester.tapVisible(bySpoken(_tile));
-    expect(find.text(_summary), findsOneWidget);
+    expect(bySpoken(_summary), findsOneWidget);
     await _expectMoved(tester, rig, 7);
     expect(bySpoken(_tile), findsNothing);
   });

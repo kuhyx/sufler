@@ -208,7 +208,13 @@ class _RehearsalScreenState extends State<RehearsalScreen> {
         child: Focus(
           autofocus: true,
           child: Scaffold(
-            appBar: AppBar(title: Text(widget.title)),
+            appBar: AppBar(
+              // A section title or a line range is shown; the missed-only
+              // walk's name is a glyph (textgate).
+              title: widget.resume.missedOnly
+                  ? Icon(Icons.history, semanticLabel: widget.title)
+                  : Text(widget.title),
+            ),
             body: ListenableBuilder(
               listenable: Listenable.merge([ctl, _assist]),
               builder: (context, _) => _body(ctl),

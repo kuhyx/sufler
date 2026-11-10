@@ -46,12 +46,12 @@ void main() {
     );
     await tester.tapVisible(bySpoken('Czasy i nagrania'));
     // 2: 11 syllables x 0.4 + 1 s; 4: its recording + 1 s; 10: 2 x 0.4 + 1.
-    expect(find.text('Pauza 5,4 s · szacowane'), findsOneWidget);
-    expect(find.text('Pauza 2,2 s · z nagrania'), findsOneWidget);
-    expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);
+    expect(bySpoken('Pauza 5,4 s · szacowane'), findsOneWidget);
+    expect(bySpoken('Pauza 2,2 s · z nagrania'), findsOneWidget);
+    expect(bySpoken('Pauza 1,8 s · szacowane'), findsOneWidget);
     await tester.tap(find.text('Koniec!'));
     await tester.pumpAndSettle();
-    expect(find.text('Teraz: 1,8 s · szacowane'), findsOneWidget);
+    expect(bySpoken('Teraz: 1,8 s · szacowane'), findsOneWidget);
   });
 
   testWidgets('two recordings are not enough: the old default stays', (
@@ -66,8 +66,8 @@ void main() {
       seed: _seed(const {1: 2.0, 4: 1.2}),
     );
     await tester.tapVisible(bySpoken('Czasy i nagrania'));
-    expect(find.textContaining('szacowane'), findsNothing);
-    expect(find.textContaining('automatycznie'), findsNWidgets(2));
+    expect(bySpokenContaining('szacowane'), findsNothing);
+    expect(bySpokenContaining('automatycznie'), findsNWidgets(2));
   });
 
   testWidgets('−/+ on an estimated pause makes it a manual one', (
@@ -95,8 +95,8 @@ void main() {
 
     await openTab(tester, 'Narzędzia');
     await tester.tapVisible(bySpoken('Czasy i nagrania'));
-    expect(find.text('Pauza 5,9 s · ręcznie'), findsOneWidget);
-    expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);
+    expect(bySpoken('Pauza 5,9 s · ręcznie'), findsOneWidget);
+    expect(bySpoken('Pauza 1,8 s · szacowane'), findsOneWidget);
   });
   testWidgets('a time tapped in "Nagraj czasy" counts toward his pace', (
     tester,
@@ -132,8 +132,8 @@ void main() {
     await openTab(tester, 'Narzędzia');
     await tester.tapVisible(bySpoken('Czasy i nagrania'));
     // The tap (line 2) is a third sample; the median stays 0.4 s/syllable.
-    expect(find.text('Pauza 2,2 s · szacowane'), findsOneWidget);
-    expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);
-    expect(find.textContaining('automatycznie'), findsNothing);
+    expect(bySpoken('Pauza 2,2 s · szacowane'), findsOneWidget);
+    expect(bySpoken('Pauza 1,8 s · szacowane'), findsOneWidget);
+    expect(bySpokenContaining('automatycznie'), findsNothing);
   });
 }

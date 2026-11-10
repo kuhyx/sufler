@@ -39,7 +39,7 @@ class SectionFacts {
   final Map<ScriptLine, List<LineNote>> notes;
 
   /// Who sings (songs only).
-  final String? singers;
+  final Widget? singers;
 
   /// Total number of notes.
   int get noteCount => notes.values.fold(0, (n, list) => n + list.length);
@@ -175,7 +175,7 @@ Future<void> showSectionDetails(
                 children: [
                   const Icon(Icons.mic_external_on, semanticLabel: 'śpiewa'),
                   const SizedBox(width: AppSpacing.sm),
-                  Flexible(child: Text(facts.singers!)),
+                  Flexible(child: facts.singers!),
                 ],
               ),
             if (facts.mine > 0)

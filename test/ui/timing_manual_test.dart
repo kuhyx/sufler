@@ -59,7 +59,7 @@ void main() {
     expect(bySpoken('Kwestia 1/2'), findsOneWidget);
     rig.capture.hear(null);
     await _settle(tester);
-    expect(find.textContaining('Nie słyszę mikrofonu'), findsOneWidget);
+    expect(bySpoken('Nie słyszę mikrofonu'), findsOneWidget);
     // Own text hidden: said from memory, timed by the tap.
     expect(find.text(_first), findsNothing);
     final done = bySpoken('Skończyłem');
@@ -87,7 +87,7 @@ void main() {
     await tester.tap(find.byKey(const Key('manual-walk')));
     await _settle(tester);
     expect(rig.capture.listening, isFalse);
-    expect(find.textContaining('Nie słyszę mikrofonu'), findsNothing);
+    expect(bySpokenContaining('Nie słyszę mikrofonu'), findsNothing);
     expect(find.text(_first), findsNothing);
     await _finish(tester);
     expect(bySpoken('Kwestia 2/2'), findsOneWidget);

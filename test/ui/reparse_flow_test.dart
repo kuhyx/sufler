@@ -61,7 +61,7 @@ void main() {
     await tester.tap(bySpoken('Importuj plik'));
     await tester.pumpAndSettle();
     expect(
-      find.text(
+      bySpoken(
         'Zaktualizowano parsowanie: 3 kwestie przeniesione, 0 utraconych',
       ),
       findsOneWidget,
@@ -92,7 +92,7 @@ void main() {
     await tester.pumpWidget(SuflerApp(services: rig.services));
     await tester.pumpAndSettle();
     expect(rig.imported, ['test.txt']);
-    expect(find.textContaining('3 kwestie przeniesione'), findsOneWidget);
+    expect(bySpokenContaining('3 kwestie przeniesione'), findsOneWidget);
     final meta = await tester.io(() => rig.library.loadMeta('abc123'));
     expect(meta.fingerprint, newerParse().fingerprint);
   });
@@ -108,17 +108,17 @@ void main() {
       seed: (rig) =>
           rig.library.savePack('abc123', fixturePackZip(fingerprint: 'zzz')),
     );
-    expect(find.text(stalePackMessage), findsOneWidget);
+    expect(bySpoken(stalePackMessage), findsOneWidget);
     await openTab(tester, 'Narzędzia');
     await openSegment(tester, groupVoices);
-    expect(find.textContaining('Brak paczki'), findsOneWidget);
+    expect(bySpokenContaining('Brak paczki'), findsOneWidget);
 
     rig.files.next = (
       name: 'p.zip',
       bytes: fixturePackZip(fingerprint: 'other'),
     );
     await tester.tapVisible(bySpoken('Importuj paczkę audio (.zip)'));
-    expect(find.text('Zła paczka audio: $stalePackMessage'), findsOneWidget);
+    expect(bySpoken('Zła paczka audio: $stalePackMessage'), findsOneWidget);
 
     await openTab(tester, 'Sceny');
     await tester.tapVisible(find.text('Scena 1'));

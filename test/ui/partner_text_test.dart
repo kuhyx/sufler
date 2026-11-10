@@ -12,8 +12,7 @@ final _wolf = {const Role.character(wolf)};
 const _cue = 'Dzień dobry, Wilku!';
 const _speaking = Key('partner-speaking');
 
-String _header(WidgetTester t) =>
-    t.widget<Text>(find.textContaining('Przebieg').first).data!;
+String _header(WidgetTester t) => rehearsalHeader(t);
 
 /// Starts Scena 1 and stops on its first (partner) line, still playing.
 Future<void> _start(WidgetTester t) async {
@@ -39,9 +38,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     // My line: the partner's line above it stays hidden too.
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     expect(find.text(_cue), findsNothing);
-    expect(find.text('(Błystek)'), findsOneWidget);
+    expect(find.text('Błystek'), findsOneWidget);
     await leaveRehearsal(tester);
   });
 
@@ -58,7 +57,7 @@ void main() {
     expect(find.text(_cue), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     expect(find.text(_cue), findsOneWidget);
     await leaveRehearsal(tester);
   });
@@ -75,7 +74,7 @@ void main() {
     // Held for its reading time, then my line; still readable above it.
     await tester.pump(const Duration(seconds: 5));
     await tester.pump();
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     expect(find.text(_cue), findsOneWidget);
     await leaveRehearsal(tester);
   });

@@ -26,8 +26,10 @@ class RehearsalControls extends StatelessWidget {
               onPressed: ctl.back,
             ),
             IconButton.filledTonal(
-              tooltip: ctl.paused ? 'Wznów' : 'Pauza',
-              icon: Icon(ctl.paused ? Icons.play_arrow : Icons.pause),
+              icon: Icon(
+                ctl.paused ? Icons.play_arrow : Icons.pause,
+                semanticLabel: ctl.paused ? 'Wznów' : 'Pauza',
+              ),
               onPressed: over ? null : (ctl.paused ? ctl.resume : ctl.pause),
             ),
             IconButton(

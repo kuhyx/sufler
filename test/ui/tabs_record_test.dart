@@ -30,20 +30,20 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
     expect(find.text('Scena 2'), findsOneWidget);
-    expect(find.text(groupTempoText), findsNothing);
+    expect(bySpoken(groupTempoText), findsNothing);
     await openTab(tester, 'Piosenki');
     expect(find.text('Scena 2'), findsNothing);
     await openSectionDetails(tester, 'Piosenka');
     expect(
       find.descendant(
         of: find.byKey(const Key('section-singers')),
-        matching: find.text('Chór, Błystek'),
+        matching: find.text('Błystek'),
       ),
       findsOneWidget,
     );
     await closeSectionDetails(tester);
     await openTab(tester, 'Ustawienia próby');
-    expect(find.text(groupTempoText), findsOneWidget);
+    expect(bySpoken(groupTempoText), findsOneWidget);
     await openTab(tester, 'Narzędzia');
     expect(bySpoken('Eksportuj talię Anki'), findsOneWidget);
   });
@@ -54,7 +54,7 @@ void main() {
     expect(find.byType(NavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
     await openTab(tester, 'Ustawienia próby');
-    expect(find.text(groupTempoText), findsOneWidget);
+    expect(bySpoken(groupTempoText), findsOneWidget);
   });
 
   testWidgets('one tap records a scene: auto-advance, meter, saved', (
@@ -78,7 +78,7 @@ void main() {
     await _settle(tester);
     expect(bySpoken('Kwestia 2/2'), findsOneWidget);
     expect(find.text('Naprawdę.'), findsOneWidget);
-    expect(find.text('Zapisano kwestię 2: 2,0 s (+1 s pauzy)'), findsOneWidget);
+    expect(bySpoken('Zapisano kwestię 2: 2,0 s (+1 s pauzy)'), findsOneWidget);
 
     final wav = pcmToWav(Uint8List(16000 * 2), sampleRate: 16000);
     rig.capture.hear(
@@ -120,6 +120,6 @@ void main() {
     expect(rig.capture.listening, isFalse);
     await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.text('Pauza 2,2 s · ręcznie'), findsOneWidget);
+    expect(bySpoken('Pauza 2,2 s · ręcznie'), findsOneWidget);
   });
 }

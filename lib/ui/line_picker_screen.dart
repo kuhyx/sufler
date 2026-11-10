@@ -2,7 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/range.dart';
-import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/who.dart';
 
 /// How the line picker builds its range.
 enum PickMode {
@@ -55,32 +55,54 @@ class _LinePickerScreenState extends State<LinePickerScreen> {
     }
   }
 
-  String get _hint {
-    if (_cumulative) return 'Stuknij ostatnią kwestię.';
-    return _first == null
-        ? 'Stuknij pierwszą kwestię.'
-        : 'Od $_first. Stuknij ostatnią kwestię.';
+  /// What to tap next: a start flag, then an end flag after the line
+  /// number already picked; spoken as the old hint.
+  Widget get _hint {
+    final first = _first;
+    final end = first != null || _cumulative;
+    return Row(
+      spacing: AppSpacing.sm,
+      children: [
+        if (first != null) ...[
+          const Icon(Icons.flag_outlined, size: 20),
+          Text('$first'),
+          const Icon(Icons.arrow_forward, size: 20),
+        ],
+        Icon(
+          end ? Icons.sports_score : Icons.flag_outlined,
+          semanticLabel: _cumulative
+              ? 'Stuknij ostatnią kwestię.'
+              : first == null
+              ? 'Stuknij pierwszą kwestię.'
+              : 'Od $first. Stuknij ostatnią kwestię.',
+        ),
+        const Icon(Icons.touch_app_outlined, size: 20),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final s = widget.script;
     // One entry per distinct start line (a song may start its scene).
-    final starts = <int, String>{0: 'Od początku'};
+    // Section titles are script content; the very start is a glyph.
+    final starts = <int, Widget>{
+      0: const Icon(Icons.first_page, semanticLabel: 'Od początku'),
+    };
     for (final sec in [...s.scenes, ...s.songs]) {
-      starts.putIfAbsent(sec.start, () => 'Od: ${sec.title}');
+      starts.putIfAbsent(sec.start, () => Text(sec.title));
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text(_cumulative ? 'Narastająco' : 'Własny zakres'),
+        title: Icon(
+          _cumulative ? Icons.trending_up : Icons.straighten,
+          semanticLabel: _cumulative ? 'Narastająco' : 'Własny zakres',
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Text(_hint),
-          ),
+          Padding(padding: const EdgeInsets.all(AppSpacing.md), child: _hint),
           if (_cumulative)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -90,7 +112,7 @@ class _LinePickerScreenState extends State<LinePickerScreen> {
                 value: _from,
                 items: [
                   for (final e in starts.entries)
-                    DropdownMenuItem(value: e.key, child: Text(e.value)),
+                    DropdownMenuItem(value: e.key, child: e.value),
                 ],
                 onChanged: (v) => setState(() => _from = v ?? 0),
               ),
@@ -111,10 +133,11 @@ class _LinePickerScreenState extends State<LinePickerScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: Text(
-                    line.isSpoken
-                        ? speakerNames(s, line)
-                        : kindLabel(line.kind),
+                  subtitle: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: line.isSpoken
+                        ? Who(s, [line])
+                        : kindGlyph(line.kind, size: 16),
                   ),
                   onTap: enabled ? () => _tap(i) : null,
                 );

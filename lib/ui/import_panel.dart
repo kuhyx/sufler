@@ -48,11 +48,6 @@ class _ImportPanelState extends State<ImportPanel> {
         icon: const Icon(Icons.upload_file, semanticLabel: 'Importuj plik'),
         label: const SizedBox.shrink(),
       ),
-      const SizedBox(height: AppSpacing.xs),
-      Text(
-        'PDF, DOCX, ODT lub TXT',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
       const SizedBox(height: AppSpacing.md),
       TextField(
         key: const Key('gdoc-url'),

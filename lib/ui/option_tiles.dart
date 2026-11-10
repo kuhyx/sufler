@@ -2,7 +2,6 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 const double _tileHeight = 88;
-const double _hintSize = 16;
 const double _iconRowHeight = 24;
 
 /// Marks the tiles an [OptionColumn] sets two to a row.
@@ -55,33 +54,6 @@ class OptionColumn extends StatelessWidget {
   }
 }
 
-/// Shows [info] under [title] in a bottom sheet (the long explanation a tile
-/// has no room for).
-Future<void> showOptionInfo(BuildContext context, Widget title, Text info) =>
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            0,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              title,
-              const SizedBox(height: AppSpacing.sm),
-              info,
-            ],
-          ),
-        ),
-      ),
-    );
-
 class _Tile extends StatelessWidget {
   const new({
     required this.title,
@@ -94,13 +66,12 @@ class _Tile extends StatelessWidget {
   final Widget title;
   final Widget body;
   final VoidCallback? onTap;
-  final Text? info;
+  final String? info;
   final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final info = this.info;
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -110,42 +81,32 @@ class _Tile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: info == null
-            ? null
-            : () => showOptionInfo(context, title, info),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: _tileHeight),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Fixed height, so titles line up across a row even when only
-                // one tile has an icon.
-                SizedBox(
-                  height: _iconRowHeight,
-                  child: Row(
-                    children: [
-                      ?leading,
-                      const Spacer(),
-                      if (info != null)
-                        Icon(
-                          Icons.info_outline,
-                          size: _hintSize,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                    ],
+      // The explanation is spoken only (textgate): a hint, never painted.
+      child: Semantics(
+        hint: info,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: _tileHeight),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Fixed height, so titles line up across a row even when only
+                  // one tile has an icon.
+                  SizedBox(
+                    height: _iconRowHeight,
+                    child: Row(children: [?leading]),
                   ),
-                ),
-                DefaultTextStyle.merge(
-                  style: theme.textTheme.bodyLarge,
-                  child: title,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                body,
-              ],
+                  DefaultTextStyle.merge(
+                    style: theme.textTheme.bodyLarge,
+                    child: title,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  body,
+                ],
+              ),
             ),
           ),
         ),
@@ -175,8 +136,8 @@ class ToggleTile extends StatelessWidget implements OptionTile {
   /// New value; null disables the tile.
   final ValueChanged<bool>? onChanged;
 
-  /// Longer explanation, shown on long press.
-  final Text? info;
+  /// Longer explanation, spoken only (screen-reader hint).
+  final String? info;
 
   @override
   Widget build(BuildContext context) => _Tile(
@@ -207,8 +168,8 @@ class ActionTile extends StatelessWidget implements OptionTile {
   /// Runs the action; null disables the tile.
   final VoidCallback? onTap;
 
-  /// Longer explanation, shown on long press.
-  final Text? info;
+  /// Longer explanation, spoken only (screen-reader hint).
+  final String? info;
 
   @override
   Widget build(BuildContext context) {

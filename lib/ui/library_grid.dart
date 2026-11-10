@@ -68,9 +68,16 @@ class LibraryGrid extends StatelessWidget {
               children: [
                 Text(s.title, style: Theme.of(sheet).textTheme.titleLarge),
                 const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '${s.source} · ${s.lines.where((l) => l.isSpoken).length} '
-                  'kwestii',
+                Text(s.source),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.record_voice_over_outlined,
+                      semanticLabel: 'kwestii',
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text('${s.lines.where((l) => l.isSpoken).length}'),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.md),
                 FilledButton(

@@ -11,6 +11,7 @@ import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/line_timing_sheet.dart';
 import 'package:sufler/ui/services.dart';
+import 'package:sufler/ui/spoken.dart';
 import 'package:sufler/ui/timing_session_screen.dart';
 
 /// My lines with their pause length; tap one to override or record it.
@@ -99,12 +100,30 @@ class _TimingScreenState extends State<TimingScreen> {
         pace: _pace,
       );
 
-  static String _source(PauseSource s) => switch (s) {
-    PauseSource.manual => 'ręcznie',
-    PauseSource.recording => 'z nagrania',
-    PauseSource.estimate => 'szacowane',
-    PauseSource.formula => 'automatycznie',
+  /// Where a pause comes from: its glyph and its spoken word.
+  static (IconData, String) _source(PauseSource s) => switch (s) {
+    PauseSource.manual => (Icons.pan_tool_alt_outlined, 'ręcznie'),
+    PauseSource.recording => (Icons.mic_none, 'z nagrania'),
+    PauseSource.estimate => (Icons.info_outline, 'szacowane'),
+    PauseSource.formula => (Icons.auto_mode, 'automatycznie'),
   };
+
+  /// A line's pause: hourglass, seconds and source glyph; spoken as before.
+  Widget _pauseRow(ScriptLine l) {
+    final p = _pause(l);
+    final (icon, word) = _source(p.source);
+    return Spoken(
+      semanticLabel: 'Pauza ${seconds(p.seconds)} · $word',
+      child: Row(
+        spacing: AppSpacing.xs,
+        children: [
+          const Icon(Icons.hourglass_bottom, size: 16),
+          Text(seconds(p.seconds)),
+          Icon(icon, size: 16),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,10 +148,20 @@ class _TimingScreenState extends State<TimingScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   children: [
-                    Text(
-                      _prefs.roles.isEmpty
-                          ? 'Nie wybrano ról: pokazuję wszystkie kwestie.'
-                          : 'Twoje kwestie. Stuknij, by zmienić pauzę.',
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: _prefs.roles.isEmpty
+                          ? const Icon(
+                              Icons.groups_outlined,
+                              semanticLabel:
+                                  'Nie wybrano ról: pokazuję wszystkie '
+                                  'kwestie.',
+                            )
+                          : const Icon(
+                              Icons.person_outline,
+                              semanticLabel:
+                                  'Twoje kwestie. Stuknij, by zmienić pauzę.',
+                            ),
                     ),
                     if (_prefs.roles.isNotEmpty && lines.isNotEmpty)
                       Padding(
@@ -152,10 +181,7 @@ class _TimingScreenState extends State<TimingScreen> {
                       ListTile(
                         leading: Text('${l.index}'),
                         title: Text(l.text),
-                        subtitle: Text(
-                          'Pauza ${seconds(_pause(l).seconds)} · '
-                          '${_source(_pause(l).source)}',
-                        ),
+                        subtitle: _pauseRow(l),
                         trailing: _recorded.containsKey(l.index)
                             ? const Icon(Icons.mic)
                             : null,

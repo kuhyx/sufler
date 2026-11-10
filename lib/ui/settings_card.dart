@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/icon_header.dart';
 import 'package:sufler/ui/option_tiles.dart';
 
 /// Which half of the settings a [SettingsCard] shows.
@@ -64,14 +65,12 @@ class SettingsCard extends StatelessWidget {
               Icons.visibility,
               semanticLabel: 'Pokaż tekst partnerów',
             ),
-            info: const Text(
-              'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
-            ),
+            info: 'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
             value: s.partnerText,
             onChanged: (v) => onSettings(s.copyWith(partnerText: v)),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const SectionHeader('Tekst mojej kwestii'),
+          const IconHeader(Icons.text_fields, 'Tekst mojej kwestii'),
           const SizedBox(height: AppSpacing.xs),
           SegmentedButton<TextVisibility>(
             segments: const [
@@ -107,9 +106,7 @@ class SettingsCard extends StatelessWidget {
               Icons.mic,
               semanticLabel: 'Słuchaj mnie (mikrofon)',
             ),
-            info: const Text(
-              'kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę',
-            ),
+            info: 'kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę',
             value: s.listen,
             onChanged: (v) => onSettings(s.copyWith(listen: v)),
           ),
@@ -119,10 +116,9 @@ class SettingsCard extends StatelessWidget {
               Icons.play_circle,
               semanticLabel: 'Piosenki i monologi w całości',
             ),
-            info: const Text(
-              'piosenkę lub ≥ 3 kwestie z rzędu mówisz naraz i oceniasz raz; '
-              'cudze piosenki grają jako jeden krok',
-            ),
+            info:
+                'piosenkę lub ≥ 3 kwestie z rzędu mówisz naraz i oceniasz raz; '
+                'cudze piosenki grają jako jeden krok',
             value: s.wholeRuns,
             onChanged: (v) => onSettings(s.copyWith(wholeRuns: v)),
           ),

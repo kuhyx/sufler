@@ -6,6 +6,7 @@ import 'package:sufler/model/role.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/edits.dart';
 import 'package:sufler/rehearsal/groups.dart';
+import 'package:sufler/ui/icon_header.dart';
 import 'package:sufler/ui/services.dart';
 import 'package:sufler/ui/song_preview.dart';
 
@@ -96,7 +97,7 @@ class _RolesScreenState extends State<RolesScreen> {
         .where((o) => !o.role.isSong && !ensembles.contains(o.role));
     final suggested = suggestedGroups(_groups, _characters);
     return [
-      const SectionHeader('Twoje role'),
+      const IconHeader(Icons.person_outline, 'Twoje role'),
       const SizedBox(height: AppSpacing.sm),
       Wrap(
         spacing: AppSpacing.sm,
@@ -112,12 +113,12 @@ class _RolesScreenState extends State<RolesScreen> {
       ),
       if (_groups.isNotEmpty) ...[
         const SizedBox(height: AppSpacing.lg),
-        const SectionHeader('Grupy'),
+        const IconHeader(Icons.groups_outlined, 'Grupy'),
         for (final g in _groups) _group(s, g, suggested: suggested),
       ],
       if (s.songs.isNotEmpty) ...[
         const SizedBox(height: AppSpacing.lg),
-        const SectionHeader('Piosenki'),
+        const IconHeader(Icons.music_note_outlined, 'Piosenki'),
         for (final song in s.songs) _song(s, song),
       ],
       const SizedBox(height: AppSpacing.lg),
@@ -131,8 +132,12 @@ class _RolesScreenState extends State<RolesScreen> {
   Widget _group(Script s, GroupOption g, {required Set<Role> suggested}) {
     final extra = extraLines(s, g.role, _roles);
     final notes = [
-      if (suggested.contains(g.role)) 'twoja grupa',
-      if (extra == 0) 'te kwestie już masz' else '+$extra dla Ciebie',
+      if (suggested.contains(g.role))
+        const Icon(Icons.star_outline, semanticLabel: 'twoja grupa'),
+      if (extra == 0)
+        const Icon(Icons.done_all, semanticLabel: 'te kwestie już masz')
+      else
+        Text('+$extra', semanticsLabel: '+$extra dla Ciebie'),
     ];
     return CheckboxListTile(
       contentPadding: EdgeInsets.zero,
@@ -148,7 +153,7 @@ class _RolesScreenState extends State<RolesScreen> {
               ],
             )
           : Text('${g.label} (${g.count})'),
-      subtitle: Text(notes.join(' · ')),
+      subtitle: Row(spacing: AppSpacing.xs, children: notes),
       value: _roles.contains(g.role),
       onChanged: (on) => _toggle(g.role, on: on ?? false),
     );

@@ -8,8 +8,9 @@ import 'package:sufler/storage/line_edits.dart';
 import 'package:sufler/storage/migrate.dart';
 import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/correction_dialogs.dart';
-import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/feedback.dart';
 import 'package:sufler/ui/services.dart';
+import 'package:sufler/ui/who.dart';
 
 /// Browse lines and fix what the importer got wrong. Every edit is saved
 /// to the library at once.
@@ -80,7 +81,7 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
         roles: renameRole(p.roles, from: pick.from, into: pick.into),
       ),
     );
-    if (mounted) showToast(context, 'Postacie scalone');
+    if (mounted) showDone(context, 'Postacie scalone');
   }
 
   @override
@@ -113,7 +114,13 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
   Widget _tile(Script s, ScriptLine line) => ListTile(
     leading: Text('${line.index}'),
     title: Text(line.text, maxLines: 3, overflow: TextOverflow.ellipsis),
-    subtitle: Text('${kindLabel(line.kind)} · ${speakerNames(s, line)}'),
+    subtitle: Row(
+      spacing: AppSpacing.xs,
+      children: [
+        kindGlyph(line.kind, size: 16),
+        Flexible(child: Who(s, [line])),
+      ],
+    ),
     trailing: const Icon(Icons.edit_outlined),
     onTap: () => _editLine(line),
   );

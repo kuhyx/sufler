@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
+import 'package:sufler/ui/feedback.dart';
 import 'package:sufler/ui/import_panel.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/library_grid.dart';
@@ -57,10 +58,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
       final note = await storeImport(_services, got.script, bytes: got.bytes);
       await _reload();
       if (!mounted) return;
-      if (note != null) showToast(context, note);
+      if (note != null) showDone(context, note);
       await _open(got.script.id);
     } on Object catch (e) {
-      if (mounted) showError(context, 'Import nie powiódł się: $e');
+      if (mounted) showFailure(context, 'Import nie powiódł się: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -119,13 +120,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _delete(Script s) async {
-    final ok = await confirmDestructive(
-      context,
-      title: '',
-      message: '',
-      confirmLabel: 'Usuń',
-      cancelLabel: 'Anuluj',
-    );
+    final ok = await confirmDelete(context);
     if (!ok) return;
     await _services.library.deleteScript(s.id);
     await _reload();
@@ -162,10 +157,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _library(List<Script> scripts) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Padding(
-        padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, 0, 0),
-        child: SectionHeader('Twoje skrypty'),
-      ),
       if (_busy) const LinearProgressIndicator(),
       Expanded(
         child: LibraryGrid(
@@ -181,7 +172,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _emptyOrLoading(List<Script>? scripts) => ListView(
     padding: const EdgeInsets.all(AppSpacing.md),
     children: [
-      const SectionHeader('Twoje skrypty'),
       if (_busy) const LinearProgressIndicator(),
       if (scripts == null)
         const Center(child: CircularProgressIndicator())

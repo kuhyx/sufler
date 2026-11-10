@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/who.dart';
 
 /// Lines shown before "Pokaż cały tekst".
 const int previewLines = 3;
@@ -11,17 +12,6 @@ List<ScriptLine> songLyrics(Script s, Section song) => [
   for (var i = song.start; i <= song.end && i < s.lines.length; i++)
     if (s.lines[i].isSpoken && s.lines[i].songId == song.id) s.lines[i],
 ];
-
-/// Who sings [song]: every distinct speaker, "Chór" for unattributed.
-String songSingers(Script s, Section song) {
-  final names = <String>[];
-  for (final l in songLyrics(s, song)) {
-    for (final n in speakerNames(s, l).split(', ')) {
-      if (!names.contains(n)) names.add(n);
-    }
-  }
-  return names.isEmpty ? '—' : names.join(', ');
-}
 
 /// What a song is before picking it: singers, line count, the first lyric
 /// lines, and the whole text on demand.
@@ -51,18 +41,33 @@ class _SongPreviewState extends State<SongPreview> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Śpiewa: ${songSingers(widget.script, widget.song)} · '
-          '${lyrics.length} $verses',
-          style: small,
+        Row(
+          spacing: AppSpacing.xs,
+          children: [
+            const Icon(
+              Icons.mic_external_on,
+              size: 16,
+              semanticLabel: 'Śpiewa',
+            ),
+            Flexible(child: Who(widget.script, lyrics, style: small)),
+            Icon(
+              Icons.format_list_numbered,
+              size: 16,
+              semanticLabel: '${lyrics.length} $verses',
+            ),
+            Text('${lyrics.length}', style: small),
+          ],
         ),
         const SizedBox(height: AppSpacing.xs),
         for (final l in shown)
           Text(l.text, style: const TextStyle(fontStyle: FontStyle.italic)),
         if (lyrics.length > previewLines)
-          TextButton(
+          IconButton(
             onPressed: () => setState(() => _open = !_open),
-            child: Text(_open ? 'Zwiń' : 'Pokaż cały tekst'),
+            icon: Icon(
+              _open ? Icons.expand_less : Icons.expand_more,
+              semanticLabel: _open ? 'Zwiń' : 'Pokaż cały tekst',
+            ),
           ),
       ],
     );

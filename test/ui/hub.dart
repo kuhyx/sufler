@@ -82,3 +82,23 @@ Future<TestRig> openHub(
   if (tab != null) await openTab(tester, tab);
   return rig;
 }
+
+/// The rehearsal header's spoken words ("Przebieg 1 · kwestia 2/4 · …"):
+/// painted as glyph + number pairs, so the words live in its Semantics.
+String rehearsalHeader(WidgetTester t) => t
+    .widget<Semantics>(
+      find
+          .ancestor(
+            of: find.byKey(const Key('rehearsal-header')),
+            matching: find.byType(Semantics),
+          )
+          .first,
+    )
+    .properties
+    .label!;
+
+/// Like [bySpoken], for a spoken label containing [part].
+Finder bySpokenContaining(String part) => find.byWidgetPredicate(
+  (w) => w is Semantics && (w.properties.label?.contains(part) ?? false),
+  description: 'spoken label containing "$part"',
+);

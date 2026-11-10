@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'fakes.dart';
 import 'fit.dart';
 import 'hub.dart';
+import 'options_nav.dart';
 
 /// Each tab's segment chips and what each segment must still hold: nothing
 /// from the old lists is dropped, it moves under one chip.
@@ -98,8 +99,7 @@ void main() {
       usePixel6a(tester);
       await openHub(tester, 'options-$tab', renderable: true, tab: tab);
       for (final MapEntry(key: chip, value: items) in segments.entries) {
-        await tester.tap(find.text(chip));
-        await tester.pumpAndSettle();
+        await openSegment(tester, chip);
         expectNoVerticalScroll(tester, screen: '$tab / $chip');
         expectTilesClearChips(tester, reason: '$tab / $chip');
         for (final item in items) {

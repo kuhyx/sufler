@@ -5,18 +5,26 @@ import 'package:flutter/material.dart';
 import 'package:sufler/model/line_note.dart';
 import 'package:sufler/model/script.dart';
 
-/// Shows the notes of [lines] (line -> its notes) under [title]; each
-/// line's text heads its notes when there are several lines.
+/// Shows the notes of [lines] (line -> its notes) under a notes glyph and
+/// the section [title] (script content), if any; each line's text heads its
+/// notes when there are several lines. The notes are the assistant's answers
+/// kuhy asked for (content).
 Future<void> showNotes(
   BuildContext context,
-  String title,
+  String? title,
   Map<ScriptLine, List<LineNote>> lines,
 ) => showDialog<void>(
   context: context,
   builder: (context) {
     final theme = Theme.of(context).textTheme;
     return AlertDialog(
-      title: Text(title),
+      title: Row(
+        spacing: AppSpacing.sm,
+        children: [
+          const Icon(Icons.lightbulb_outline, semanticLabel: 'Notatki'),
+          if (title != null) Flexible(child: Text(title)),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -96,4 +104,4 @@ void openSectionNotes(
   BuildContext context,
   String title,
   Map<ScriptLine, List<LineNote>> lines,
-) => unawaited(showNotes(context, 'Notatki: $title', lines));
+) => unawaited(showNotes(context, title, lines));

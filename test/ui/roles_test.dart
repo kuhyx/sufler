@@ -30,7 +30,7 @@ void main() {
     for (final g in ['Wszyscy (1)', 'Śnieżynki (1)', 'Ala, Bolek, Cela (4)']) {
       expect(find.widgetWithText(CheckboxListTile, g), findsOneWidget);
     }
-    expect(find.byIcon(Icons.groups), findsOneWidget);
+    expect(find.byIcon(Icons.groups), findsWidgets);
 
     await tester.tap(find.text('Ala (5)'));
     await tester.pumpAndSettle();
@@ -40,14 +40,17 @@ void main() {
       _trio,
     });
     expect(_check(tester, 'Ala, Bolek, Cela (4)').value, isTrue);
-    expect(find.text('twoja grupa · te kwestie już masz'), findsOneWidget);
+    final trio = find.widgetWithText(CheckboxListTile, 'Ala, Bolek, Cela (4)');
+    for (final note in ['twoja grupa', 'te kwestie już masz']) {
+      expect(find.descendant(of: trio, matching: bySpoken(note)), findsOne);
+    }
     expect(_check(tester, 'Śnieżynki (1)').value, isFalse);
 
     await tester.tap(find.text('Wszyscy (1)'));
     await tester.pumpAndSettle();
     expect(await _saved(tester, rig), {const Role.character('ala'), _trio});
     // The chorus is offered, not suggested; picking it adds its line.
-    await tester.tapVisible(find.byIcon(Icons.groups));
+    await tester.tapVisible(bySpoken('Chór (kwestie bez przypisania)'));
     expect(await _saved(tester, rig), contains(Role.group(const [])));
 
     await tester.tapVisible(bySpoken('Gotowe'));
@@ -65,16 +68,15 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(
-      find.text('Śpiewa: Ala, Bolek, Cela, Chór · 4 wersy'),
-      findsOneWidget,
-    );
+    expect(find.text('Ala, Bolek, Cela'), findsOneWidget);
+    expect(bySpoken('Chór'), findsWidgets);
+    expect(bySpoken('4 wersy'), findsOneWidget);
     expect(find.text('Hej ho idziemy'), findsOneWidget);
     expect(find.text('Do domu wracamy'), findsOneWidget);
     expect(find.text('La la la'), findsNothing);
-    await tester.tapVisible(find.text('Pokaż cały tekst'));
+    await tester.tapVisible(bySpoken('Pokaż cały tekst'));
     expect(find.text('La la la'), findsOneWidget);
-    await tester.tapVisible(find.text('Zwiń'));
+    await tester.tapVisible(bySpoken('Zwiń'));
     expect(find.text('La la la'), findsNothing);
 
     await tester.tapVisible(title);

@@ -22,12 +22,11 @@ Future<void> _speakDone(WidgetTester t) async {
 Future<void> _say(WidgetTester t, String grade) async {
   await t.tap(bySpoken('Gotowe'));
   await t.pump();
-  await t.tap(find.text(grade));
+  await t.tap(bySpoken(grade));
   await t.pump();
 }
 
-String _header(WidgetTester t) =>
-    t.widget<Text>(find.textContaining('Przebieg').first).data!;
+String _header(WidgetTester t) => rehearsalHeader(t);
 
 void main() {
   testWidgets('Źle hides my line, replays the cue, asks until Dobrze', (
@@ -44,13 +43,13 @@ void main() {
     expect(find.byKey(const Key('retry')), findsOneWidget);
     expect(rig.speech.said, [_cue, _cue]);
     await _speakDone(tester);
-    expect(find.text('Mów z pamięci…'), findsOneWidget);
+    expect(bySpoken('Mów z pamięci…'), findsOneWidget);
     expect(_header(tester), contains('kwestia 2/4'));
     // Space still ends the line; a second Źle loops again.
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
     expect(find.text(_line2), findsOneWidget);
-    await tester.tap(find.text('Źle'));
+    await tester.tap(bySpoken('Źle'));
     await tester.pump();
     await _speakDone(tester);
     await _say(tester, 'Dobrze');

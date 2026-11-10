@@ -44,7 +44,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     // My line: countdown running, my text NOT shown.
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     expect(find.byKey(const Key('countdown')), findsOneWidget);
     expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsNothing);
     final before = tester.widget<Text>(find.byKey(const Key('countdown')));
@@ -57,22 +57,22 @@ void main() {
     await tester.pump();
     expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsOneWidget);
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
 
     // Space ends my line too; ✗ marks it as not known and asks it again
     // (after the line before it) until ✓.
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
-    await tester.tap(find.text('Źle'));
+    await tester.tap(bySpoken('Źle'));
     await tester.pump();
     expect(find.text('Naprawdę.'), findsNothing);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     expect(rig.speech.said.last, 'No dobrze.');
     expect(find.text('No dobrze.'), findsNothing);
@@ -110,7 +110,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(bySpoken('Usuń'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Usuń').last);
+    await tester.tap(bySpoken('Usuń').last);
     await tester.pumpAndSettle();
     expect(bySpoken('Brak skryptów'), findsOneWidget);
     expect(await tester.io(() => rig.library.scripts()), isEmpty);
@@ -177,6 +177,6 @@ void main() {
     expect(bySpoken('Wybierz swoje role'), findsOneWidget);
     await tester.tap(find.text('Scena 1'));
     await tester.pumpAndSettle();
-    expect(find.text('Wybierz co najmniej jedną rolę'), findsOneWidget);
+    expect(bySpoken('Wybierz co najmniej jedną rolę'), findsOneWidget);
   });
 }

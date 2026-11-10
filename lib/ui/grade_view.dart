@@ -40,19 +40,16 @@ class GradeView extends StatelessWidget {
   final Widget Function(String text, TextStyle? style)? textView;
 
   Widget _button({required bool ok}) {
-    final icon = Icon(ok ? Icons.check : Icons.close);
-    final label = Text(ok ? 'Dobrze' : 'Źle');
+    final icon = Icon(
+      ok ? Icons.check : Icons.close,
+      semanticLabel: ok ? 'Dobrze' : 'Źle',
+    );
     void tap() => onGrade(ok);
     final picked = suggestion == ok;
     final key = Key(ok ? 'grade-ok' : 'grade-bad');
     return picked || (suggestion == null && ok)
-        ? FilledButton.icon(key: key, onPressed: tap, icon: icon, label: label)
-        : OutlinedButton.icon(
-            key: key,
-            onPressed: tap,
-            icon: icon,
-            label: label,
-          );
+        ? FilledButton(key: key, onPressed: tap, child: icon)
+        : OutlinedButton(key: key, onPressed: tap, child: icon);
   }
 
   @override
@@ -89,11 +86,20 @@ class GradeView extends StatelessWidget {
           ),
         ],
         if (suggestion != null)
-          Text(
-            suggestion!
-                ? 'Wygląda dobrze — Enter potwierdza ✓'
-                : 'Enter potwierdza ✗',
-            style: theme.bodySmall,
+          // The suggested grade is also the filled button below.
+          Row(
+            key: const Key('suggestion'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.keyboard_return,
+                size: 18,
+                semanticLabel: suggestion!
+                    ? 'Wygląda dobrze — Enter potwierdza ✓'
+                    : 'Enter potwierdza ✗',
+              ),
+              Icon(suggestion! ? Icons.check : Icons.close, size: 18),
+            ],
           ),
         const SizedBox(height: AppSpacing.lg),
         Row(

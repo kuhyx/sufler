@@ -17,8 +17,7 @@ Future<void> _speakDone(WidgetTester t) async {
   await t.pump();
 }
 
-String _header(WidgetTester t) =>
-    t.widget<Text>(find.textContaining('Przebieg').first).data!;
+String _header(WidgetTester t) => rehearsalHeader(t);
 
 void main() {
   testWidgets('learning: hidden, said, revealed, graded; missed practice', (
@@ -28,21 +27,21 @@ void main() {
     final rig = await openHub(tester, 'learn', roles: _wolf);
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
-    expect(find.text('Mów z pamięci…'), findsOneWidget);
+    expect(bySpoken('Mów z pamięci…'), findsOneWidget);
     expect(find.text(_line2), findsNothing);
     // The countdown runs out by itself: the text is revealed for grading.
     await tester.pump(const Duration(seconds: 8));
     await tester.pump();
     expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.text(_line2), findsOneWidget);
-    await tester.tap(find.text('Źle'));
+    await tester.tap(bySpoken('Źle'));
     await tester.pump();
     expect(find.text('Naprawdę.'), findsNothing);
     // Asked again after the cue; the ✓ retry does not count as known.
     await _speakDone(tester);
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     expect(_header(tester), contains('kwestia 3/4'));
     await leaveRehearsal(tester);
@@ -53,7 +52,7 @@ void main() {
     final saidBefore = rig.speech.said.length;
     await tester.tapVisible(bySpoken('Tylko nieumiane (1)'));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Tylko nieumiane'), findsOneWidget);
+    expect(bySpoken('Tylko nieumiane'), findsOneWidget);
     expect(_header(tester), contains('/2'));
     expect(rig.speech.said.skip(saidBefore), ['Dzień dobry, Wilku!']);
     expect(find.text('Dzień dobry, Wilku!'), findsNothing);
@@ -77,23 +76,23 @@ void main() {
     );
     final learn = find.byKey(const Key('learn'));
     expect(
-      find.descendant(of: learn, matching: find.textContaining('kwestia 3')),
+      find.descendant(of: learn, matching: find.text('3')),
       findsOneWidget,
     );
     await tester.tap(learn);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(_header(tester), contains('kwestia 3/4'));
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.resume!.position, 3);
     expect(
-      find.textContaining('Ucz się dalej: Scena 1 · kwestia 4'),
+      bySpokenContaining('Ucz się dalej: Scena 1 · kwestia 4'),
       findsOneWidget,
     );
   });
@@ -111,7 +110,7 @@ void main() {
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
     expect(rig.capture.listening, isTrue);
-    expect(find.text('Mów z pamięci… słucham'), findsOneWidget);
+    expect(bySpoken('słucham'), findsOneWidget);
     rig.capture.hear(take(2.5, 'piaskowe wilki nie jedzą krasnali'));
     await tester.pump();
     await tester.pump();
@@ -119,20 +118,20 @@ void main() {
     expect(find.byKey(const Key('heard')), findsOneWidget);
     expect(
       find.ancestor(
-        of: find.text('Dobrze'),
+        of: bySpoken('Dobrze'),
         matching: find.byType(FilledButton),
       ),
       findsOneWidget,
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     // A wrong take pre-selects ✗.
     rig.capture.hear(take(1, 'coś zupełnie innego tu było'));
     await tester.pump();
     await tester.pump();
     expect(
-      find.ancestor(of: find.text('Źle'), matching: find.byType(FilledButton)),
+      find.ancestor(of: bySpoken('Źle'), matching: find.byType(FilledButton)),
       findsOneWidget,
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);

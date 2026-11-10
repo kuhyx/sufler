@@ -91,14 +91,14 @@ void main() {
     final rig = await _hub(tester, 'runs-learn');
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     expect(find.textContaining(_first), findsNothing);
     expect(find.byKey(const Key('pause')), findsNothing);
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.text('$_first\nPięć sześć.\n$_last'), findsOneWidget);
-    await tester.tap(find.text('Źle'));
+    await tester.tap(bySpoken('Źle'));
     await tester.pump();
     expect(rig.speech.said, [
       'Witaj, Wilku.',
@@ -108,7 +108,7 @@ void main() {
     expect(find.byKey(const Key('retry')), findsOneWidget);
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     expect(rig.speech.said.last, 'Brawo.');
     await leaveRehearsal(tester);
@@ -132,7 +132,7 @@ void main() {
     await tester.pump();
     expect(find.text(_first), findsOneWidget);
     expect(find.textContaining(_last), findsNothing);
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
@@ -155,7 +155,7 @@ void main() {
     expect(find.text('$_first\nPięć sześć.\n$_last'), findsOneWidget);
     await tester.tap(bySpoken('Skończyłem'));
     await _settle(tester);
-    expect(find.text('Zapisano w całości: 3 kwestie'), findsOneWidget);
+    expect(bySpoken('Zapisano w całości: 3 kwestie'), findsOneWidget);
     expect(bySpoken('Kwestia 4/7'), findsOneWidget);
     expect(find.text('Teraz piosenka.'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('run123'));
@@ -181,7 +181,7 @@ void main() {
     await _settle(tester);
     await tester.tap(bySpoken('Skończyłem'));
     await _settle(tester);
-    expect(find.text('1 z tych kwestii ma już nagranie.'), findsOneWidget);
+    expect(bySpoken('1 z tych kwestii ma już nagranie.'), findsOneWidget);
     await tester.tap(bySpoken('Zachowaj istniejące'));
     await _settle(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('run123'));
@@ -205,17 +205,17 @@ void main() {
       script: fixtureScript(),
     );
     await tester.tapVisible(find.text('Scena 2'));
-    String header() =>
-        tester.widget<Text>(find.textContaining('Przebieg').first).data!;
+    String header() => rehearsalHeader(tester);
     expect(header(), contains('kwestia 1/2'));
-    expect(find.text('Chór, Błystek · Piosenka'), findsOneWidget);
+    expect(find.text('· Piosenka'), findsOneWidget);
+    expect(bySpoken('Chór'), findsOneWidget);
     await tester.pump(const Duration(seconds: 2));
     expect(header(), contains('kwestia 1/2'), reason: 'still singing');
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     expect(rig.speech.said, ['La la la', 'Śpiewam ja', 'Hej hej']);
     expect(header(), contains('kwestia 2/2'));
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     await leaveRehearsal(tester);
   });
 
@@ -236,13 +236,12 @@ void main() {
     await tester.tap(find.byKey(const Key('learn')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    String header() =>
-        tester.widget<Text>(find.textContaining('Przebieg').first).data!;
+    String header() => rehearsalHeader(tester);
     expect(header(), contains('kwestia 4/6'));
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    await tester.tap(find.text('Dobrze'));
+    await tester.tap(bySpoken('Dobrze'));
     await tester.pump();
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('run123'));

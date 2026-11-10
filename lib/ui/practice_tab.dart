@@ -19,6 +19,7 @@ class PracticeTab extends StatelessWidget {
   Widget build(BuildContext context) => OptionSegments(
     groups: [
       OptionGroup(
+        icon: Icons.speed,
         label: groupTempoText,
         children: [
           SettingsCard(
@@ -31,6 +32,7 @@ class PracticeTab extends StatelessWidget {
         ],
       ),
       OptionGroup(
+        icon: Icons.school_outlined,
         label: groupModes,
         children: [
           SettingsCard(

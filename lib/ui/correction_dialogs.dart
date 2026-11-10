@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/model/script.dart';
-import 'package:sufler/ui/labels.dart';
+import 'package:sufler/ui/who.dart';
 
 /// Result of [LineEditDialog].
 typedef LineEdit = ({List<String> speakers, LineKind kind});
@@ -47,7 +47,7 @@ class _LineEditDialogState extends State<LineEditDialog> {
             value: _kind,
             items: [
               for (final k in LineKind.values)
-                DropdownMenuItem(value: k, child: Text(kindLabel(k))),
+                DropdownMenuItem(value: k, child: kindGlyph(k)),
             ],
             onChanged: (k) => setState(() => _kind = k ?? _kind),
           ),

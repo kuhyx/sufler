@@ -61,14 +61,19 @@ void main() {
     expect(find.text('4'), findsOneWidget);
   });
 
-  testWidgets('a long press on a tile opens its explanation', (tester) async {
+  testWidgets('a tile explains itself only to the screen reader', (
+    tester,
+  ) async {
     tester.usePhone();
     await openHub(tester, 'tile-info', tab: 'Ustawienia próby');
     await openSegment(tester, groupModes);
-    await tester.longPress(bySpoken('Słuchaj mnie (mikrofon)'));
-    await tester.pumpAndSettle();
     expect(
-      find.text('kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę'),
+      find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.hint ==
+                'kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę',
+      ),
       findsOneWidget,
     );
   });

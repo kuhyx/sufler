@@ -51,24 +51,48 @@ class _PcSessionTileState extends State<PcSessionTile> {
   @override
   Widget build(BuildContext context) {
     final signedIn = _signedIn;
+    final status = context.statusColors;
+    // State as a glyph + hue; the old sentences are spoken only.
     final subtitle = switch (signedIn) {
-      null => 'Sprawdzam…',
-      true => 'Połączono: telefon pyta PC przez Firebase.',
-      false when _failed =>
-        'Logowanie nie powiodło się. Spróbuj ponownie lub sprawdź sieć.',
-      false =>
-        'Zaloguj się kontem Google synchronizacji, by z telefonu '
+      null => const Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: SizedBox.square(
+          dimension: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            semanticsLabel: 'Sprawdzam…',
+          ),
+        ),
+      ),
+      true => Icon(
+        Icons.cloud_done_outlined,
+        color: status.success,
+        semanticLabel: 'Połączono: telefon pyta PC przez Firebase.',
+      ),
+      false when _failed => Icon(
+        Icons.cloud_off_outlined,
+        color: status.danger,
+        semanticLabel:
+            'Logowanie nie powiodło się. Spróbuj ponownie lub sprawdź sieć.',
+      ),
+      false => const Icon(
+        Icons.cloud_outlined,
+        semanticLabel:
+            'Zaloguj się kontem Google synchronizacji, by z telefonu '
             'pytać PC o znaczenie słów i nagrywać poprawione kwestie.',
+      ),
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: AppSpacing.sm),
-        const SectionHeader('PC (Claude i głosy)'),
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.computer, semanticLabel: 'Połącz z PC'),
-          subtitle: Text(subtitle),
+          subtitle: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: subtitle,
+          ),
           trailing: signedIn == false
               ? FilledButton(
                   onPressed: _busy ? null : _signIn,

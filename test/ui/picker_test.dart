@@ -11,15 +11,15 @@ void main() {
     tester.usePhone();
     await openHub(tester, 'custom', roles: {const Role.character(wolf)});
     await tester.tapVisible(bySpoken('Własny zakres…'));
-    expect(find.text('Stuknij pierwszą kwestię.'), findsOneWidget);
+    expect(bySpoken('Stuknij pierwszą kwestię.'), findsOneWidget);
     await tester.tap(find.text('No dobrze.'));
     await tester.pump();
-    expect(find.text('Od 5. Stuknij ostatnią kwestię.'), findsOneWidget);
+    expect(bySpoken('Od 5. Stuknij ostatnią kwestię.'), findsOneWidget);
     await tester.tap(find.text('Naprawdę.'));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Kwestie 4–5'), findsOneWidget);
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(find.text('4–5'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     await leaveRehearsal(tester);
   });
 
@@ -33,13 +33,13 @@ void main() {
     await tester.tapVisible(bySpoken('Narastająco…'));
     await tester.tap(find.byKey(const Key('cumulative-from')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Od: Scena 2').last);
+    await tester.tap(find.text('Scena 2').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Koniec!'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Kwestie 6–10'), findsOneWidget);
+    expect(find.text('6–10'), findsOneWidget);
     expect(rig.speech.said.first, 'La la la');
     await leaveRehearsal(tester);
   });

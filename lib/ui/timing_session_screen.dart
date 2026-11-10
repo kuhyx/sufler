@@ -7,8 +7,9 @@ import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/run_take.dart';
 import 'package:sufler/rehearsal/runs.dart';
 import 'package:sufler/rehearsal/timing_session.dart';
-import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/services.dart';
+import 'package:sufler/ui/status_glyph.dart';
+import 'package:sufler/ui/timing_prompts.dart';
 import 'package:sufler/ui/timing_run_view.dart';
 
 /// "Nagraj czasy": reads my [lines] one after another, hands-free. Each
@@ -115,16 +116,6 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
   List<Widget> _body(BuildContext context, TimingSession s) {
     final theme = Theme.of(context).textTheme;
     final total = s.lines.length;
-    final last = s.lastTake;
-    final pause = s.lastPause;
-    final saved = s.lastLine == null
-        ? null
-        : pause != null
-        ? 'Zapisano kwestię ${s.lastLine!.index}: pauza ${seconds(pause)}'
-        : last == null
-        ? null
-        : 'Zapisano kwestię ${s.lastLine!.index}: '
-              '${seconds(last.durationSeconds)} (+1 s pauzy)';
     if (s.state == TakeState.done) {
       return [
         Icon(
@@ -132,7 +123,8 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
           size: 32,
           semanticLabel: 'Gotowe: zapisano ${s.saved} z $total',
         ),
-        if (s.problem != null) Text(s.problem!),
+        if (s.problem case final problem?)
+          statusGlyph(context, problem, ok: false),
         const SizedBox(height: AppSpacing.md),
         FilledButton(
           key: const Key('close-btn'),
@@ -162,7 +154,7 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
       if (s.state case TakeState.run || TakeState.overwrite)
         ...runViews(context, s)
       else if (s.state == TakeState.manual)
-        ..._manual(theme, s)
+        ...manualViews(context, s)
       else ...[
         const Icon(
           Icons.record_voice_over,
@@ -189,9 +181,10 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         ),
         ?runOffer(s),
       ],
-      if (s.runNote != null) Text(s.runNote!, style: theme.bodySmall),
-      if (saved != null) Text(saved, style: theme.bodySmall),
-      if (s.state == TakeState.skipped) ..._skipped(s),
+      if (s.runNote case final note?)
+        statusGlyph(context, note, ok: !note.startsWith('Nie ')),
+      ?savedView(s),
+      if (s.state == TakeState.skipped) ...skippedViews(s),
       const SizedBox(height: AppSpacing.lg),
       FilledButton.tonalIcon(
         onPressed: () => unawaited(s.stop()),
@@ -201,57 +194,6 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
     ];
   }
 
-  /// Tap timing: own text hidden (said from memory); the time from when
-  /// the line came up to the tap becomes its pause.
-  List<Widget> _manual(TextTheme theme, TimingSession s) => [
-    // After a missed take the line may already be under way: the clock
-    // runs from when it came up, so only ask for the tap.
-    Text(
-      s.problem != null
-          ? '${s.problem}. Stuknij, gdy skończysz tę kwestię.'
-          : 'Powiedz kwestię i stuknij, gdy skończysz.',
-    ),
-    const SizedBox(height: AppSpacing.md),
-    SizedBox(
-      height: AppSpacing.xxl * 2,
-      child: FilledButton(
-        // textStyle, not Text.style: keeps the button's foreground colour.
-        style: FilledButton.styleFrom(textStyle: theme.headlineSmall),
-        onPressed: s.finished,
-        child: const Icon(Icons.check, semanticLabel: 'Skończyłem'),
-      ),
-    ),
-    const SizedBox(height: AppSpacing.sm),
-  ];
-
   ValueListenable<double> get _levelSource =>
       ServicesScope.of(context).capture.level;
-
-  List<Widget> _skipped(TimingSession s) {
-    final other = s.lines[s.skipTo!];
-    return [
-      const SizedBox(height: AppSpacing.md),
-      Text(
-        'To brzmi jak kolejna kwestia (${s.skipTo! + 1}/${s.lines.length}): '
-        '„${other.text}”',
-        key: const Key('skip-warning'),
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      Wrap(
-        spacing: AppSpacing.sm,
-        children: [
-          FilledButton(
-            key: const Key('accept-skip'),
-            onPressed: s.accept,
-            child: const Icon(Icons.check, semanticLabel: 'Tak, zapisz tam'),
-          ),
-          OutlinedButton(
-            key: const Key('redo-skip'),
-            onPressed: s.redo,
-            child: const Icon(Icons.repeat, semanticLabel: 'Powtórz tę'),
-          ),
-        ],
-      ),
-    ];
-  }
 }

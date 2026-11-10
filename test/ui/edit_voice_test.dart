@@ -108,7 +108,7 @@ void main() {
     final rig = await _rehearse(tester, 'edit-own');
     await tester.pump(const Duration(milliseconds: 600));
     await tester.pump();
-    expect(find.text('Twoja kwestia'), findsOneWidget);
+    expect(bySpoken('Twoja kwestia'), findsOneWidget);
     await _edit(tester);
     await tester.pump(const Duration(milliseconds: 500));
     final s = (await tester.io(() => rig.library.loadScript('abc123')))!;

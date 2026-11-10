@@ -65,7 +65,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('kind')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('dialog').last);
+    await tester.tap(bySpoken('dialog').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilterChip, 'Piaskowy Wilk'));
     await tester.pumpAndSettle();

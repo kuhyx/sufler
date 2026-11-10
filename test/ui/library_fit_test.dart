@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/ui/app.dart';
+import 'package:sufler/ui/library_grid.dart';
 
 import 'fakes.dart';
 import 'fit.dart';
+import 'hub.dart';
 
 /// Seeds [count] scripts ("Sztuka 1".."Sztuka N") and starts on the library.
 Future<TestRig> openLibrary(WidgetTester tester, int count) async {
@@ -15,7 +17,7 @@ Future<TestRig> openLibrary(WidgetTester tester, int count) async {
   }
   await tester.pumpWidget(SuflerApp(services: rig.services));
   await tester.pumpAndSettle();
-  expect(find.text('Twoje skrypty'), findsOneWidget, reason: 'no library');
+  expect(find.byType(LibraryGrid), findsOneWidget, reason: 'no library');
   return rig;
 }
 
@@ -32,11 +34,7 @@ void main() {
       await tester.longPress(find.text('Sztuka 1'));
       await tester.pumpAndSettle();
       expect(find.textContaining('s1.pdf'), findsOneWidget, reason: 'source');
-      expect(
-        find.textContaining('kwestii'),
-        findsWidgets,
-        reason: 'line count',
-      );
+      expect(bySpoken('kwestii'), findsOneWidget, reason: 'line count');
       expectHittable(
         find.bySemanticsLabel('Usuń'),
         reason: 'delete in the sheet',

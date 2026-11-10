@@ -8,6 +8,7 @@ import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/notes_view.dart';
 import 'package:sufler/ui/section_tile.dart';
 import 'package:sufler/ui/song_preview.dart';
+import 'package:sufler/ui/who.dart';
 
 /// Starts something over a range, titled with the label.
 typedef RangeAction = void Function(LineRange range, String label);
@@ -69,7 +70,7 @@ class SectionsTab extends StatelessWidget {
       mine: mine.length,
       known: mine.where((l) => prefs.knowledge[l.index]?.last ?? false).length,
       notes: notesIn(script, prefs.notes, s.start, s.end),
-      singers: songs ? songSingers(script, s) : null,
+      singers: songs ? Who(script, songLyrics(script, s)) : null,
     );
   }
 
