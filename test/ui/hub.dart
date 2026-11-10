@@ -18,18 +18,38 @@ Future<void> leaveRehearsal(WidgetTester tester) async {
 
 /// Switches the script hub to tab [label] ("Sceny", "Piosenki",
 /// "Ustawienia próby", "Narzędzia").
+///
+/// The labels are spoken-only (never painted, so not tappable): find the
+/// destination's index by its label and tap its icon instead.
 Future<void> openTab(WidgetTester tester, String label) async {
-  final rail = find.descendant(
-    of: find.byType(NavigationRail),
-    matching: find.text(label),
+  final rail = find.byType(NavigationRail);
+  final nav = rail.evaluate().isNotEmpty ? rail : find.byType(NavigationBar);
+  final labels = find
+      .descendant(
+        of: nav,
+        matching: find.byType(Text, skipOffstage: false),
+        skipOffstage: false,
+      )
+      .evaluate()
+      .map((e) => (e.widget as Text).data)
+      .toList();
+  final index = labels.indexOf(label);
+  expect(index, isNonNegative, reason: 'no tab "$label" in $labels');
+  await tester.tap(
+    find.descendant(of: nav, matching: find.byType(Icon)).at(index),
   );
-  final bar = find.descendant(
-    of: find.byType(NavigationBar),
-    matching: find.text(label),
-  );
-  await tester.tap(rail.evaluate().isNotEmpty ? rail : bar);
   await tester.pumpAndSettle();
 }
+
+/// Finds a control by the words it keeps only as a spoken label (Icon
+/// semanticLabel, Text semanticsLabel, or a Semantics widget). Unlike
+/// find.bySemanticsLabel this also matches labels merged into a button.
+/// (Icon and Text build such a Semantics widget themselves, so one
+/// predicate covers all three without double matches.)
+Finder bySpoken(String label) => find.byWidgetPredicate(
+  (w) => w is Semantics && w.properties.label == label,
+  description: 'spoken label "$label"',
+);
 
 /// Seeds the fixture script (+ prefs/settings) and starts the app, which
 /// opens the only script straight away (the roles screen counts as already
@@ -58,7 +78,7 @@ Future<TestRig> openHub(
   if (seed != null) await tester.io(() => seed(rig));
   await tester.pumpWidget(SuflerApp(services: rig.services));
   await tester.pumpAndSettle();
-  expect(find.text('Moje role'), findsOneWidget, reason: 'hub not opened');
+  expect(bySpoken('Moje role'), findsOneWidget, reason: 'hub not opened');
   if (tab != null) await openTab(tester, tab);
   return rig;
 }

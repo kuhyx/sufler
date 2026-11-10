@@ -30,7 +30,10 @@ class _LineEditDialogState extends State<LineEditDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text('Kwestia ${widget.line.index}'),
+    title: Icon(
+      Icons.edit_document,
+      semanticLabel: 'Kwestia ${widget.line.index}',
+    ),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -49,7 +52,7 @@ class _LineEditDialogState extends State<LineEditDialog> {
             onChanged: (k) => setState(() => _kind = k ?? _kind),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Mówią'),
+          const Icon(Icons.person, semanticLabel: 'Mówią'),
           const SizedBox(height: AppSpacing.xs),
           Wrap(
             spacing: AppSpacing.sm,
@@ -71,15 +74,17 @@ class _LineEditDialogState extends State<LineEditDialog> {
       ),
     ),
     actions: [
-      TextButton(
+      IconButton(
+        key: const Key('line-cancel'),
+        icon: const Icon(Icons.close, semanticLabel: 'Anuluj'),
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Anuluj'),
       ),
-      FilledButton(
+      IconButton(
+        key: const Key('line-save'),
+        icon: const Icon(Icons.check, semanticLabel: 'Zapisz'),
         onPressed: () =>
             Navigator.of(context)
                 .pop<LineEdit>((speakers: _speakers, kind: _kind)),
-        child: const Text('Zapisz'),
       ),
     ],
   );
@@ -118,30 +123,34 @@ class _MergeDialogState extends State<MergeDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Scal postacie'),
+    title: const Icon(Icons.merge, semanticLabel: 'Scal postacie'),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Postać (np. literówka)'),
+        const Icon(
+          Icons.person_outline,
+          semanticLabel: 'Postać (np. literówka)',
+        ),
         _pick(const Key('merge-from'), _from, (v) => _from = v),
-        const SizedBox(height: AppSpacing.md),
-        const Text('to naprawdę'),
+        const SizedBox(height: AppSpacing.xs),
         _pick(const Key('merge-into'), _into, (v) => _into = v),
       ],
     ),
     actions: [
-      TextButton(
+      IconButton(
+        key: const Key('merge-cancel'),
+        icon: const Icon(Icons.close, semanticLabel: 'Anuluj'),
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Anuluj'),
       ),
-      FilledButton(
+      IconButton(
+        key: const Key('merge-save'),
+        icon: const Icon(Icons.merge, semanticLabel: 'Scal'),
         onPressed: _from == _into
             ? null
             : () =>
                   Navigator.of(context)
                       .pop<MergePick>((from: _from, into: _into)),
-        child: const Text('Scal'),
       ),
     ],
   );

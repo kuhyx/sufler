@@ -22,8 +22,7 @@ class RehearsalControls extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             IconButton(
-              tooltip: 'Wstecz',
-              icon: const Icon(Icons.skip_previous),
+              icon: const Icon(Icons.skip_previous, semanticLabel: 'Wstecz'),
               onPressed: ctl.back,
             ),
             IconButton.filledTonal(
@@ -32,8 +31,7 @@ class RehearsalControls extends StatelessWidget {
               onPressed: over ? null : (ctl.paused ? ctl.resume : ctl.pause),
             ),
             IconButton(
-              tooltip: 'Dalej',
-              icon: const Icon(Icons.skip_next),
+              icon: const Icon(Icons.skip_next, semanticLabel: 'Dalej'),
               onPressed: over ? null : ctl.skip,
             ),
           ],

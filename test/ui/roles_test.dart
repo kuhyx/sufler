@@ -22,19 +22,15 @@ void main() {
     final rig = await openHub(tester, 'roles', script: groupScript());
     // The hub does not cover the screen with roles: it is its own screen.
     expect(find.byType(FilterChip), findsNothing);
-    await tester.tap(find.text('Moje role'));
+    await tester.tap(bySpoken('Moje role'));
     await tester.pumpAndSettle();
     expect(find.text('Ala (5)'), findsOneWidget);
     // Ensembles are listed as groups, not as people.
     expect(find.widgetWithText(FilterChip, 'Wszyscy (1)'), findsNothing);
-    for (final g in [
-      'Wszyscy (1)',
-      'Śnieżynki (1)',
-      'Ala, Bolek, Cela (4)',
-      'Chór (kwestie bez przypisania) (1)',
-    ]) {
+    for (final g in ['Wszyscy (1)', 'Śnieżynki (1)', 'Ala, Bolek, Cela (4)']) {
       expect(find.widgetWithText(CheckboxListTile, g), findsOneWidget);
     }
+    expect(find.byIcon(Icons.groups), findsOneWidget);
 
     await tester.tap(find.text('Ala (5)'));
     await tester.pumpAndSettle();
@@ -51,17 +47,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(await _saved(tester, rig), {const Role.character('ala'), _trio});
     // The chorus is offered, not suggested; picking it adds its line.
-    await tester.tapVisible(find.text('Chór (kwestie bez przypisania) (1)'));
+    await tester.tapVisible(find.byIcon(Icons.groups));
     expect(await _saved(tester, rig), contains(Role.group(const [])));
 
-    await tester.tapVisible(find.text('Gotowe'));
-    expect(find.text('Moje role'), findsOneWidget); // back on the hub
+    await tester.tapVisible(bySpoken('Gotowe'));
+    expect(bySpoken('Moje role'), findsOneWidget); // back on the hub
   });
 
   testWidgets('song picker previews singers, size and lyrics', (tester) async {
     tester.usePhone();
     final rig = await openHub(tester, 'songs', script: groupScript());
-    await tester.tap(find.text('Moje role'));
+    await tester.tap(bySpoken('Moje role'));
     await tester.pumpAndSettle();
     final title = find.text('Piosenka Hej (4)');
     await tester.scrollUntilVisible(

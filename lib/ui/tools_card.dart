@@ -138,8 +138,12 @@ class _ToolsCardState extends State<ToolsCard> {
       children: [
         if (widget.onRefreshParse case final refresh?)
           ActionTile(
+            key: const Key('refresh-parse'),
             icon: Icons.refresh,
-            title: const Text('Odśwież parsowanie: wskaż plik'),
+            title: const Icon(
+              Icons.refresh,
+              semanticLabel: 'Odśwież parsowanie: wskaż plik',
+            ),
             info: const Text(
               'skrypt ma starszą wersję parsowania; czasy, nagrania i oceny '
               'zostaną',
@@ -147,20 +151,27 @@ class _ToolsCardState extends State<ToolsCard> {
             onTap: refresh,
           ),
         ActionTile(
+          key: const Key('correct-text'),
           icon: Icons.edit_note,
-          title: const Text('Popraw tekst'),
-          info: const Text('mówiący, rodzaj kwestii, scalanie postaci'),
+          title: const Icon(Icons.edit_note, semanticLabel: 'Popraw tekst'),
           onTap: widget.onCorrect,
         ),
         ActionTile(
+          key: const Key('timings'),
           icon: Icons.timer_outlined,
-          title: const Text('Czasy i nagrania'),
-          info: const Text('długość pauzy, nagraj siebie'),
+          title: const Icon(
+            Icons.timer_outlined,
+            semanticLabel: 'Czasy i nagrania',
+          ),
           onTap: widget.onTimings,
         ),
         ActionTile(
+          key: const Key('export-anki'),
           icon: Icons.style_outlined,
-          title: const Text('Eksportuj talię Anki'),
+          title: const Icon(
+            Icons.style_outlined,
+            semanticLabel: 'Eksportuj talię Anki',
+          ),
           onTap: _exportAnki,
         ),
       ],
@@ -179,13 +190,21 @@ class _ToolsCardState extends State<ToolsCard> {
           ),
         if (widget.canRender)
           ActionTile(
+            key: const Key('generate-voices'),
             icon: Icons.record_voice_over,
-            title: const Text('Generuj głosy'),
+            title: const Icon(
+              Icons.record_voice_over,
+              semanticLabel: 'Generuj głosy',
+            ),
             onTap: progress == null ? _render : null,
           ),
         ActionTile(
+          key: const Key('import-audio'),
           icon: Icons.folder_zip_outlined,
-          title: const Text('Importuj paczkę audio (.zip)'),
+          title: const Icon(
+            Icons.folder_zip_outlined,
+            semanticLabel: 'Importuj paczkę audio (.zip)',
+          ),
           onTap: _importPack,
         ),
       ],

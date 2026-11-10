@@ -56,9 +56,9 @@ void main() {
     rig
       ..script = newerParse()
       ..files.next = (name: 'krasnale.pdf', bytes: Uint8List.fromList([7]));
-    await tester.tap(find.byTooltip('Importuj'));
+    await tester.tap(bySpoken('Importuj'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Importuj plik'));
+    await tester.tap(bySpoken('Importuj plik'));
     await tester.pumpAndSettle();
     expect(
       find.text(
@@ -117,7 +117,7 @@ void main() {
       name: 'p.zip',
       bytes: fixturePackZip(fingerprint: 'other'),
     );
-    await tester.tapVisible(find.text('Importuj paczkę audio (.zip)'));
+    await tester.tapVisible(bySpoken('Importuj paczkę audio (.zip)'));
     expect(find.text('Zła paczka audio: $stalePackMessage'), findsOneWidget);
 
     await openTab(tester, 'Sceny');

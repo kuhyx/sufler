@@ -27,7 +27,7 @@ void main() {
       await openLibrary(tester, 15);
       expectNoVerticalScroll(tester, screen: 'library');
       expectHittable(find.text('Sztuka 1'), reason: 'first tile');
-      expectHittable(find.byTooltip('Importuj'), reason: 'import');
+      expectHittable(find.bySemanticsLabel('Importuj'), reason: 'import');
 
       await tester.longPress(find.text('Sztuka 1'));
       await tester.pumpAndSettle();
@@ -37,7 +37,10 @@ void main() {
         findsWidgets,
         reason: 'line count',
       );
-      expectHittable(find.text('Usuń'), reason: 'delete in the sheet');
+      expectHittable(
+        find.bySemanticsLabel('Usuń'),
+        reason: 'delete in the sheet',
+      );
     },
   );
 

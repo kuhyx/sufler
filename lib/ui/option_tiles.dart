@@ -57,7 +57,7 @@ class OptionColumn extends StatelessWidget {
 
 /// Shows [info] under [title] in a bottom sheet (the long explanation a tile
 /// has no room for).
-Future<void> showOptionInfo(BuildContext context, Text title, Text info) =>
+Future<void> showOptionInfo(BuildContext context, Widget title, Text info) =>
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -73,10 +73,7 @@ Future<void> showOptionInfo(BuildContext context, Text title, Text info) =>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title.data ?? '',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              title,
               const SizedBox(height: AppSpacing.sm),
               info,
             ],
@@ -94,7 +91,7 @@ class _Tile extends StatelessWidget {
     this.leading,
   });
 
-  final Text title;
+  final Widget title;
   final Widget body;
   final VoidCallback? onTap;
   final Text? info;
@@ -170,7 +167,7 @@ class ToggleTile extends StatelessWidget implements OptionTile {
   });
 
   /// What the option is.
-  final Text title;
+  final Widget title;
 
   /// Whether it is on.
   final bool value;
@@ -205,7 +202,7 @@ class ActionTile extends StatelessWidget implements OptionTile {
   final IconData icon;
 
   /// The action's name.
-  final Text title;
+  final Widget title;
 
   /// Runs the action; null disables the tile.
   final VoidCallback? onTap;

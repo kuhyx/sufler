@@ -33,14 +33,14 @@ void main() {
     // The countdown runs out by itself: the text is revealed for grading.
     await tester.pump(const Duration(seconds: 8));
     await tester.pump();
-    expect(find.text('Jak poszło?'), findsOneWidget);
+    expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.text(_line2), findsOneWidget);
     await tester.tap(find.text('Źle'));
     await tester.pump();
     expect(find.text('Naprawdę.'), findsNothing);
     // Asked again after the cue; the ✓ retry does not count as known.
     await _speakDone(tester);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
@@ -51,7 +51,7 @@ void main() {
 
     // "Only lines I missed": line 2 with its prompt, line 1.
     final saidBefore = rig.speech.said.length;
-    await tester.tapVisible(find.text('Tylko nieumiane (1)'));
+    await tester.tapVisible(bySpoken('Tylko nieumiane (1)'));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Tylko nieumiane'), findsOneWidget);
     expect(_header(tester), contains('/2'));
@@ -85,7 +85,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(_header(tester), contains('kwestia 3/4'));
     expect(find.text('Twoja kwestia'), findsOneWidget);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
@@ -115,7 +115,7 @@ void main() {
     rig.capture.hear(take(2.5, 'piaskowe wilki nie jedzą krasnali'));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Jak poszło?'), findsOneWidget);
+    expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.byKey(const Key('heard')), findsOneWidget);
     expect(
       find.ancestor(
@@ -150,12 +150,12 @@ void main() {
     final rig = await openHub(tester, 'pause', roles: _wolf);
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
-    expect(find.text('Pauza 7,4 s'), findsOneWidget);
-    await tester.tap(find.byTooltip('Dłuższa pauza'));
+    expect(find.text('7,4 s'), findsOneWidget);
+    await tester.tap(bySpoken('Dłuższa pauza'));
     await tester.pump();
-    expect(find.text('Pauza 7,9 s'), findsOneWidget);
-    await tester.tap(find.byTooltip('Dłuższa pauza'));
-    await tester.tap(find.byTooltip('Krótsza pauza'));
+    expect(find.text('7,9 s'), findsOneWidget);
+    await tester.tap(bySpoken('Dłuższa pauza'));
+    await tester.tap(bySpoken('Krótsza pauza'));
     await tester.pump();
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds[2], closeTo(7.94, 0.01));
@@ -164,7 +164,7 @@ void main() {
     // The next rehearsal uses it.
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
-    expect(find.text('Pauza 7,9 s'), findsOneWidget);
+    expect(find.text('7,9 s'), findsOneWidget);
     await leaveRehearsal(tester);
   });
 }

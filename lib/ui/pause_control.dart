@@ -28,24 +28,25 @@ class PauseControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
-    children: [_buttons(), if (estimated) const Text('szacowane')],
+    children: [
+      _buttons(),
+      if (estimated) const Icon(Icons.info_outline, semanticLabel: 'szacowane'),
+    ],
   );
 
   Widget _buttons() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       IconButton(
-        tooltip: 'Krótsza pauza',
-        icon: const Icon(Icons.remove),
+        icon: const Icon(Icons.remove, semanticLabel: 'Krótsza pauza'),
         onPressed: length > pauseStep ? () => onAdjust(-pauseStep) : null,
       ),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-        child: Text('Pauza ${seconds(length)}', key: const Key('pause')),
+        child: Text(seconds(length), key: const Key('pause')),
       ),
       IconButton(
-        tooltip: 'Dłuższa pauza',
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add, semanticLabel: 'Dłuższa pauza'),
         onPressed: () => onAdjust(pauseStep),
       ),
     ],

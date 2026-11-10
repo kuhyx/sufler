@@ -83,12 +83,7 @@ List<GroupOption> groupOptions(Script s) {
   final chorus = Role.group(const []);
   final unattributed = count(chorus);
   if (unattributed > 0) {
-    out.add((
-      role: chorus,
-      label: 'Chór (kwestie bez przypisania)',
-      count: unattributed,
-      members: const {},
-    ));
+    out.add((role: chorus, label: '', count: unattributed, members: const {}));
   }
   return out;
 }

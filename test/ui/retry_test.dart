@@ -20,7 +20,7 @@ Future<void> _speakDone(WidgetTester t) async {
 }
 
 Future<void> _say(WidgetTester t, String grade) async {
-  await t.tap(find.text('Gotowe'));
+  await t.tap(bySpoken('Gotowe'));
   await t.pump();
   await t.tap(find.text(grade));
   await t.pump();
@@ -40,7 +40,7 @@ void main() {
     await _say(tester, 'Źle');
     // Hidden again; the partner's cue is played once more.
     expect(find.text(_line2), findsNothing);
-    expect(find.text('Jak poszło?'), findsNothing);
+    expect(bySpoken('Jak poszło?'), findsNothing);
     expect(find.byKey(const Key('retry')), findsOneWidget);
     expect(rig.speech.said, [_cue, _cue]);
     await _speakDone(tester);
@@ -58,8 +58,8 @@ void main() {
     expect(find.byKey(const Key('retry')), findsNothing);
     await _say(tester, 'Dobrze');
     await _speakDone(tester);
-    expect(find.text('Koniec'), findsOneWidget);
-    expect(find.text('Przebieg 1: 1/2'), findsOneWidget);
+    expect(bySpoken('Koniec'), findsOneWidget);
+    expect(bySpoken('Przebieg 1: 1/2'), findsOneWidget);
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.knowledge, {
@@ -90,7 +90,7 @@ void main() {
     await _say(tester, 'Dobrze');
     await _say(tester, 'Dobrze');
     await _speakDone(tester);
-    expect(find.text('Koniec'), findsOneWidget);
+    expect(bySpoken('Koniec'), findsOneWidget);
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.knowledge, {
@@ -111,12 +111,12 @@ void main() {
     await _say(tester, 'Dobrze');
     await _say(tester, 'Dobrze');
     await _speakDone(tester);
-    expect(find.text('Koniec'), findsOneWidget);
+    expect(bySpoken('Koniec'), findsOneWidget);
     await leaveRehearsal(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.pureRuns, {'scena-1'});
     expect(find.byKey(_badge), findsOneWidget);
-    expect(find.byTooltip('Czysty przebieg'), findsOneWidget);
+    expect(bySpoken('Czysty przebieg'), findsOneWidget);
   });
 
   test('only a whole scene or song walk can be a pure run', () {

@@ -45,8 +45,8 @@ class _ImportPanelState extends State<ImportPanel> {
     children: [
       FilledButton.icon(
         onPressed: widget.busy ? null : widget.onFile,
-        icon: const Icon(Icons.upload_file),
-        label: const Text('Importuj plik'),
+        icon: const Icon(Icons.upload_file, semanticLabel: 'Importuj plik'),
+        label: const SizedBox.shrink(),
       ),
       const SizedBox(height: AppSpacing.xs),
       Text(
@@ -58,16 +58,15 @@ class _ImportPanelState extends State<ImportPanel> {
         key: const Key('gdoc-url'),
         controller: _url,
         decoration: const InputDecoration(
-          labelText: 'Link do Google Docs',
-          hintText: 'https://docs.google.com/document/d/…',
+          prefixIcon: Icon(Icons.link, semanticLabel: 'Link do Google Docs'),
         ),
         onSubmitted: (_) => _link(),
       ),
       const SizedBox(height: AppSpacing.sm),
       OutlinedButton.icon(
         onPressed: widget.busy ? null : _link,
-        icon: const Icon(Icons.link),
-        label: const Text('Importuj link'),
+        icon: const Icon(Icons.link, semanticLabel: 'Importuj link'),
+        label: const SizedBox.shrink(),
       ),
       if (widget.busy) const LinearProgressIndicator(),
     ],

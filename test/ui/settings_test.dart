@@ -18,7 +18,7 @@ void main() {
   ) async {
     tester.usePhone();
     final rig = await openHub(tester, 'settings');
-    await tester.tap(find.text('Moje role'));
+    await tester.tap(bySpoken('Moje role'));
     await tester.pumpAndSettle();
     await tester.tapVisible(find.text('Piaskowy Wilk (3)'));
     await tester.tapVisible(find.text('Piosenka (3)'));
@@ -27,12 +27,12 @@ void main() {
 
     await openTab(tester, 'Ustawienia próby');
     await openSegment(tester, groupModes);
-    await tester.tapVisible(find.text('Powtarzaj do skutku'));
-    await tester.tapVisible(find.byTooltip('Więcej przebiegów'));
-    await tester.tapVisible(find.text('Słuchaj mnie (mikrofon)'));
+    await tester.tapVisible(bySpoken('Powtarzaj do skutku'));
+    await tester.tapVisible(bySpoken('Więcej przebiegów'));
+    await tester.tapVisible(bySpoken('Słuchaj mnie (mikrofon)'));
     await openSegment(tester, groupTempoText);
-    await tester.tapVisible(find.text('Czytanie'));
-    await tester.tapVisible(find.text('Pokaż tekst partnerów'));
+    await tester.tapVisible(bySpoken('Czytanie'));
+    await tester.tapVisible(bySpoken('Pokaż tekst partnerów'));
 
     // Reopen from a brand-new library over the same IndexedDB.
     final fresh = ScriptLibrary(IdbStore(idbFactoryMemory, dbName: 'settings'));
@@ -49,7 +49,7 @@ void main() {
     expect(settings.partnerText, isTrue);
     expect(settings.lastScriptId, rig.script.id);
 
-    await tester.tap(find.text('Moje role'));
+    await tester.tap(bySpoken('Moje role'));
     await tester.pumpAndSettle();
     final chip = tester.widget<FilterChip>(
       find.widgetWithText(FilterChip, 'Piaskowy Wilk (3)'),
@@ -58,16 +58,19 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     await openSegment(tester, groupModes);
-    expect(find.text('Czyste przebiegi: 4'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
   });
 
   testWidgets('a long press on a tile opens its explanation', (tester) async {
     tester.usePhone();
     await openHub(tester, 'tile-info', tab: 'Ustawienia próby');
     await openSegment(tester, groupModes);
-    await tester.longPress(find.text('Powtarzaj do skutku'));
+    await tester.longPress(bySpoken('Słuchaj mnie (mikrofon)'));
     await tester.pumpAndSettle();
-    expect(find.text('aż do N czystych przebiegów z rzędu'), findsOneWidget);
+    expect(
+      find.text('kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('speed slider persists per script', (tester) async {

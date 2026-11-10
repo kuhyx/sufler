@@ -65,9 +65,17 @@ void expectTilesClearChips(WidgetTester tester, {required String reason}) {
         reason: '$why info icon too close to the top edge',
       );
     }
-    final title = tester.getRect(
-      find.descendant(of: tiles.at(i), matching: find.byType(Text)).first,
-    );
+    // Titles are icons now (textgate): the title is the topmost Text or
+    // Icon below the tile's fixed 24 px icon row (leading/info icons).
+    final title = find
+        .descendant(
+          of: tiles.at(i),
+          matching: find.byWidgetPredicate((w) => w is Text || w is Icon),
+        )
+        .evaluate()
+        .map((e) => tester.getRect(find.byWidget(e.widget).first))
+        .where((r) => r.top >= tile.top + AppSpacing.md + 24 - 0.5)
+        .reduce((a, b) => a.top <= b.top ? a : b);
     expect(
       titleTops.putIfAbsent(tile.top, () => title.top),
       title.top,
@@ -75,6 +83,14 @@ void expectTilesClearChips(WidgetTester tester, {required String reason}) {
     );
   }
 }
+
+/// A tile title [item], painted or (textgate) kept only as a spoken label.
+Finder _named(String item) => find.byWidgetPredicate(
+  (w) =>
+      (w is Text && (w.data ?? '').contains(item)) ||
+      (w is Semantics && (w.properties.label ?? '').contains(item)),
+  description: 'title "$item"',
+);
 
 void main() {
   for (final MapEntry(key: tab, value: segments) in _segments.entries) {
@@ -87,12 +103,13 @@ void main() {
         expectNoVerticalScroll(tester, screen: '$tab / $chip');
         expectTilesClearChips(tester, reason: '$tab / $chip');
         for (final item in items) {
-          expectHittable(find.textContaining(item), reason: '$chip: $item');
+          expectHittable(_named(item), reason: '$chip: $item');
         }
         expectHittable(
+          // Nav labels are spoken-only (never painted): check the icons.
           find.descendant(
             of: find.byType(NavigationBar),
-            matching: find.text(tab),
+            matching: find.byType(Icon),
           ),
           reason: 'nav bar',
         );

@@ -73,13 +73,15 @@ class LibraryGrid extends StatelessWidget {
                   'kwestii',
                 ),
                 const SizedBox(height: AppSpacing.md),
-                FilledButton.icon(
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Usuń'),
+                FilledButton(
                   onPressed: () {
                     Navigator.of(sheet).pop();
                     onDelete(s);
                   },
+                  child: const Icon(
+                    Icons.delete_outline,
+                    semanticLabel: 'Usuń',
+                  ),
                 ),
               ],
             ),

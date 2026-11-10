@@ -94,9 +94,9 @@ void main() {
     expect(find.text('Twoja kwestia'), findsOneWidget);
     expect(find.textContaining(_first), findsNothing);
     expect(find.byKey(const Key('pause')), findsNothing);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    expect(find.text('Jak poszło?'), findsOneWidget);
+    expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.text('$_first\nPięć sześć.\n$_last'), findsOneWidget);
     await tester.tap(find.text('Źle'));
     await tester.pump();
@@ -106,7 +106,7 @@ void main() {
     ], reason: 'cue replayed');
     await _speakDone(tester);
     expect(find.byKey(const Key('retry')), findsOneWidget);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
@@ -128,13 +128,13 @@ void main() {
     );
     await tester.tapVisible(find.text('Scena 1'));
     await _speakDone(tester);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     expect(find.text(_first), findsOneWidget);
     expect(find.textContaining(_last), findsNothing);
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     expect(find.text('Pięć sześć.'), findsOneWidget);
     await leaveRehearsal(tester);
@@ -146,21 +146,21 @@ void main() {
     final rig = await _hub(tester, 'runs-rec');
     rig.recorder.result = _take();
     await openSectionDetails(tester, 'Scena 1');
-    await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
+    await tester.tap(bySpoken('Nagraj czasy: Scena 1'));
     await _settle(tester);
-    expect(find.text('Kwestia 1/7'), findsOneWidget);
-    await tester.tap(find.text('Nagraj w całości (3 kwestie)'));
+    expect(bySpoken('Kwestia 1/7'), findsOneWidget);
+    await tester.tap(bySpoken('Nagraj w całości (3 kwestie)'));
     await _settle(tester);
     expect(rig.recorder.recording, isTrue);
     expect(find.text('$_first\nPięć sześć.\n$_last'), findsOneWidget);
-    await tester.tap(find.text('Skończyłem'));
+    await tester.tap(bySpoken('Skończyłem'));
     await _settle(tester);
     expect(find.text('Zapisano w całości: 3 kwestie'), findsOneWidget);
-    expect(find.text('Kwestia 4/7'), findsOneWidget);
+    expect(bySpoken('Kwestia 4/7'), findsOneWidget);
     expect(find.text('Teraz piosenka.'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('run123'));
     expect(prefs.recordings.keys, [2, 4, 5]);
-    await tester.tap(find.text('Stop'));
+    await tester.tap(bySpoken('Stop'));
     await _settle(tester);
   });
 
@@ -175,14 +175,14 @@ void main() {
     );
     rig.recorder.result = _take();
     await openSectionDetails(tester, 'Scena 1');
-    await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
+    await tester.tap(bySpoken('Nagraj czasy: Scena 1'));
     await _settle(tester);
-    await tester.tap(find.text('Nagraj w całości (3 kwestie)'));
+    await tester.tap(bySpoken('Nagraj w całości (3 kwestie)'));
     await _settle(tester);
-    await tester.tap(find.text('Skończyłem'));
+    await tester.tap(bySpoken('Skończyłem'));
     await _settle(tester);
     expect(find.text('1 z tych kwestii ma już nagranie.'), findsOneWidget);
-    await tester.tap(find.text('Zachowaj istniejące'));
+    await tester.tap(bySpoken('Zachowaj istniejące'));
     await _settle(tester);
     final prefs = await tester.io(() => rig.library.loadPrefs('run123'));
     expect(prefs.recordings.keys.toSet(), {2, 4, 5});
@@ -190,7 +190,7 @@ void main() {
       () => rig.library.loadRecording(prefs.recordings[4]!),
     );
     expect(kept, old);
-    await tester.tap(find.text('Stop'));
+    await tester.tap(bySpoken('Stop'));
     await _settle(tester);
   });
 
@@ -240,7 +240,7 @@ void main() {
         tester.widget<Text>(find.textContaining('Przebieg').first).data!;
     expect(header(), contains('kwestia 4/6'));
     expect(find.text('Twoja kwestia'), findsOneWidget);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();

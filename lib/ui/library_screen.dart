@@ -121,8 +121,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _delete(Script s) async {
     final ok = await confirmDestructive(
       context,
-      title: 'Usunąć „${s.title}”?',
-      message: 'Znikną też poprawki, czasy, nagrania i głosy tego skryptu.',
+      title: '',
+      message: '',
       confirmLabel: 'Usuń',
       cancelLabel: 'Anuluj',
     );
@@ -137,12 +137,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final wide = MediaQuery.sizeOf(context).width >= wideLayout;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sufler'),
         actions: [
           if (scripts != null && scripts.isNotEmpty)
             IconButton(
-              tooltip: 'Importuj',
-              icon: const Icon(Icons.add),
+              key: const Key('library-import'),
+              icon: const Icon(Icons.add, semanticLabel: 'Importuj'),
               onPressed: _busy ? null : _openImport,
             ),
         ],
@@ -187,10 +186,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (scripts == null)
         const Center(child: CircularProgressIndicator())
       else ...[
-        const EmptyState(
-          icon: Icons.theater_comedy_outlined,
-          title: 'Brak skryptów',
-          message: 'Zaimportuj sztukę z pliku albo z Google Docs.',
+        Icon(
+          key: const Key('library-empty'),
+          Icons.theater_comedy_outlined,
+          size: 64,
+          color: Theme.of(context).colorScheme.outline,
+          semanticLabel: 'Brak skryptów',
         ),
         ImportPanel(busy: _busy, onFile: _importFile, onLink: _importLink),
       ],

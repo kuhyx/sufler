@@ -104,11 +104,12 @@ class SectionsTab extends StatelessWidget {
       const SizedBox(height: AppSpacing.sm),
       Expanded(
         child: sections.isEmpty
-            ? const SingleChildScrollView(
-                child: EmptyState(
-                  icon: Icons.inbox_outlined,
-                  title: 'Nic tu nie ma',
-                  message: 'Ten skrypt nie ma takich fragmentów.',
+            ? SingleChildScrollView(
+                child: Icon(
+                  Icons.inbox_outlined,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.outline,
+                  semanticLabel: 'Nic tu nie ma',
                 ),
               )
             : FitGrid(

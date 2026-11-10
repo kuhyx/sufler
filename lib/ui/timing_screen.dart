@@ -80,7 +80,7 @@ class _TimingScreenState extends State<TimingScreen> {
       MaterialPageRoute<void>(
         builder: (_) => TimingSessionScreen(
           scriptId: widget.scriptId,
-          title: 'wszystkie',
+          title: widget.scriptId,
           lines: lines,
           runs: findRuns(_script!, _prefs.roles),
         ),
@@ -118,7 +118,9 @@ class _TimingScreenState extends State<TimingScreen> {
                 l,
           ];
     return Scaffold(
-      appBar: AppBar(title: const Text('Czasy i nagrania')),
+      appBar: AppBar(
+        title: const Icon(Icons.timelapse, semanticLabel: 'Czasy i nagrania'),
+      ),
       body: s == null
           ? const Center(child: CircularProgressIndicator())
           : Center(
@@ -139,8 +141,11 @@ class _TimingScreenState extends State<TimingScreen> {
                         ),
                         child: FilledButton.icon(
                           onPressed: () => _recordAll(lines),
-                          icon: const Icon(Icons.mic),
-                          label: const Text('Nagraj czasy'),
+                          icon: const Icon(
+                            Icons.mic,
+                            semanticLabel: 'Nagraj czasy',
+                          ),
+                          label: const SizedBox.shrink(),
                         ),
                       ),
                     for (final l in lines)

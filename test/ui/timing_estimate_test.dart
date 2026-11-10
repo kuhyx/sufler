@@ -44,7 +44,7 @@ void main() {
       tab: 'Narzędzia',
       seed: _seed(_three),
     );
-    await tester.tapVisible(find.text('Czasy i nagrania'));
+    await tester.tapVisible(bySpoken('Czasy i nagrania'));
     // 2: 11 syllables x 0.4 + 1 s; 4: its recording + 1 s; 10: 2 x 0.4 + 1.
     expect(find.text('Pauza 5,4 s · szacowane'), findsOneWidget);
     expect(find.text('Pauza 2,2 s · z nagrania'), findsOneWidget);
@@ -65,7 +65,7 @@ void main() {
       tab: 'Narzędzia',
       seed: _seed(const {1: 2.0, 4: 1.2}),
     );
-    await tester.tapVisible(find.text('Czasy i nagrania'));
+    await tester.tapVisible(bySpoken('Czasy i nagrania'));
     expect(find.textContaining('szacowane'), findsNothing);
     expect(find.textContaining('automatycznie'), findsNWidgets(2));
   });
@@ -83,18 +83,18 @@ void main() {
     await tester.tapVisible(find.text('Scena 1'));
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
-    expect(find.text('Pauza 5,4 s'), findsOneWidget);
-    expect(find.text('szacowane'), findsOneWidget);
-    await tester.tap(find.byTooltip('Dłuższa pauza'));
+    expect(find.text('5,4 s'), findsOneWidget);
+    expect(bySpoken('szacowane'), findsOneWidget);
+    await tester.tap(bySpoken('Dłuższa pauza'));
     await tester.pump();
-    expect(find.text('Pauza 5,9 s'), findsOneWidget);
-    expect(find.text('szacowane'), findsNothing);
+    expect(find.text('5,9 s'), findsOneWidget);
+    expect(bySpoken('szacowane'), findsNothing);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds[2], closeTo(5.9, 0.01));
     await leaveRehearsal(tester);
 
     await openTab(tester, 'Narzędzia');
-    await tester.tapVisible(find.text('Czasy i nagrania'));
+    await tester.tapVisible(bySpoken('Czasy i nagrania'));
     expect(find.text('Pauza 5,9 s · ręcznie'), findsOneWidget);
     expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);
   });
@@ -110,7 +110,7 @@ void main() {
       seed: _seed(const {1: 2.0, 5: 1.2}),
     );
     await openSectionDetails(tester, 'Scena 1');
-    await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
+    await tester.tap(bySpoken('Nagraj czasy: Scena 1'));
     await _settle(tester);
     await tester.tap(find.byKey(const Key('manual-walk')));
     await _settle(tester);
@@ -118,19 +118,19 @@ void main() {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 600)),
     );
-    await tester.tap(find.text('Skończyłem'));
+    await tester.tap(bySpoken('Skończyłem'));
     await _settle(tester);
-    expect(find.text('Kwestia 2/2'), findsOneWidget);
-    await tester.tap(find.text('Stop'));
+    expect(bySpoken('Kwestia 2/2'), findsOneWidget);
+    await tester.tap(bySpoken('Stop'));
     await _settle(tester);
-    await tester.tap(find.text('Zamknij'));
+    await tester.tap(bySpoken('Zamknij'));
     await tester.pumpAndSettle();
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds.keys, [2]);
     expect(prefs.recordings.keys, unorderedEquals([1, 5]));
 
     await openTab(tester, 'Narzędzia');
-    await tester.tapVisible(find.text('Czasy i nagrania'));
+    await tester.tapVisible(bySpoken('Czasy i nagrania'));
     // The tap (line 2) is a third sample; the median stays 0.4 s/syllable.
     expect(find.text('Pauza 2,2 s · szacowane'), findsOneWidget);
     expect(find.text('Pauza 1,8 s · szacowane'), findsOneWidget);

@@ -43,10 +43,13 @@ class LearnCard extends StatelessWidget {
     final first = _firstWithMine;
     final Widget action;
     if (prefs.roles.isEmpty) {
-      action = FilledButton.icon(
+      action = FilledButton(
+        key: const Key('learn_roles'),
         onPressed: onRoles,
-        icon: const Icon(Icons.person_outline),
-        label: const Text('Wybierz swoje role'),
+        child: const Icon(
+          Icons.person_outline,
+          semanticLabel: 'Wybierz swoje role',
+        ),
       );
     } else if (resume != null) {
       action = FilledButton.icon(
@@ -71,7 +74,12 @@ class LearnCard extends StatelessWidget {
         ),
       );
     } else {
-      action = const Text('Twoje role nie mają kwestii w scenach.');
+      action = Icon(
+        Icons.info_outline,
+        size: 64,
+        color: Theme.of(context).colorScheme.outline,
+        semanticLabel: 'Twoje role nie mają kwestii w scenach.',
+      );
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),

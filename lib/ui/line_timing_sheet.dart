@@ -137,7 +137,9 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
           key: const Key('seconds'),
           controller: _field,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Pauza (sekundy)'),
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.timer, semanticLabel: 'Pauza (sekundy)'),
+          ),
           onSubmitted: (_) => _apply(),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -145,10 +147,16 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            FilledButton(onPressed: _apply, child: const Text('Ustaw pauzę')),
+            FilledButton(
+              onPressed: _apply,
+              child: const Icon(Icons.timer, semanticLabel: 'Ustaw pauzę'),
+            ),
             OutlinedButton(
               onPressed: () => _setOverride(null),
-              child: const Text('Automatycznie'),
+              child: const Icon(
+                Icons.autorenew,
+                semanticLabel: 'Automatycznie',
+              ),
             ),
           ],
         ),
@@ -162,15 +170,19 @@ class _LineTimingSheetState extends State<LineTimingSheet> {
           Wrap(
             spacing: AppSpacing.sm,
             children: [
-              TextButton.icon(
+              IconButton(
                 onPressed: _play,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Odtwórz nagranie'),
+                icon: const Icon(
+                  Icons.play_arrow,
+                  semanticLabel: 'Odtwórz nagranie',
+                ),
               ),
-              TextButton.icon(
+              IconButton(
                 onPressed: _deleteRecording,
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Usuń nagranie'),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  semanticLabel: 'Usuń nagranie',
+                ),
               ),
             ],
           ),

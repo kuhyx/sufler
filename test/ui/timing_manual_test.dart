@@ -26,7 +26,7 @@ Future<void> _finish(WidgetTester t, [Finder? button]) async {
   await t.runAsync(
     () => Future<void>.delayed(const Duration(milliseconds: 600)),
   );
-  await t.tap(button ?? find.text('Skończyłem'));
+  await t.tap(button ?? bySpoken('Skończyłem'));
   await _settle(t);
 }
 
@@ -46,7 +46,7 @@ Future<TestRig> _walk(WidgetTester tester, String db) async {
     },
   );
   await openSectionDetails(tester, 'Scena 1');
-  await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
+  await tester.tap(bySpoken('Nagraj czasy: Scena 1'));
   await _settle(tester);
   return rig;
 }
@@ -56,25 +56,29 @@ void main() {
     tester,
   ) async {
     final rig = await _walk(tester, 'rec-manual');
-    expect(find.text('Kwestia 1/2'), findsOneWidget);
+    expect(bySpoken('Kwestia 1/2'), findsOneWidget);
     rig.capture.hear(null);
     await _settle(tester);
     expect(find.textContaining('Nie słyszę mikrofonu'), findsOneWidget);
     // Own text hidden: said from memory, timed by the tap.
     expect(find.text(_first), findsNothing);
-    final done = find.widgetWithText(FilledButton, 'Skończyłem');
+    final done = bySpoken('Skończyłem');
     expect(done, findsOneWidget);
-    expect(tester.getSize(done).height, greaterThanOrEqualTo(72));
+    final button = find.ancestor(
+      of: done,
+      matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+    );
+    expect(tester.getSize(button.first).height, greaterThanOrEqualTo(72));
     await _finish(tester, done);
-    expect(find.text('Kwestia 2/2'), findsOneWidget);
+    expect(bySpoken('Kwestia 2/2'), findsOneWidget);
     expect(find.text('Naprawdę.'), findsOneWidget);
     expect(rig.capture.listening, isTrue);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds.keys, [2]);
     expect(prefs.recordings.keys, [2]);
-    await tester.tap(find.text('Stop'));
+    await tester.tap(bySpoken('Stop'));
     await _settle(tester);
-    expect(find.text('Gotowe: zapisano 1 z 2'), findsOneWidget);
+    expect(bySpoken('Gotowe: zapisano 1 z 2'), findsOneWidget);
   });
 
   testWidgets('"Bez mikrofonu" times the whole walk by taps', (tester) async {
@@ -86,11 +90,11 @@ void main() {
     expect(find.textContaining('Nie słyszę mikrofonu'), findsNothing);
     expect(find.text(_first), findsNothing);
     await _finish(tester);
-    expect(find.text('Kwestia 2/2'), findsOneWidget);
+    expect(bySpoken('Kwestia 2/2'), findsOneWidget);
     expect(find.text('Naprawdę.'), findsNothing);
     expect(rig.capture.listening, isFalse);
     await _finish(tester);
-    expect(find.text('Gotowe: zapisano 2 z 2'), findsOneWidget);
+    expect(bySpoken('Gotowe: zapisano 2 z 2'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds.keys, unorderedEquals([2, 4]));
     expect(prefs.recordings.keys, [2]);

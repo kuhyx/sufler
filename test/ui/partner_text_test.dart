@@ -86,10 +86,10 @@ void main() {
     final rig = await openHub(tester, 'partner-nav', roles: _wolf);
     await _start(tester);
     expect(_header(tester), contains('kwestia 1/4'));
-    await tester.tap(find.byTooltip('Dalej'));
+    await tester.tap(bySpoken('Dalej'));
     await tester.pump();
     expect(_header(tester), contains('kwestia 2/4'));
-    await tester.tap(find.byTooltip('Wstecz'));
+    await tester.tap(bySpoken('Wstecz'));
     await tester.pump();
     expect(_header(tester), contains('kwestia 1/4'));
     expect(rig.speech.said, [_cue, _cue]);

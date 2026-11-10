@@ -74,14 +74,14 @@ void main() {
     final rig = await _rehearse(tester, 'lookup');
     await _longPressWord(tester, _cue, 'Wilku');
     expect(find.text('„Wilku”'), findsOneWidget);
-    await tester.tap(find.text('Słownik'));
+    await tester.tap(bySpoken('Słownik'));
     await tester.pump();
     expect(rig.links, ['https://sjp.pwn.pl/szukaj/Wilku.html']);
-    await tester.tap(find.text('Wikisłownik'));
+    await tester.tap(bySpoken('Wikisłownik'));
     await tester.pump();
     expect(rig.links.last, 'https://pl.wiktionary.org/wiki/Wilku');
 
-    await tester.tap(find.text('Zapytaj Claude'));
+    await tester.tap(bySpoken('Zapytaj Claude'));
     await tester.pumpAndSettle();
     expect(rig.assistant.explained, ['Wilku']);
     expect(find.text(rig.assistant.answer), findsOneWidget);
@@ -91,22 +91,22 @@ void main() {
 
     // Closed: the line carries a note mark; tapping it reads the note.
     await _close(tester);
-    expect(find.byTooltip('Notatki (1)'), findsOneWidget);
-    await tester.tap(find.byTooltip('Notatki (1)'));
+    expect(bySpoken('Notatki (1)'), findsOneWidget);
+    await tester.tap(bySpoken('Notatki (1)'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text(rig.assistant.answer), findsOneWidget);
-    await tester.tap(find.text('Zamknij'));
+    await tester.tap(bySpoken('Zamknij'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await _leave(tester);
 
     // The scene list counts it; the Anki export carries it.
     await openSectionDetails(tester, 'Scena 1');
-    expect(find.byTooltip('Notatki: Scena 1 (1)'), findsOneWidget);
+    expect(bySpoken('Notatki: Scena 1 (1)'), findsOneWidget);
     await closeSectionDetails(tester);
     await openTab(tester, 'Narzędzia');
-    await tester.tapVisible(find.text('Eksportuj talię Anki'));
+    await tester.tapVisible(bySpoken('Eksportuj talię Anki'));
     expect(rig.exportedNotes.last[1]!.single.text, rig.assistant.answer);
   });
 
@@ -116,9 +116,9 @@ void main() {
     tester.usePhone();
     final rig = await _rehearse(tester, 'lookup-sentence');
     await _longPressWord(tester, _cue, 'dobry');
-    await tester.tap(find.text('całe zdanie'));
+    await tester.tap(bySpoken('całe zdanie'));
     await tester.pump();
-    await tester.tap(find.text('Zapytaj Claude'));
+    await tester.tap(bySpoken('Zapytaj Claude'));
     await tester.pumpAndSettle();
     expect(rig.assistant.explained, [_cue]);
     await _close(tester);
@@ -131,16 +131,16 @@ void main() {
     final rig = await _rehearse(tester, 'lookup-offline');
     rig.assistant.online = false;
     await _longPressWord(tester, _cue, 'Wilku');
-    await tester.tap(find.text('Zapytaj Claude'));
+    await tester.tap(bySpoken('Zapytaj Claude'));
     await tester.pumpAndSettle();
     expect(find.text(_offline), findsOneWidget);
     await _close(tester);
-    expect(find.byTooltip('Notatki (1)'), findsNothing);
+    expect(bySpoken('Notatki (1)'), findsNothing);
 
     rig.assistant.setOnline(on: true);
     await _settle(tester);
     expect(rig.assistant.explained, ['Wilku', 'Wilku']);
-    expect(find.byTooltip('Notatki (1)'), findsOneWidget);
+    expect(bySpoken('Notatki (1)'), findsOneWidget);
     await _leave(tester);
   });
 
@@ -155,7 +155,7 @@ void main() {
       ),
     );
     await openSectionDetails(tester, 'Scena 1');
-    expect(find.byTooltip('Notatki: Scena 1 (1)'), findsOneWidget);
+    expect(bySpoken('Notatki: Scena 1 (1)'), findsOneWidget);
     await closeSectionDetails(tester);
     await tester.io(() => rig.library.replaceParse(rig.script, newerParse()));
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));

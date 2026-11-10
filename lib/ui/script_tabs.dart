@@ -91,11 +91,11 @@ class ScriptTabs extends StatefulWidget {
   State<ScriptTabs> createState() => _ScriptTabsState();
 }
 
-const List<({String label, IconData icon})> _tabs = [
-  (label: 'Sceny', icon: Icons.theaters),
-  (label: 'Piosenki', icon: Icons.music_note),
-  (label: 'Ustawienia próby', icon: Icons.tune),
-  (label: 'Narzędzia', icon: Icons.build_outlined),
+const List<({String semanticLabel, IconData icon})> _tabs = [
+  (semanticLabel: 'Sceny', icon: Icons.theaters),
+  (semanticLabel: 'Piosenki', icon: Icons.music_note),
+  (semanticLabel: 'Ustawienia próby', icon: Icons.tune),
+  (semanticLabel: 'Narzędzia', icon: Icons.build_outlined),
 ];
 
 class _ScriptTabsState extends State<ScriptTabs> {
@@ -139,10 +139,9 @@ class _ScriptTabsState extends State<ScriptTabs> {
     final appBar = AppBar(
       title: Text(widget.script.title),
       actions: [
-        TextButton.icon(
+        IconButton(
           onPressed: widget.onRoles,
-          icon: const Icon(Icons.person_outline),
-          label: const Text('Moje role'),
+          icon: const Icon(Icons.person_outline, semanticLabel: 'Moje role'),
         ),
       ],
     );
@@ -151,12 +150,19 @@ class _ScriptTabsState extends State<ScriptTabs> {
       return Scaffold(
         appBar: appBar,
         body: _page(_tab),
+        // The destination label is its spoken name only: never painted
+        // (alwaysHide) and no long-press tooltip.
         bottomNavigationBar: NavigationBar(
           selectedIndex: _tab,
           onDestinationSelected: go,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
           destinations: [
             for (final t in _tabs)
-              NavigationDestination(icon: Icon(t.icon), label: t.label),
+              NavigationDestination(
+                icon: Icon(t.icon),
+                label: t.semanticLabel,
+                tooltip: '',
+              ),
           ],
         ),
       );
@@ -168,12 +174,13 @@ class _ScriptTabsState extends State<ScriptTabs> {
           NavigationRail(
             selectedIndex: _tab,
             onDestinationSelected: go,
-            labelType: NavigationRailLabelType.all,
+            labelType: NavigationRailLabelType.none,
             destinations: [
               for (final t in _tabs)
                 NavigationRailDestination(
                   icon: Icon(t.icon),
-                  label: Text(t.label),
+                  // labelType none: the rail keeps this for semantics only.
+                  label: Text(t.semanticLabel),
                 ),
             ],
           ),

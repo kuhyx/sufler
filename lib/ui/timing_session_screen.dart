@@ -91,7 +91,12 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
   Widget build(BuildContext context) {
     final session = _session!;
     return Scaffold(
-      appBar: AppBar(title: Text('Nagraj czasy: ${widget.title}')),
+      appBar: AppBar(
+        title: Icon(
+          Icons.timelapse,
+          semanticLabel: 'Nagraj czasy: ${widget.title}',
+        ),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: kProseMaxWidth),
@@ -122,23 +127,34 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
               '${seconds(last.durationSeconds)} (+1 s pauzy)';
     if (s.state == TakeState.done) {
       return [
-        Text('Gotowe: zapisano ${s.saved} z $total', style: theme.titleLarge),
+        Icon(
+          Icons.check_circle_outline,
+          size: 32,
+          semanticLabel: 'Gotowe: zapisano ${s.saved} z $total',
+        ),
         if (s.problem != null) Text(s.problem!),
         const SizedBox(height: AppSpacing.md),
         FilledButton(
+          key: const Key('close-btn'),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Zamknij'),
+          child: const Icon(Icons.close, semanticLabel: 'Zamknij'),
         ),
       ];
     }
     final line = s.current!;
     return [
-      Text('Kwestia ${s.position + 1}/$total', style: theme.labelLarge),
+      Icon(
+        Icons.flag_outlined,
+        semanticLabel: 'Kwestia ${s.position + 1}/$total',
+      ),
       LinearProgressIndicator(value: s.position / total),
       SwitchListTile(
         key: const Key('manual-walk'),
         contentPadding: EdgeInsets.zero,
-        title: const Text('Bez mikrofonu: stuknij po każdej kwestii'),
+        title: const Icon(
+          Icons.mic_off,
+          semanticLabel: 'Bez mikrofonu: stuknij po każdej kwestii',
+        ),
         value: s.manualAll,
         onChanged: (on) => s.setManual(on: on),
       ),
@@ -148,7 +164,10 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
       else if (s.state == TakeState.manual)
         ..._manual(theme, s)
       else ...[
-        Text('Przeczytaj na głos:', style: theme.bodySmall),
+        const Icon(
+          Icons.record_voice_over,
+          semanticLabel: 'Przeczytaj na głos:',
+        ),
         Text(line.text, style: theme.headlineSmall),
         const SizedBox(height: AppSpacing.md),
         ValueListenableBuilder<double>(
@@ -162,7 +181,12 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         const SizedBox(height: AppSpacing.sm),
       ],
       if (s.state == TakeState.listening) ...[
-        const Text('Słucham… gdy skończysz mówić, przejdę dalej.'),
+        Icon(
+          Icons.mic,
+          size: 40,
+          color: Theme.of(context).colorScheme.primary,
+          semanticLabel: 'Słucham… gdy skończysz mówić, przejdę dalej.',
+        ),
         ?runOffer(s),
       ],
       if (s.runNote != null) Text(s.runNote!, style: theme.bodySmall),
@@ -171,8 +195,8 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
       const SizedBox(height: AppSpacing.lg),
       FilledButton.tonalIcon(
         onPressed: () => unawaited(s.stop()),
-        icon: const Icon(Icons.stop),
-        label: const Text('Stop'),
+        icon: const Icon(Icons.stop, semanticLabel: 'Stop'),
+        label: const SizedBox.shrink(),
       ),
     ];
   }
@@ -194,7 +218,7 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         // textStyle, not Text.style: keeps the button's foreground colour.
         style: FilledButton.styleFrom(textStyle: theme.headlineSmall),
         onPressed: s.finished,
-        child: const Text('Skończyłem'),
+        child: const Icon(Icons.check, semanticLabel: 'Skończyłem'),
       ),
     ),
     const SizedBox(height: AppSpacing.sm),
@@ -217,10 +241,15 @@ class _TimingSessionScreenState extends State<TimingSessionScreen> {
         spacing: AppSpacing.sm,
         children: [
           FilledButton(
+            key: const Key('accept-skip'),
             onPressed: s.accept,
-            child: const Text('Tak, zapisz tam'),
+            child: const Icon(Icons.check, semanticLabel: 'Tak, zapisz tam'),
           ),
-          OutlinedButton(onPressed: s.redo, child: const Text('Powtórz tę')),
+          OutlinedButton(
+            key: const Key('redo-skip'),
+            onPressed: s.redo,
+            child: const Icon(Icons.repeat, semanticLabel: 'Powtórz tę'),
+          ),
         ],
       ),
     ];

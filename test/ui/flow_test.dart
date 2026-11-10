@@ -6,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/app.dart';
+import 'package:sufler/ui/roles_screen.dart';
 
 import 'fakes.dart';
+import 'hub.dart';
 
 void main() {
   testWidgets('first run: import, roles screen once, then learn', (
@@ -17,16 +19,16 @@ void main() {
     rig.files.next = (name: 'sztuka.pdf', bytes: Uint8List(1));
     await tester.pumpWidget(SuflerApp(services: rig.services));
     await tester.pumpAndSettle();
-    expect(find.text('Brak skryptów'), findsOneWidget);
+    expect(bySpoken('Brak skryptów'), findsOneWidget);
 
-    await tester.tap(find.text('Importuj plik'));
+    await tester.tap(bySpoken('Importuj plik'));
     await tester.pumpAndSettle();
     expect(rig.imported, ['sztuka.pdf']);
     // No roles yet: the roles screen opens by itself.
-    expect(find.widgetWithText(AppBar, 'Moje role'), findsOneWidget);
+    expect(find.byType(RolesScreen), findsOneWidget);
     await tester.tap(find.text('Piaskowy Wilk (3)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pumpAndSettle();
     expect(find.text('Krasnale testowe'), findsOneWidget);
 
@@ -51,9 +53,9 @@ void main() {
     expect(after.data, isNot(before.data));
 
     // Said it: the text is revealed for grading.
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    expect(find.text('Jak poszło?'), findsOneWidget);
+    expect(bySpoken('Jak poszło?'), findsOneWidget);
     expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsOneWidget);
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
@@ -76,7 +78,7 @@ void main() {
     expect(find.text('No dobrze.'), findsNothing);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
-    expect(find.text('Koniec'), findsOneWidget);
+    expect(bySpoken('Koniec'), findsOneWidget);
     expect(find.textContaining('1/2'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.knowledge, {
@@ -96,7 +98,7 @@ void main() {
       find.byKey(const Key('gdoc-url')),
       'https://docs.google.com/document/d/x/edit',
     );
-    await tester.tap(find.text('Importuj link'));
+    await tester.tap(bySpoken('Importuj link'));
     await tester.pumpAndSettle();
     expect(rig.imported, ['https://docs.google.com/document/d/x/edit']);
     await tester.pageBack(); // roles screen
@@ -106,11 +108,11 @@ void main() {
     expect(find.text('Krasnale testowe'), findsOneWidget);
     await tester.longPress(find.text('Krasnale testowe'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Usuń'));
+    await tester.tap(bySpoken('Usuń'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Usuń').last);
     await tester.pumpAndSettle();
-    expect(find.text('Brak skryptów'), findsOneWidget);
+    expect(bySpoken('Brak skryptów'), findsOneWidget);
     expect(await tester.io(() => rig.library.scripts()), isEmpty);
   });
 
@@ -143,14 +145,14 @@ void main() {
     await tester.pumpWidget(SuflerApp(services: rig.services));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Inna sztuka'), findsOneWidget);
-    expect(find.text('Importuj plik'), findsNothing);
+    expect(bySpoken('Importuj plik'), findsNothing);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Krasnale testowe'), findsOneWidget);
-    await tester.tap(find.byTooltip('Importuj'));
+    await tester.tap(bySpoken('Importuj'));
     await tester.pumpAndSettle();
-    expect(find.text('Importuj plik'), findsOneWidget);
+    expect(bySpoken('Importuj plik'), findsOneWidget);
 
     // Opening the other script makes it the one to start with.
     await tester.tapAt(const Offset(10, 10)); // close the sheet
@@ -172,7 +174,7 @@ void main() {
     );
     await tester.pumpWidget(SuflerApp(services: rig.services));
     await tester.pumpAndSettle();
-    expect(find.text('Wybierz swoje role'), findsOneWidget);
+    expect(bySpoken('Wybierz swoje role'), findsOneWidget);
     await tester.tap(find.text('Scena 1'));
     await tester.pumpAndSettle();
     expect(find.text('Wybierz co najmniej jedną rolę'), findsOneWidget);

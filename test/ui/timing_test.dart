@@ -17,7 +17,7 @@ Future<TestRig> _openTimings(WidgetTester tester, String db) async {
     roles: {const Role.character(wolf)},
     tab: 'Narzędzia',
   );
-  await tester.tapVisible(find.text('Czasy i nagrania'));
+  await tester.tapVisible(bySpoken('Czasy i nagrania'));
   return rig;
 }
 
@@ -31,7 +31,7 @@ void main() {
     await tester.tap(find.text('Naprawdę.'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('seconds')), '9,5');
-    await tester.tap(find.text('Ustaw pauzę'));
+    await tester.tap(bySpoken('Ustaw pauzę'));
     await tester.pumpAndSettle();
     expect(find.text('Pauza 9,5 s · ręcznie'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
@@ -40,10 +40,10 @@ void main() {
     await tester.tap(find.text('Naprawdę.'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('seconds')), 'abc');
-    await tester.tap(find.text('Ustaw pauzę'));
+    await tester.tap(bySpoken('Ustaw pauzę'));
     await tester.pumpAndSettle();
     expect(find.text('Podaj liczbę sekund większą od zera'), findsOneWidget);
-    await tester.tap(find.text('Automatycznie'));
+    await tester.tap(bySpoken('Automatycznie'));
     await tester.pumpAndSettle();
     expect(find.textContaining('automatycznie'), findsNWidgets(3));
   });
@@ -66,10 +66,10 @@ void main() {
 
     await tester.tap(find.text('Naprawdę.'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Odtwórz nagranie'));
+    await tester.tap(bySpoken('Odtwórz nagranie'));
     await tester.pumpAndSettle();
     expect(rig.clips.played, ['audio/wav']);
-    await tester.tap(find.text('Usuń nagranie'));
+    await tester.tap(bySpoken('Usuń nagranie'));
     await tester.pumpAndSettle();
     expect(find.textContaining('automatycznie'), findsNWidgets(3));
   });

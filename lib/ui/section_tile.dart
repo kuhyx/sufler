@@ -44,8 +44,8 @@ class SectionFacts {
   /// Total number of notes.
   int get noteCount => notes.values.fold(0, (n, list) => n + list.length);
 
-  /// "umiem k/n".
-  String get progress => 'umiem $known/$mine';
+  /// "k/n" lines known (textgate: shown beside a check icon, no word).
+  String get progress => '$known/$mine';
 }
 
 /// One numbered square of the grid: number, title (with the pure badge) and,
@@ -78,7 +78,7 @@ class SectionTile extends StatelessWidget {
   Widget _title(BuildContext context) {
     final style = Theme.of(context).textTheme.bodyMedium!;
     final lineHeight = (TextPainter(
-      text: TextSpan(text: 'Ag', style: style),
+      text: TextSpan(text: '0g', style: style),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
     )..layout()).height;
@@ -168,29 +168,50 @@ Future<void> showSectionDetails(
               style: theme.titleLarge,
               child: SectionTitle(section: s, pure: facts.pure),
             ),
-            Text('kwestie ${s.start}–${s.end}'),
-            if (facts.singers != null) Text('śpiewa: ${facts.singers}'),
-            if (facts.mine > 0) Text(facts.progress),
+            Text('${s.start}–${s.end}'),
+            if (facts.singers != null)
+              Row(
+                key: const Key('section-singers'),
+                children: [
+                  const Icon(Icons.mic_external_on, semanticLabel: 'śpiewa'),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(child: Text(facts.singers!)),
+                ],
+              ),
+            if (facts.mine > 0)
+              Row(
+                key: const Key('section-progress'),
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    semanticLabel: 'umiem',
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(facts.progress),
+                ],
+              ),
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 if (facts.noteCount > 0)
-                  NotesButton(
-                    count: facts.noteCount,
-                    tooltip: 'Notatki: ${s.title} (${facts.noteCount})',
-                    onPressed: () =>
-                        openSectionNotes(sheet, s.title, facts.notes),
+                  Semantics(
+                    label: semanticSectionNotes(s.title, facts.noteCount),
+                    child: NotesButton(
+                      count: facts.noteCount,
+                      tooltip: '',
+                      onPressed: () =>
+                          openSectionNotes(sheet, s.title, facts.notes),
+                    ),
                   ),
                 if (facts.mine > 0)
-                  Tooltip(
-                    message: 'Nagraj czasy: ${s.title}',
-                    child: FilledButton.tonalIcon(
-                      onPressed: () {
-                        Navigator.of(sheet).pop();
-                        onRecord();
-                      },
-                      icon: const Icon(Icons.mic_none),
-                      label: const Text('Nagraj czasy'),
+                  FilledButton.tonal(
+                    onPressed: () {
+                      Navigator.of(sheet).pop();
+                      onRecord();
+                    },
+                    child: Icon(
+                      Icons.mic_none,
+                      semanticLabel: 'Nagraj czasy: ${s.title}',
                     ),
                   ),
               ],
@@ -201,3 +222,7 @@ Future<void> showSectionDetails(
     );
   },
 );
+
+/// Spoken-only label for a section's notes button (textgate: never painted).
+String semanticSectionNotes(String title, int count) =>
+    'Notatki: $title ($count)';

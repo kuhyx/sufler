@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
@@ -7,6 +8,10 @@ import '../rehearsal/fixture.dart';
 import 'fakes.dart';
 import 'fit.dart';
 import 'hub.dart';
+
+/// The range chip whose icon speaks [label] (chip labels take no hits).
+Finder _chip(String label) =>
+    find.ancestor(of: bySpoken(label), matching: find.byType(ActionChip));
 
 void main() {
   for (final (tab, first) in [
@@ -26,15 +31,29 @@ void main() {
       expectHittable(find.text(first), reason: 'tile');
       expectHittable(find.text(tab), reason: 'nav bar');
       if (tab == 'Sceny') {
-        expectHittable(find.text('Własny zakres…'), reason: 'custom range');
-        expectHittable(find.text('Narastająco…'), reason: 'cumulative');
+        expectHittable(_chip('Własny zakres…'), reason: 'custom range');
+        expectHittable(_chip('Narastająco…'), reason: 'cumulative');
       }
 
       await tester.longPress(find.text(first));
       await tester.pumpAndSettle();
-      expect(find.textContaining('umiem'), findsWidgets, reason: 'progress');
-      expect(find.textContaining('kwestie'), findsWidgets, reason: 'range');
-      expectHittable(find.textContaining('Nagraj czasy'), reason: 'record');
+      expect(
+        find.byKey(const Key('section-progress')),
+        findsWidgets,
+        reason: 'progress',
+      );
+      expect(find.textContaining('–'), findsWidgets, reason: 'range');
+      expectHittable(
+        find.ancestor(
+          of: find.byWidgetPredicate(
+            (w) =>
+                w is Semantics &&
+                (w.properties.label ?? '').startsWith('Nagraj czasy'),
+          ),
+          matching: find.byType(FilledButton),
+        ),
+        reason: 'record',
+      );
     });
 
     testWidgets('$tab: last tile reachable by paging', (tester) async {

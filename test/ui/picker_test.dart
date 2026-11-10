@@ -10,7 +10,7 @@ void main() {
   testWidgets('custom range: tap first and last line', (tester) async {
     tester.usePhone();
     await openHub(tester, 'custom', roles: {const Role.character(wolf)});
-    await tester.tapVisible(find.text('Własny zakres…'));
+    await tester.tapVisible(bySpoken('Własny zakres…'));
     expect(find.text('Stuknij pierwszą kwestię.'), findsOneWidget);
     await tester.tap(find.text('No dobrze.'));
     await tester.pump();
@@ -30,7 +30,7 @@ void main() {
       'cumulative',
       roles: {const Role.character(wolf)},
     );
-    await tester.tapVisible(find.text('Narastająco…'));
+    await tester.tapVisible(bySpoken('Narastająco…'));
     await tester.tap(find.byKey(const Key('cumulative-from')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Od: Scena 2').last);

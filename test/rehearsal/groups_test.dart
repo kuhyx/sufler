@@ -14,7 +14,8 @@ void main() {
       'Wszyscy',
       'Śnieżynki',
       'Ala, Bolek, Cela',
-      'Chór (kwestie bez przypisania)',
+      // The chorus carries no word label (textgate); the UI draws an icon.
+      '',
     ]);
     expect(byLabel['Wszyscy']!.role, const Role.character('wszyscy'));
     expect(byLabel['Wszyscy']!.count, 1);
@@ -24,7 +25,7 @@ void main() {
     final trio = byLabel['Ala, Bolek, Cela']!;
     expect(trio.role, Role.group(['cela', 'ala', 'bolek']));
     expect(trio.count, 4);
-    expect(byLabel['Chór (kwestie bez przypisania)']!.count, 1);
+    expect(byLabel['']!.count, 1);
     expect(isEnsemble(s, s.characters.first), isFalse);
   });
 
@@ -54,7 +55,7 @@ void main() {
     expect(groupOptions(fixtureScript()), [
       (
         role: Role.group(const []),
-        label: 'Chór (kwestie bez przypisania)',
+        label: '',
         count: 2,
         members: const <String>{},
       ),

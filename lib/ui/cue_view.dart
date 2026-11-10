@@ -150,8 +150,7 @@ class CueView extends StatelessWidget {
   }
 
   Widget _playButton(Cue cue) => IconButton(
-    tooltip: 'Odtwórz moje nagranie',
-    icon: const Icon(Icons.hearing),
+    icon: const Icon(Icons.hearing, semanticLabel: 'Odtwórz moje nagranie'),
     onPressed: () => onPlayRecording(cue.line.index),
   );
 
@@ -228,8 +227,8 @@ class CueView extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         FilledButton.icon(
           onPressed: controller.done,
-          icon: const Icon(Icons.check),
-          label: const Text('Gotowe'),
+          icon: const Icon(Icons.check, semanticLabel: 'Gotowe'),
+          label: const SizedBox.shrink(),
         ),
         Text(
           'albo spacja',

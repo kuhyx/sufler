@@ -88,11 +88,10 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
     final s = _script;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Popraw tekst'),
+        title: const Icon(Icons.edit_note, semanticLabel: 'Popraw tekst'),
         actions: [
           IconButton(
-            tooltip: 'Scal postacie',
-            icon: const Icon(Icons.merge_type),
+            icon: const Icon(Icons.merge_type, semanticLabel: 'Scal postacie'),
             onPressed: s == null || s.characters.length < 2 ? null : _merge,
           ),
         ],

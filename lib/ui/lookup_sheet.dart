@@ -60,7 +60,13 @@ class _LookupSheetState extends State<LookupSheet> {
   Widget _answer(BuildContext context, Ask a) {
     final style = Theme.of(context).textTheme.bodyMedium;
     if (a.answer case final text?) return Text(text, style: style);
-    if (a.error case final why?) return Text('Nie udało się: $why');
+    if (a.error case final why?) {
+      return Icon(
+        Icons.error_outline,
+        semanticLabel: 'Nie udało się: $why',
+        size: 28,
+      );
+    }
     if (a.offline) {
       return const Row(
         children: [
@@ -90,34 +96,49 @@ class _LookupSheetState extends State<LookupSheet> {
                 spacing: AppSpacing.sm,
                 children: [
                   ChoiceChip(
-                    label: const Text('słowo'),
+                    key: const Key('lookup-word'),
+                    label: const Icon(
+                      Icons.text_fields,
+                      semanticLabel: 'słowo',
+                    ),
                     selected: !_sentence,
                     onSelected: (_) => setState(() => _sentence = false),
                   ),
                   ChoiceChip(
-                    label: const Text('całe zdanie'),
+                    key: const Key('lookup-sentence'),
+                    label: const Icon(
+                      Icons.format_align_justify,
+                      semanticLabel: 'całe zdanie',
+                    ),
                     selected: _sentence,
                     onSelected: (_) => setState(() => _sentence = true),
                   ),
                 ],
               ),
             ListTile(
+              key: const Key('lookup-sjp'),
               leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('Słownik'),
-              subtitle: const Text('sjp.pwn.pl'),
+              title: const Icon(
+                Icons.menu_book_outlined,
+                semanticLabel: 'Słownik',
+              ),
               onTap: () => unawaited(widget.openLink(sjpLink(_words))),
             ),
             ListTile(
+              key: const Key('lookup-wikislownik'),
               leading: const Icon(Icons.public),
-              title: const Text('Wikisłownik'),
-              subtitle: const Text('pl.wiktionary.org'),
+              title: const Icon(Icons.public, semanticLabel: 'Wikisłownik'),
               onTap: () => unawaited(widget.openLink(wiktionaryLink(_words))),
             ),
             if (ask == null)
               FilledButton.icon(
+                key: const Key('lookup-claude'),
                 onPressed: _send,
-                icon: const Icon(Icons.lightbulb_outline),
-                label: const Text('Zapytaj Claude'),
+                icon: const Icon(
+                  Icons.lightbulb_outline,
+                  semanticLabel: 'Zapytaj Claude',
+                ),
+                label: const SizedBox.shrink(),
               )
             else
               _answer(context, ask),

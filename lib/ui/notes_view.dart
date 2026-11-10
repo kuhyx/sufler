@@ -40,9 +40,9 @@ Future<void> showNotes(
         ),
       ),
       actions: [
-        TextButton(
+        IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Zamknij'),
+          icon: const Icon(Icons.close, semanticLabel: 'Zamknij'),
         ),
       ],
     );

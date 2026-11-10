@@ -44,15 +44,15 @@ void main() {
     expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsNothing);
 
     // Pass 1: one right, one wrong -> not clean, loop again.
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
-    expect(find.text('Jak poszło?'), findsOneWidget);
-    await tester.tap(find.byTooltip('Odtwórz moje nagranie'));
+    expect(bySpoken('Jak poszło?'), findsOneWidget);
+    await tester.tap(bySpoken('Odtwórz moje nagranie'));
     await tester.pumpAndSettle(); // no countdown runs while grading
     expect(rig.clips.played, ['audio/wav']);
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Źle'));
     await tester.pump();
@@ -60,7 +60,7 @@ void main() {
     // does not lift the score.
     expect(find.text('(twoja kwestia)'), findsOneWidget);
     await _speakDone(tester);
-    await tester.tap(find.text('Gotowe'));
+    await tester.tap(bySpoken('Gotowe'));
     await tester.pump();
     await tester.tap(find.text('Dobrze'));
     await tester.pump();
@@ -77,27 +77,27 @@ void main() {
     expect(find.text('Twoja kwestia'), findsOneWidget);
 
     // Back to the partner line, then skip it.
-    await tester.tap(find.byTooltip('Wstecz'));
+    await tester.tap(bySpoken('Wstecz'));
     await tester.pump();
     expect(find.byKey(const Key('partner-speaking')), findsOneWidget);
     expect(find.text('Dzień dobry, Wilku!'), findsNothing);
-    await tester.tap(find.byTooltip('Dalej'));
+    await tester.tap(bySpoken('Dalej'));
     await tester.pump();
 
     // Pass 2 clean -> done.
     for (var i = 0; i < 2; i++) {
-      await tester.tap(find.text('Gotowe'));
+      await tester.tap(bySpoken('Gotowe'));
       await tester.pump();
       await tester.tap(find.text('Dobrze'));
       await tester.pump();
     }
     await _speakDone(tester);
-    expect(find.text('Koniec'), findsOneWidget);
-    expect(find.textContaining('Umiesz to!'), findsOneWidget);
-    expect(find.text('Przebieg 1: 1/2'), findsOneWidget);
-    expect(find.text('Przebieg 2: 2/2'), findsOneWidget);
+    expect(bySpoken('Koniec'), findsOneWidget);
+    expect(find.byIcon(Icons.emoji_events), findsOneWidget);
+    expect(bySpoken('Przebieg 1: 1/2'), findsOneWidget);
+    expect(bySpoken('Przebieg 2: 2/2'), findsOneWidget);
 
-    await tester.tap(find.text('Jeszcze raz'));
+    await tester.tap(bySpoken('Jeszcze raz'));
     await tester.pump();
     expect(_header(tester).data, startsWith('Przebieg 1'));
     await leaveRehearsal(tester);

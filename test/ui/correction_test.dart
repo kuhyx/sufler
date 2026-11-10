@@ -21,14 +21,14 @@ Future<TestRig> _openCorrection(WidgetTester tester, String db) async {
   await tester.pumpWidget(SuflerApp(services: rig.services));
   await tester.pumpAndSettle();
   await openTab(tester, 'Narzędzia');
-  await tester.tapVisible(find.text('Popraw tekst'));
+  await tester.tapVisible(bySpoken('Popraw tekst'));
   return rig;
 }
 
 void main() {
   testWidgets('merge character A into B persists', (tester) async {
     final rig = await _openCorrection(tester, 'merge');
-    await tester.tap(find.byTooltip('Scal postacie'));
+    await tester.tap(bySpoken('Scal postacie'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('merge-from')));
     await tester.pumpAndSettle();
@@ -38,7 +38,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Piaskowy Wilk').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Scal'));
+    await tester.tap(bySpoken('Scal'));
     await tester.pumpAndSettle();
 
     final saved = (await tester.io(
@@ -53,7 +53,7 @@ void main() {
     // "Moje role" shows the merged cast after returning.
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Moje role'));
+    await tester.tap(bySpoken('Moje role'));
     await tester.pumpAndSettle();
     expect(find.text('Piaskowy Wilk (6)'), findsOneWidget);
     expect(find.textContaining('Błystek ('), findsNothing);
@@ -69,7 +69,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilterChip, 'Piaskowy Wilk'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Zapisz'));
+    await tester.tap(bySpoken('Zapisz'));
     await tester.pumpAndSettle();
 
     final saved = (await tester.io(

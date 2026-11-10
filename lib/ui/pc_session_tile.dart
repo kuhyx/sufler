@@ -67,12 +67,12 @@ class _PcSessionTileState extends State<PcSessionTile> {
         const SectionHeader('PC (Claude i głosy)'),
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Połącz z PC'),
+          leading: const Icon(Icons.computer, semanticLabel: 'Połącz z PC'),
           subtitle: Text(subtitle),
           trailing: signedIn == false
               ? FilledButton(
                   onPressed: _busy ? null : _signIn,
-                  child: const Text('Połącz'),
+                  child: const Icon(Icons.link, semanticLabel: 'Połącz'),
                 )
               : null,
         ),

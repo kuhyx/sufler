@@ -75,7 +75,7 @@ class _RolesScreenState extends State<RolesScreen> {
   Widget build(BuildContext context) {
     final s = _script;
     return Scaffold(
-      appBar: AppBar(title: const Text('Moje role')),
+      appBar: AppBar(),
       body: s == null
           ? const Center(child: CircularProgressIndicator())
           : Center(
@@ -123,7 +123,7 @@ class _RolesScreenState extends State<RolesScreen> {
       const SizedBox(height: AppSpacing.lg),
       FilledButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Gotowe'),
+        child: const Icon(Icons.check, semanticLabel: 'Gotowe'),
       ),
     ];
   }
@@ -136,7 +136,18 @@ class _RolesScreenState extends State<RolesScreen> {
     ];
     return CheckboxListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text('${g.label} (${g.count})'),
+      // The chorus (unattributed lines) has no word label: a groups icon.
+      title: g.label.isEmpty
+          ? Row(
+              children: [
+                const Icon(
+                  Icons.groups,
+                  semanticLabel: 'Chór (kwestie bez przypisania)',
+                ),
+                Text(' (${g.count})'),
+              ],
+            )
+          : Text('${g.label} (${g.count})'),
       subtitle: Text(notes.join(' · ')),
       value: _roles.contains(g.role),
       onChanged: (on) => _toggle(g.role, on: on ?? false),

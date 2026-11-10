@@ -62,7 +62,7 @@ class GradeView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Jak poszło?', style: theme.labelLarge),
+        const Icon(Icons.help_outline, semanticLabel: 'Jak poszło?'),
         const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
@@ -76,7 +76,17 @@ class GradeView extends StatelessWidget {
         ),
         if (heard != null) ...[
           const SizedBox(height: AppSpacing.sm),
-          Text('Usłyszałem: „$heard”', key: const Key('heard')),
+          Row(
+            key: const Key('heard'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.hearing),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(
+                child: Text(heard!, semanticsLabel: 'Usłyszałem: $heard'),
+              ),
+            ],
+          ),
         ],
         if (suggestion != null)
           Text(

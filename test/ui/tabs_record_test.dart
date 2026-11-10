@@ -34,12 +34,18 @@ void main() {
     await openTab(tester, 'Piosenki');
     expect(find.text('Scena 2'), findsNothing);
     await openSectionDetails(tester, 'Piosenka');
-    expect(find.textContaining('śpiewa: Chór, Błystek'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('section-singers')),
+        matching: find.text('Chór, Błystek'),
+      ),
+      findsOneWidget,
+    );
     await closeSectionDetails(tester);
     await openTab(tester, 'Ustawienia próby');
     expect(find.text(groupTempoText), findsOneWidget);
     await openTab(tester, 'Narzędzia');
-    expect(find.text('Eksportuj talię Anki'), findsOneWidget);
+    expect(bySpoken('Eksportuj talię Anki'), findsOneWidget);
   });
 
   testWidgets('desktop: a side rail instead', (tester) async {
@@ -57,9 +63,9 @@ void main() {
     tester.usePhone();
     final rig = await openHub(tester, 'rec-walk', roles: _wolf);
     await openSectionDetails(tester, 'Scena 1');
-    await tester.tap(find.byTooltip('Nagraj czasy: Scena 1'));
+    await tester.tap(bySpoken('Nagraj czasy: Scena 1'));
     await _settle(tester);
-    expect(find.text('Kwestia 1/2'), findsOneWidget);
+    expect(bySpoken('Kwestia 1/2'), findsOneWidget);
     expect(find.text('Piaskowe Wilki nie jedzą Krasnali!'), findsOneWidget);
     rig.capture.level.value = 0.6;
     await tester.pump();
@@ -70,7 +76,7 @@ void main() {
 
     rig.capture.hear(take(2, 'piaskowe wilki nie jedzą krasnali'));
     await _settle(tester);
-    expect(find.text('Kwestia 2/2'), findsOneWidget);
+    expect(bySpoken('Kwestia 2/2'), findsOneWidget);
     expect(find.text('Naprawdę.'), findsOneWidget);
     expect(find.text('Zapisano kwestię 2: 2,0 s (+1 s pauzy)'), findsOneWidget);
 
@@ -79,13 +85,13 @@ void main() {
       CaptureResult(speechStart: 1, speechEnd: 2, transcript: 'x', audio: wav),
     );
     await _settle(tester);
-    expect(find.text('Gotowe: zapisano 2 z 2'), findsOneWidget);
+    expect(bySpoken('Gotowe: zapisano 2 z 2'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds, {2: 3.0});
     expect(prefs.recordings.keys, [4]);
-    await tester.tap(find.text('Zamknij'));
+    await tester.tap(bySpoken('Zamknij'));
     await tester.pumpAndSettle();
-    expect(find.text('Moje role'), findsOneWidget);
+    expect(bySpoken('Moje role'), findsOneWidget);
   });
 
   testWidgets('a skipped line is flagged; Stop ends the walk', (tester) async {
@@ -96,19 +102,19 @@ void main() {
       roles: _wolf,
       tab: 'Narzędzia',
     );
-    await tester.tapVisible(find.text('Czasy i nagrania'));
-    await tester.tap(find.text('Nagraj czasy'));
+    await tester.tapVisible(bySpoken('Czasy i nagrania'));
+    await tester.tap(bySpoken('Nagraj czasy'));
     await _settle(tester);
-    expect(find.text('Kwestia 1/3'), findsOneWidget);
+    expect(bySpoken('Kwestia 1/3'), findsOneWidget);
     rig.capture.hear(take(1.2, 'naprawdę'));
     await _settle(tester);
     expect(find.byKey(const Key('skip-warning')), findsOneWidget);
-    await tester.tap(find.text('Tak, zapisz tam'));
+    await tester.tap(bySpoken('Tak, zapisz tam'));
     await _settle(tester);
-    expect(find.text('Kwestia 3/3'), findsOneWidget);
-    await tester.tap(find.text('Stop'));
+    expect(bySpoken('Kwestia 3/3'), findsOneWidget);
+    await tester.tap(bySpoken('Stop'));
     await _settle(tester);
-    expect(find.text('Gotowe: zapisano 1 z 3'), findsOneWidget);
+    expect(bySpoken('Gotowe: zapisano 1 z 3'), findsOneWidget);
     final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
     expect(prefs.lineSeconds, {4: 2.2});
     expect(rig.capture.listening, isFalse);

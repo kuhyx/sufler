@@ -31,14 +31,12 @@ class SectionTitle extends StatelessWidget {
       Flexible(child: Text(section.title)),
       if (pure) ...[
         const SizedBox(width: AppSpacing.sm),
-        Tooltip(
-          message: 'Czysty przebieg',
-          child: Icon(
-            Icons.verified,
-            key: Key('pure-${section.id}'),
-            size: 18,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+        Icon(
+          Icons.verified,
+          key: Key('pure-${section.id}'),
+          size: 18,
+          color: Theme.of(context).colorScheme.primary,
+          semanticLabel: 'Czysty przebieg',
         ),
       ],
     ],

@@ -33,25 +33,25 @@ void main() {
     final s = _Session();
     await _pump(tester, s);
     expect(find.textContaining('Zaloguj się'), findsOneWidget);
-    await tester.tap(find.text('Połącz'));
+    await tester.tap(find.bySemanticsLabel('Połącz'));
     await tester.pumpAndSettle();
     expect(s.signIns, 1);
     expect(find.textContaining('Połączono'), findsOneWidget);
-    expect(find.text('Połącz'), findsNothing);
+    expect(find.bySemanticsLabel('Połącz'), findsNothing);
   });
 
   testWidgets('a failed sign-in keeps the button and explains', (tester) async {
     final s = _Session()..works = false;
     await _pump(tester, s);
-    await tester.tap(find.text('Połącz'));
+    await tester.tap(find.bySemanticsLabel('Połącz'));
     await tester.pumpAndSettle();
-    expect(find.text('Połącz'), findsOneWidget);
+    expect(find.bySemanticsLabel('Połącz'), findsOneWidget);
     expect(find.textContaining('nie powiodło się'), findsOneWidget);
   });
 
   testWidgets('already signed in: no button', (tester) async {
     await _pump(tester, _Session()..session = true);
     expect(find.textContaining('Połączono'), findsOneWidget);
-    expect(find.text('Połącz'), findsNothing);
+    expect(find.bySemanticsLabel('Połącz'), findsNothing);
   });
 }

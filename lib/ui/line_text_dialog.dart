@@ -34,7 +34,10 @@ class _LineTextDialogState extends State<LineTextDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text('Kwestia ${widget.line.index}'),
+    title: Icon(
+      Icons.edit_outlined,
+      semanticLabel: 'Kwestia ${widget.line.index}',
+    ),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -45,11 +48,13 @@ class _LineTextDialogState extends State<LineTextDialog> {
             controller: _text,
             maxLines: null,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Tekst'),
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.text_fields, semanticLabel: 'Tekst'),
+            ),
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Mówią'),
+          const Icon(Icons.person, semanticLabel: 'Mówią'),
           const SizedBox(height: AppSpacing.xs),
           Wrap(
             spacing: AppSpacing.sm,
@@ -71,18 +76,18 @@ class _LineTextDialogState extends State<LineTextDialog> {
       ),
     ),
     actions: [
-      TextButton(
+      IconButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Anuluj'),
+        icon: const Icon(Icons.close, semanticLabel: 'Anuluj'),
       ),
-      FilledButton(
+      IconButton(
         onPressed: _valid
             ? () => Navigator.of(context).pop<LineTextEdit>((
                 text: _text.text.trim(),
                 speakers: _speakers,
               ))
             : null,
-        child: const Text('Zapisz'),
+        icon: const Icon(Icons.check, semanticLabel: 'Zapisz'),
       ),
     ],
   );

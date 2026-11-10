@@ -46,7 +46,7 @@ void main() {
     expect(find.text(_summary), findsOneWidget);
     await _expectMoved(tester, rig, 5);
     await openTab(tester, 'Narzędzia');
-    expect(find.text(_tile), findsNothing);
+    expect(bySpoken(_tile), findsNothing);
 
     // Next open: the parse is current, the document kept: nothing to do.
     await _open(tester, rig);
@@ -70,16 +70,16 @@ void main() {
     rig
       ..script = Script.fromJson({...fixtureScript().toJson(), 'id': 'zzz'})
       ..files.next = (name: 'inna.pdf', bytes: Uint8List.fromList([6]));
-    await tester.tapVisible(find.text(_tile));
+    await tester.tapVisible(bySpoken(_tile));
     expect(find.textContaining('To inny plik niż ten skrypt'), findsOneWidget);
     expect(await tester.io(() => rig.library.loadSource('abc123')), isNull);
 
     rig
       ..script = newerParse()
       ..files.next = (name: 'test.txt', bytes: Uint8List.fromList([7]));
-    await tester.tapVisible(find.text(_tile));
+    await tester.tapVisible(bySpoken(_tile));
     expect(find.text(_summary), findsOneWidget);
     await _expectMoved(tester, rig, 7);
-    expect(find.text(_tile), findsNothing);
+    expect(bySpoken(_tile), findsNothing);
   });
 }

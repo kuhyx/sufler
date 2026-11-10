@@ -14,7 +14,10 @@ Widget? runOffer(TimingSession s) {
       key: const Key('record-run'),
       onPressed: s.recordRun,
       icon: const Icon(Icons.queue_music),
-      label: Text('Nagraj w całości (${linesLabel(n)})'),
+      label: Icon(
+        Icons.record_voice_over,
+        semanticLabel: 'Nagraj w całości (${linesLabel(n)})',
+      ),
     ),
   );
 }
@@ -34,12 +37,14 @@ List<Widget> runViews(BuildContext context, TimingSession s) {
         spacing: AppSpacing.sm,
         children: [
           FilledButton(
+            key: const Key('overwrite-run'),
             onPressed: () => s.overwrite(yes: true),
-            child: const Text('Nadpisz'),
+            child: const Icon(Icons.refresh, semanticLabel: 'Nadpisz'),
           ),
           OutlinedButton(
+            key: const Key('keep-recordings'),
             onPressed: () => s.overwrite(yes: false),
-            child: const Text('Zachowaj istniejące'),
+            child: const Icon(Icons.save, semanticLabel: 'Zachowaj istniejące'),
           ),
         ],
       ),
@@ -47,19 +52,26 @@ List<Widget> runViews(BuildContext context, TimingSession s) {
   }
   final lines = s.runLines ?? const [];
   return [
-    Text('Powiedz (zaśpiewaj) całość bez przerwy:', style: theme.bodySmall),
+    const Icon(
+      Icons.record_voice_over,
+      semanticLabel: 'Powiedz (zaśpiewaj) całość bez przerwy:',
+    ),
     Text([for (final l in lines) l.text].join('\n'), style: theme.titleLarge),
     const SizedBox(height: AppSpacing.md),
     // Pauses do not end it: only the tap does.
-    const Text('Nagrywam… stuknij „Skończyłem” na końcu.'),
+    const Icon(
+      Icons.mic,
+      semanticLabel: 'Nagrywam… stuknij „Skończyłem” na końcu.',
+    ),
     const SizedBox(height: AppSpacing.md),
     SizedBox(
       height: AppSpacing.xxl * 2,
       child: FilledButton(
         // textStyle, not Text.style: keeps the button's foreground colour.
         style: FilledButton.styleFrom(textStyle: theme.headlineSmall),
+        key: const Key('finish-run'),
         onPressed: s.finished,
-        child: const Text('Skończyłem'),
+        child: const Icon(Icons.done, semanticLabel: 'Skończyłem'),
       ),
     ),
   ];

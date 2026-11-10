@@ -20,21 +20,30 @@ class RehearsalSummary extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Koniec', style: Theme.of(context).textTheme.headlineSmall),
+        const Icon(
+          Icons.check_circle_outline,
+          size: 32,
+          semanticLabel: 'Koniec',
+        ),
         if (reached)
-          Text('Czyste przebiegi z rzędu: ${s.cleanTarget}. Umiesz to!'),
+          Icon(
+            Icons.emoji_events,
+            semanticLabel:
+                'Czyste przebiegi z rzędu: ${s.cleanTarget}. Umiesz to!',
+          ),
         const SizedBox(height: AppSpacing.md),
         for (final (i, p) in s.history.indexed)
           ListTile(
             dense: true,
             leading: Icon(p.clean ? Icons.check_circle : Icons.cancel),
-            title: Text('Przebieg ${i + 1}: $p'),
+            // The score is a number, so it stays visible; the words are spoken.
+            title: Text('$p', semanticsLabel: 'Przebieg ${i + 1}: $p'),
           ),
         const SizedBox(height: AppSpacing.md),
         FilledButton.icon(
           onPressed: onAgain,
-          icon: const Icon(Icons.replay),
-          label: const Text('Jeszcze raz'),
+          icon: const Icon(Icons.replay, semanticLabel: 'Jeszcze raz'),
+          label: const SizedBox.shrink(),
         ),
       ],
     );

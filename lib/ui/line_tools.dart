@@ -26,7 +26,10 @@ class LineTools extends StatelessWidget {
       final picked = await showDialog<ScriptLine>(
         context: context,
         builder: (context) => SimpleDialog(
-          title: const Text('Którą kwestię poprawić?'),
+          title: const Icon(
+            Icons.edit_note,
+            semanticLabel: 'Którą kwestię poprawić?',
+          ),
           children: [
             for (final l in cue.lines)
               SimpleDialogOption(
@@ -56,21 +59,33 @@ class LineTools extends StatelessWidget {
       spacing: AppSpacing.sm,
       children: [
         IconButton(
-          tooltip: 'Popraw kwestię',
-          icon: const Icon(Icons.edit_outlined),
+          icon: const Icon(
+            Icons.edit_outlined,
+            semanticLabel: 'Popraw kwestię',
+          ),
           onPressed: () => unawaited(_edit(context)),
         ),
         if (count > 0)
-          NotesButton(
-            count: count,
-            tooltip: 'Notatki ($count)',
-            onPressed: () => assist.showCueNotes(context, cue),
+          Semantics(
+            label: semanticNotes(count),
+            child: NotesButton(
+              count: count,
+              tooltip: '',
+              onPressed: () => assist.showCueNotes(context, cue),
+            ),
           ),
         if (lines.any(assist.edited.contains))
-          Text('zmieniono', key: const Key('edited'), style: small),
+          const Icon(
+            Icons.done,
+            key: Key('edited'),
+            semanticLabel: 'zmieniono',
+          ),
         if (lines.any(assist.ttsLines.contains))
           Text(ttsUntilRendered, style: small),
       ],
     );
   }
 }
+
+/// Spoken-only label for a cue's notes button (textgate: never painted).
+String semanticNotes(int count) => 'Notatki ($count)';

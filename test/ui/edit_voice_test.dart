@@ -39,17 +39,17 @@ Future<TestRig> _rehearse(WidgetTester t, String db) async {
 
 /// ✎ on the current line: new text, saved.
 Future<void> _edit(WidgetTester t) async {
-  await t.tap(find.byTooltip('Popraw kwestię'));
+  await t.tap(bySpoken('Popraw kwestię'));
   await t.pumpAndSettle();
   await t.enterText(find.byKey(const Key('line-text')), _new);
-  await t.tap(find.text('Zapisz'));
+  await t.tap(bySpoken('Zapisz'));
   await t.pump();
   await t.pump(const Duration(milliseconds: 100));
 }
 
 /// Steps back to line 1 and lets it start again.
 Future<void> _replay(WidgetTester t) async {
-  await t.tap(find.byTooltip('Wstecz'));
+  await t.tap(bySpoken('Wstecz'));
   await t.pump(const Duration(milliseconds: 100));
 }
 
@@ -65,7 +65,7 @@ void main() {
     final log = await tester.io(() => rig.library.loadCorrections('abc123'));
     expect(log.single['text'], _new);
     expect(log.single['was'], 'Dzień dobry, Wilku!');
-    expect(find.text('zmieniono'), findsOneWidget);
+    expect(bySpoken('zmieniono'), findsOneWidget);
     expect(rig.assistant.rendered, [(index: 1, text: _new)]);
     final pack = (await tester.io(() => rig.library.loadPack('abc123')))!;
     expect(pack.clip(1), [7, 7]);
@@ -113,7 +113,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     final s = (await tester.io(() => rig.library.loadScript('abc123')))!;
     expect(s.lines[2].text, _new);
-    expect(find.text('zmieniono'), findsOneWidget);
+    expect(bySpoken('zmieniono'), findsOneWidget);
     await leaveRehearsal(tester);
   });
 }

@@ -46,7 +46,10 @@ class SettingsCard extends StatelessWidget {
     return OptionColumn(
       children: [
         if (group == SettingsGroup.tempoText) ...[
-          Text('Tempo ${speed.toStringAsFixed(2)}×'),
+          Icon(
+            Icons.speed,
+            semanticLabel: 'Tempo ${speed.toStringAsFixed(2)}×',
+          ),
           Slider(
             value: speed,
             min: minSpeed,
@@ -57,7 +60,10 @@ class SettingsCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           ToggleTile(
-            title: const Text('Pokaż tekst partnerów'),
+            title: const Icon(
+              Icons.visibility,
+              semanticLabel: 'Pokaż tekst partnerów',
+            ),
             info: const Text(
               'domyślnie tylko kto mówi — na scenie nie masz ich tekstu',
             ),
@@ -71,15 +77,15 @@ class SettingsCard extends StatelessWidget {
             segments: const [
               ButtonSegment(
                 value: TextVisibility.revealAfter,
-                label: Text('Nauka'),
+                label: Icon(Icons.school, semanticLabel: 'Nauka'),
               ),
               ButtonSegment(
                 value: TextVisibility.hide,
-                label: Text('Bez tekstu'),
+                label: Icon(Icons.visibility_off, semanticLabel: 'Bez tekstu'),
               ),
               ButtonSegment(
                 value: TextVisibility.show,
-                label: Text('Czytanie'),
+                label: Icon(Icons.menu_book, semanticLabel: 'Czytanie'),
               ),
             ],
             selected: {s.visibility},
@@ -87,23 +93,20 @@ class SettingsCard extends StatelessWidget {
                 onSettings(s.copyWith(visibility: v.single)),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(switch (s.visibility) {
-            TextVisibility.revealAfter =>
-              'Mówisz z pamięci, potem widzisz tekst i oceniasz ✓/✗.',
-            TextVisibility.hide => 'Tekstu nie widać nawet przy ocenie.',
-            TextVisibility.show => 'Pierwsze czytanie: tekst widać od razu.',
-          }, style: Theme.of(context).textTheme.bodySmall),
         ],
         if (group == SettingsGroup.modes) ...[
           ToggleTile(
-            title: const Text('Oceniaj się ✓/✗'),
+            title: const Icon(Icons.task_alt, semanticLabel: 'Oceniaj się ✓/✗'),
             value: s.grades,
             onChanged: s.grades && !s.selfGrade
                 ? null
                 : (v) => onSettings(s.copyWith(selfGrade: v)),
           ),
           ToggleTile(
-            title: const Text('Słuchaj mnie (mikrofon)'),
+            title: const Icon(
+              Icons.mic,
+              semanticLabel: 'Słuchaj mnie (mikrofon)',
+            ),
             info: const Text(
               'kończy kwestię, gdy przestaniesz mówić, i podpowiada ocenę',
             ),
@@ -112,7 +115,10 @@ class SettingsCard extends StatelessWidget {
           ),
           ToggleTile(
             key: const Key('whole-runs'),
-            title: const Text('Piosenki i monologi w całości'),
+            title: const Icon(
+              Icons.play_circle,
+              semanticLabel: 'Piosenki i monologi w całości',
+            ),
             info: const Text(
               'piosenkę lub ≥ 3 kwestie z rzędu mówisz naraz i oceniasz raz; '
               'cudze piosenki grają jako jeden krok',
@@ -121,25 +127,38 @@ class SettingsCard extends StatelessWidget {
             onChanged: (v) => onSettings(s.copyWith(wholeRuns: v)),
           ),
           ToggleTile(
-            title: const Text('Powtarzaj do skutku'),
-            info: const Text('aż do N czystych przebiegów z rzędu'),
+            title: const Icon(
+              Icons.repeat,
+              semanticLabel: 'Powtarzaj do skutku',
+            ),
             value: s.loop,
             onChanged: (v) => onSettings(s.copyWith(loop: v)),
           ),
           Row(
             children: [
-              Expanded(child: Text('Czyste przebiegi: ${s.cleanTarget}')),
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.clean_hands,
+                      semanticLabel: 'Czyste przebiegi',
+                    ),
+                    Text(s.cleanTarget.toString()),
+                  ],
+                ),
+              ),
               IconButton(
-                tooltip: 'Mniej przebiegów',
-                icon: const Icon(Icons.remove),
+                icon: const Icon(
+                  Icons.remove,
+                  semanticLabel: 'Mniej przebiegów',
+                ),
                 onPressed: s.cleanTarget > 1
                     ? () =>
                           onSettings(s.copyWith(cleanTarget: s.cleanTarget - 1))
                     : null,
               ),
               IconButton(
-                tooltip: 'Więcej przebiegów',
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, semanticLabel: 'Więcej przebiegów'),
                 onPressed: () =>
                     onSettings(s.copyWith(cleanTarget: s.cleanTarget + 1)),
               ),

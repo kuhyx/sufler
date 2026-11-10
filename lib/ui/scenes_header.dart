@@ -22,20 +22,20 @@ List<Widget> scenesHeader(ScriptTabs w) {
         if (missed > 0)
           _RangeChip(
             leading: const Icon(Icons.replay),
-            title: Text('Tylko nieumiane ($missed)'),
-            subtitle: const Text('kwestie, przy których dałeś ✗'),
+            labelIcon: Icons.error_outline,
+            semanticLabel: 'Tylko nieumiane ($missed)',
             onTap: w.onMissed,
           ),
         _RangeChip(
           leading: const Icon(Icons.straighten),
-          title: const Text('Własny zakres…'),
-          subtitle: const Text('od kwestii do kwestii'),
+          labelIcon: Icons.crop_free,
+          semanticLabel: 'Własny zakres…',
           onTap: () => w.onPick(PickMode.custom),
         ),
         _RangeChip(
           leading: const Icon(Icons.trending_up),
-          title: const Text('Narastająco…'),
-          subtitle: const Text('od początku (lub sceny) do wybranej kwestii'),
+          labelIcon: Icons.stacked_line_chart,
+          semanticLabel: 'Narastająco…',
           onTap: () => w.onPick(PickMode.cumulative),
         ),
       ],
@@ -48,21 +48,20 @@ List<Widget> scenesHeader(ScriptTabs w) {
 class _RangeChip extends StatelessWidget {
   const new({
     required this.leading,
-    required this.title,
-    required this.subtitle,
+    required this.labelIcon,
+    required this.semanticLabel,
     required this.onTap,
   });
 
   final Widget leading;
-  final Text title;
-  final Text subtitle;
+  final IconData labelIcon;
+  final String semanticLabel;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => ActionChip(
     avatar: leading,
-    label: title,
-    tooltip: subtitle.data,
+    label: Icon(labelIcon, semanticLabel: semanticLabel),
     onPressed: onTap,
   );
 }
