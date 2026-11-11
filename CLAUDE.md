@@ -6,10 +6,15 @@
 - lint: `flutter analyze`
 - coverage: `flutter test -j 4 --reporter=compact --coverage`
 - coverage-gaps: `coverage-gaps coverage/lcov.info`
+- deploy: `scripts/deploy.sh`
 
 `-j 4`: each widget-test process (test/ui) peaks ~300 MB; default -j (=cores)
 exceeds the 2 GiB `capped.sh` ceiling and a flutter_tester is OOM-killed
 ("Cannot add event while adding stream"). CI is uncapped and keeps the default.
+
+`deploy` pulls ~/src/sufler (the TTS unit runs from it), installs the desktop
+package, restarts `sufler-tts` and installs the release APK on the Pixel
+(`install -r` only); `--health` runs just the checks.
 
 ## Project rules
 
