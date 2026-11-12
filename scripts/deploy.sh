@@ -5,7 +5,8 @@
 #   1. git pull --ff-only (the sufler-tts unit runs from that checkout), then
 #      re-exec the pulled copy of this script so the pulled code is deployed.
 #   2. desktop: packaging/install_arch.sh (web build + wrapper -> pacman pkg).
-#   3. tts: link the unit if missing, restart it, wait for /health ok.
+#   3. tts: link the unit if missing, uv sync the venv, restart it, wait
+#      for /health ok.
 #   4. phone: release build + `adb install -r` via phone_deploy.sh (never
 #      uninstall, never pm clear), then check the new versionCode landed.
 # Exits non-zero unless every health check passes. Idempotent.
@@ -110,6 +111,10 @@ deploy_tts() {
         "$LIVE/scripts/install_tts.sh"
         systemctl --user enable "$UNIT"
     fi
+    # A pin bump (e.g. crdt-sync for the relay's e2e) must reach the venv the
+    # unit runs from, or the relay stays off after the restart.
+    log "tts: sync venv from uv.lock"
+    uv sync --locked --directory "$LIVE/tts"
     log "tts: restart $UNIT"
     systemctl --user restart "$UNIT"
     local waited=0

@@ -8,12 +8,16 @@ import threading
 from typing import Any
 
 import pytest
+from crdt_sync import E2eCipher
 
 from sufler_tts.assist import AssistError
+from sufler_tts.relay.e2e import SEALED, Sealer
 from sufler_tts.relay.rtdb import SERVER_TIME
-from sufler_tts.relay.worker import Relay
+from sufler_tts.relay.worker import Relay, RelayLocked
 
 DAY_MS = 24 * 3600 * 1000
+# The shared key in tests (the phone's tests seal with the same one).
+SEALER = Sealer(E2eCipher(bytes([7] * 32)))
 
 
 class FakeDb:
@@ -107,19 +111,28 @@ def assist() -> FakeAssist:
 
 @pytest.fixture
 def relay(db: FakeDb, assist: FakeAssist) -> Relay:
-    return Relay(db, assist, "pc-uuid", clock=lambda: db.server_ms / 1000)
-
-
-def _request(db: FakeDb, kind: str, payload: object, rid: str = RID) -> None:
-    db.put(
-        f"requests/{rid}",
-        {
-            "kind": kind,
-            "payload": json.dumps(payload),
-            "deviceId": "phone-uuid",
-            "ts": SERVER_TIME,
-        },
+    return Relay(
+        db, assist, "pc-uuid", unlock=lambda: SEALER, clock=lambda: db.server_ms / 1000
     )
+
+
+def _request(
+    db: FakeDb, kind: str, payload: object, rid: str = RID, *, sealed: bool = True
+) -> None:
+    """Plays the phone: a request as it publishes it (sealed)."""
+    path = f"requests/{rid}"
+    record = {
+        "kind": kind,
+        "payload": json.dumps(payload),
+        "deviceId": "phone-uuid",
+        "ts": SERVER_TIME,
+    }
+    db.put(path, SEALER.seal_request(path, record) if sealed else record)
+
+
+def _result(db: FakeDb, rid: str = RID) -> Any:
+    """A result as the phone reads it (opened)."""
+    return SEALER.open(f"results/{rid}", db.get(f"results/{rid}"))
 
 
 def _serve(relay: Relay) -> None:
@@ -135,7 +148,7 @@ def test_explain_request_gets_a_result(
     assert assist.calls == [
         ("explain", {"selection": "wilku", "line": {"text": "Witaj"}})
     ]
-    assert db.get(f"results/{RID}") == {
+    assert _result(db) == {
         "ok": True,
         "text": "Znaczy: witam.",
         "at": db.server_ms,
@@ -146,7 +159,7 @@ def test_explain_request_gets_a_result(
 def test_render_line_result_carries_base64_audio(db: FakeDb, relay: Relay) -> None:
     _request(db, "render_line", {"script": {"id": "x"}, "index": 1})
     _serve(relay)
-    result = db.get(f"results/{RID}")
+    result = _result(db)
     assert result["ok"] is True
     assert base64.b64decode(result["audioB64"]) == b"OggS\x00clip"
 
@@ -162,7 +175,7 @@ def test_failures_become_error_results(
         {"kind": "explain", "payload": 7, "ts": SERVER_TIME},
     )
     _serve(relay)
-    results = db.get("results")
+    results = {rid: _result(db, rid) for rid in db.get("results")}
     assert results[RID]["ok"] is False
     assert results[RID]["error"] == "claude timed out after 90 s"
     assert "unknown kind" in results["01J9Z3K6Q4X8M2N5P7R9T1V3W6"]["error"]
@@ -227,9 +240,74 @@ def test_presence_beats_with_server_time_and_leaves(db: FakeDb, relay: Relay) ->
 
 
 def test_server_clock_follows_measured_skew(db: FakeDb, assist: FakeAssist) -> None:
-    relay = Relay(db, assist, "pc", clock=lambda: (db.server_ms - 60_000) / 1000)
+    relay = Relay(
+        db,
+        assist,
+        "pc",
+        unlock=lambda: SEALER,
+        clock=lambda: (db.server_ms - 60_000) / 1000,
+    )
     relay.beat()  # this PC is a minute slow
     assert relay.server_now_ms() == db.server_ms
     _request(db, "explain", {"selection": "x"})
     _serve(relay)
     assert len(assist.calls) == 1  # a fresh request is not "stale" by skew
+
+
+def test_stored_records_carry_no_text(db: FakeDb, relay: Relay) -> None:
+    _request(db, "explain", {"selection": "wilku", "line": {"text": "Witaj"}})
+    assert set(db.get(f"requests/{RID}")) == {"kind", "deviceId", "ts", SEALED}
+    assert "wilku" not in json.dumps(db.get("requests"))
+    _serve(relay)
+    stored = db.get(f"results/{RID}")
+    assert set(stored) == {"ok", "at", SEALED}
+    assert "witam" not in json.dumps(stored)
+
+
+def test_an_older_phones_unsealed_request_gets_a_sealed_answer(
+    db: FakeDb, relay: Relay, assist: FakeAssist
+) -> None:
+    _request(db, "explain", {"selection": "x"}, sealed=False)
+    _serve(relay)
+    assert len(assist.calls) == 1
+    assert SEALED in db.get(f"results/{RID}")
+    assert _result(db)["text"] == "Znaczy: witam."
+
+
+def test_a_request_under_another_key_is_refused_sealed(
+    db: FakeDb, relay: Relay, assist: FakeAssist
+) -> None:
+    other = Sealer(E2eCipher(bytes([9] * 32)))
+    path = f"requests/{RID}"
+    db.put(
+        path,
+        other.seal_request(
+            path, {"kind": "explain", "payload": "{}", "ts": SERVER_TIME}
+        ),
+    )
+    _serve(relay)
+    assert assist.calls == []
+    assert "another key" in _result(db)["error"]
+
+
+def test_a_moved_blob_does_not_open(db: FakeDb, relay: Relay) -> None:
+    _request(db, "explain", {"selection": "x"})
+    moved = db.get(f"requests/{RID}")
+    assert SEALER.open("requests/01J9Z3K6Q4X8M2N5P7R9T1V3W6", moved) is None
+
+
+def test_locked_pc_neither_beats_nor_answers(db: FakeDb, assist: FakeAssist) -> None:
+    tries: list[int] = []
+
+    def locked() -> Sealer:
+        tries.append(1)
+        raise RelayLocked("no crdt-sync passphrase on this PC")
+
+    relay = Relay(db, assist, "pc", unlock=locked, clock=lambda: db.server_ms / 1000)
+    _request(db, "explain", {"selection": "x"})
+    with pytest.raises(RelayLocked):
+        relay.beat()
+    with pytest.raises(RelayLocked):
+        relay.scan()
+    assert db.get("presence") is None and db.get("results") is None
+    assert assist.calls == [] and len(tries) == 2  # retried, never cached

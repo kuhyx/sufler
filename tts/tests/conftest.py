@@ -43,6 +43,22 @@ def script_json() -> dict[str, Any]:
     }
 
 
+@pytest.fixture(autouse=True)
+def _no_real_secrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """No test reads the real ~/.config/crdt-sync/password (the e2e key)."""
+    crdt_sync = _crdt_sync()
+    if crdt_sync is not None:
+        monkeypatch.setattr(crdt_sync, "PASSWORD_FILE", tmp_path / "no-password")
+
+
+def _crdt_sync() -> Any:
+    try:
+        import crdt_sync  # noqa: PLC0415
+    except ImportError:
+        return None
+    return crdt_sync
+
+
 @pytest.fixture
 def engine() -> FakeEngine:
     """A fake engine that records every synthesis call."""

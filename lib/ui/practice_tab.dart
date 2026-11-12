@@ -42,8 +42,11 @@ class PracticeTab extends StatelessWidget {
             onSpeed: tabs.onSpeed,
             onSettings: tabs.onSettings,
           ),
-          if (ServicesScope.maybeOf(context)?.pcSession case final s?)
-            PcSessionTile(session: s),
+          if (ServicesScope.maybeOf(context) case Services(
+            pcSession: final s?,
+            :final relayKey,
+          ))
+            PcSessionTile(session: s, relayKey: relayKey),
         ],
       ),
     ],

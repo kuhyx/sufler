@@ -10,12 +10,19 @@ dependencies:
   archive: 4.6.0
   audioplayers: 6.8.1
   # The phone's relay to the PC (lib/assist/): Google sign-in -> Firebase
-  # refresh token (keystore) -> ID tokens for RTDB REST. Tutor's pin.
+  # refresh token (keystore) -> ID tokens for RTDB REST, and the e2e key
+  # (Argon2id of the shared passphrase) sealing what it carries. Tutor's pin.
   crdt_sync:
     git:
       url: https://github.com/kuhyx/utils
-      ref: crdt_sync_dart-v0.12.1
+      ref: crdt_sync_dart-v0.14.1
       path: crdt_sync_dart
+  # Keystore passphrase + cached e2e key, and the icon-only lock button.
+  crdt_sync_flutter:
+    git:
+      url: https://github.com/kuhyx/utils
+      ref: crdt_sync_flutter-v0.8.1
+      path: crdt_sync_flutter
   crypto: 3.0.8
   design_system:
     git:
@@ -37,7 +44,7 @@ dependencies:
   meta: 1.19.0
   path: 1.9.1
   path_provider: 2.1.6
-  record: 7.1.2
+  record: 7.2.0
   share_plus: 13.3.1
   speech_to_text: 7.5.0
   sqlite3: 3.9.1

@@ -38,6 +38,7 @@ Future<void> main() async {
         transcribe: openTranscriber(),
         assistant: openAssistant(store),
         pcSession: openPcSession(),
+        relayKey: openRelayKey(),
       ),
     ),
   );

@@ -56,15 +56,16 @@ Under `/sufler` in the shared kuhy-syncs database (rules: the sync uid only):
 
 ```
 sufler/requests/{rid}   {"kind": "explain" | "render_line",
-                         "payload": "<the HTTP body above, JSON-encoded>",
+                         "payload": "<the HTTP body above, JSON-encoded>",   (sealed)
                          "deviceId": "<phone install uuid>",
                          "ts": {".sv": "timestamp"}}
 sufler/results/{rid}    {"ok": true, "text": "..."}            (explain)
                         {"ok": true, "audioB64": "<ogg, base64>"} (render_line)
                         {"ok": false, "error": "<reason>"}
-                        + "at": <server ms>
+                        + "at": <server ms>     (text/audioB64/error sealed)
 sufler/presence/{pc}    {"beat": <server ms>, "host", "pid", "started", "version"}
 sufler/clients/{dev}    {"seen": <server ms>}   (the phone's server-clock probe)
+sufler/e2e              "<e2e header JSON>"     (salt, Argon2id cost, check MAC)
 ```
 
 - `rid`: 22 random url-safe chars (`[A-Za-z0-9_-]{16,64}` accepted).
@@ -88,6 +89,40 @@ sufler/clients/{dev}    {"seen": <server ms>}   (the phone's server-clock probe)
   Results and requests older than 24 h are deleted every 10 min.
 - Errors never carry the URL (`?auth=<idToken>` is in it), only method,
   path and status.
+
+## E2E
+
+The relay's records are sealed end to end, so the database never sees a
+line of the script, an explanation or a clip:
+
+- Stored as `{"_e2e": "<blob>", <clear fields>}`: a request keeps `kind`,
+  `deviceId` and `ts` clear and seals `{payload}`; a result keeps `ok` and
+  `at` clear and seals `{text | audioB64 | error}`. Presence and clients
+  stay clear (server times only). The blob is crdt_sync's `E2eCipher`
+  (XChaCha20-Poly1305) with the record's path (`sufler/requests/{rid}`,
+  `sufler/results/{rid}`, no sandbox namespace) as AAD, so a blob moved to
+  another rid does not open.
+- Key: Argon2id of the shared crdt-sync passphrase, header at `sufler/e2e`
+  (one JSON string leaf). No new prefix and no copy step: the data lives
+  seconds. Only the PC creates the header (first unlock); a phone that
+  finds none is locked and tries again on the next request or lock tap.
+- PC (`tts/sufler_tts/relay/e2e.py`): passphrase from
+  `~/.config/crdt-sync/password` (`crdt_sync.PASSWORD_FILE`), derived key
+  cached 0600 in `~/.local/share/sufler/e2e-relay.key` (checked against
+  the header before use). Locked (no or wrong passphrase, bad header):
+  logs `relay locked`, writes no beat and answers nothing, so phones see it
+  offline; it retries every beat/scan.
+- Phone (`lib/assist/relay_seal.dart`): passphrase and derived key in the
+  Android keystore (crdt_sync_flutter `kE2ePassphraseKey`,
+  `keystoreKeyCache('sufler')`). Locked: nothing is sent; an explanation
+  fails with the spoken "Szyfrowanie zablokowane" error. Once signed in,
+  the "Połącz z PC" tile shows crdt_sync_flutter's lock button (icon only):
+  closed lock = locked, tap it to enter the passphrase.
+- Compatibility: a reader accepts a record without `_e2e` as stored (an
+  older build on the other side); writers always seal. A blob that does
+  not open (another key, tampered) is an error result, never shown.
+- `test/assist/relay_e2e_vectors.json` holds a header and records sealed
+  by each side; both suites open the other side's records.
 
 ## Credentials
 

@@ -20,7 +20,15 @@ from typing import Any, Final
 
 from sufler_tts.assets import DATA
 from sufler_tts.relay.rtdb import Rtdb, RtdbError
-from sufler_tts.relay.worker import BEAT_S, GC_S, RESCAN_S, AssistLike, Relay
+from sufler_tts.relay.worker import (
+    BEAT_S,
+    GC_S,
+    RESCAN_S,
+    AssistLike,
+    Relay,
+    RelayLocked,
+    SealerLike,
+)
 
 APP: Final = "sufler"
 _logger = logging.getLogger(__name__)
@@ -76,12 +84,40 @@ def device_id(data_dir: Path = DATA) -> str:
     return str(identity.device_id)
 
 
+def passphrase() -> str:
+    """The shared crdt-sync passphrase (`crdt_sync.PASSWORD_FILE`), or ""."""
+    try:
+        return str(_crdt_sync().PASSWORD_FILE.read_text().strip())
+    except OSError:
+        return ""
+
+
+def unlocker(
+    db: Rtdb, read_passphrase: Callable[[], str] = passphrase, state_dir: Path = DATA
+) -> Callable[[], SealerLike]:
+    """The relay's e2e unlock: cached key in `state_dir`, else the passphrase."""
+    _crdt_sync()  # a venv without crdt-sync fails here, as RelaySetupError
+    try:
+        from sufler_tts.relay import e2e  # noqa: PLC0415
+    except ImportError:
+        raise RelaySetupError(
+            "crdt-sync lacks e2e: cd ~/src/sufler/tts && uv sync --locked"
+        ) from None
+
+    def unlock() -> SealerLike:
+        return e2e.unlock(db, read_passphrase(), state_dir)
+
+    return unlock
+
+
 def _every(stop: threading.Event, seconds: float, step: Callable[[], object]) -> None:
     while not stop.is_set():
         try:
             step()
         except RtdbError as err:
             _logger.warning("relay: %s", err)
+        except RelayLocked as err:
+            _logger.warning("relay locked (no e2e key, nothing answered): %s", err)
         stop.wait(seconds)
 
 
@@ -92,7 +128,7 @@ def _listen(stop: threading.Event, relay: Relay, db: Rtdb) -> None:
             relay.on_events(db.stream("requests"))
             backoff = 1.0
             stop.wait(1.0)  # a server closing at once must not spin
-        except RtdbError as err:
+        except (RtdbError, RelayLocked) as err:
             _logger.warning("relay stream: %s (retry in %.0f s)", err, backoff)
             stop.wait(backoff)
             backoff = min(backoff * 2, 30.0)
@@ -132,7 +168,7 @@ def start(
         return None
     try:
         db = connect()
-        relay = Relay(db, assist, device_id(), clock=time.time)
+        relay = Relay(db, assist, device_id(), unlock=unlocker(db), clock=time.time)
     except RelaySetupError as err:
         _logger.warning("relay off: %s (HTTP only)", err)
         return None

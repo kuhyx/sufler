@@ -1,0 +1,44 @@
+{
+  "passphrase": "test-passphrase",
+  "header": "{\"v\":1,\"kdf\":\"argon2id\",\"salt\":\"/+W137v99Lvyd++1OZXyBw==\",\"m\":8,\"t\":1,\"p\":1,\"check\":\"04U5OquTHBoMoIJWlvaTYFZUp3zTFZDfthb/pSun3bE=\"}",
+  "rid": "01J9Z3K6Q4X8M2N5P7R9T1V3W5",
+  "plain": {
+    "request": {
+      "kind": "explain",
+      "payload": "{\"selection\": \"na bakier\"}",
+      "deviceId": "phone-uuid",
+      "ts": 1700000000000
+    },
+    "result": {
+      "ok": true,
+      "text": "Znaczy: krzywo.",
+      "at": 1700000001000
+    }
+  },
+  "python": {
+    "request": {
+      "kind": "explain",
+      "deviceId": "phone-uuid",
+      "ts": 1700000000000,
+      "_e2e": "Abja0IxqzCUcTDx+4GYutwgFEQmCOdOVdqCDzONOHE0lnuPtxf6bdKpIi05dELKH4uIqCm43Jpixii4nNLnMBX+5zIcOI3BQntjMQkLp4reGUL9+0w=="
+    },
+    "result": {
+      "ok": true,
+      "at": 1700000001000,
+      "_e2e": "ARTtAz+Ao3Q7RbE3imMHTJnB0UnsVYTXI8zQ/EBKlfKDdgRibRjp2k+yPnPT7YfloqiN4s4/wYS2Ph+rEy3vntymbA=="
+    }
+  },
+  "dart": {
+    "request": {
+      "kind": "explain",
+      "deviceId": "phone-uuid",
+      "ts": 1700000000000,
+      "_e2e": "ARwZ5GQZk1T5g/Gfd+O+drZP6+B37RTriWcp4mJfNNnCf9axg7NYli8V/5p9peWx269i9uJlIvEFTd1Khlyi+YPsxjx8R0CTMlCQ6l4P1dfoNr8LIw=="
+    },
+    "result": {
+      "ok": true,
+      "at": 1700000001000,
+      "_e2e": "ARRJ7vJ2GozCudXlcf9y6rly4MqTVfMgvH5dETlWd9LH2f8yvl6FB/dy9E9aEVKAdiZuh3ZDuILJXcXMLGJ9rSfcLw=="
+    }
+  }
+}

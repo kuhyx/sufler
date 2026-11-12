@@ -11,7 +11,10 @@ into RTDB and polls for the result (DOCS-contract.md "Relay"). This worker:
   10 min of server time unanswered (the phone gave up; no Claude call is
   spent on it), and GCs results and requests older than 24 h;
 * beats `presence/{device}` with a server timestamp every 30 s; the beat
-  also measures this PC's clock skew, so "10 min old" is server time.
+  also measures this PC's clock skew, so "10 min old" is server time;
+* opens each request and seals each result with the shared e2e key
+  (`relay/e2e.py`). Without the key it neither beats nor answers (phones
+  see it offline), so nothing it writes is ever plaintext.
 """
 
 from __future__ import annotations
@@ -41,6 +44,22 @@ _RID: Final = re.compile(r"[A-Za-z0-9_-]{16,64}")
 _logger = logging.getLogger(__name__)
 
 
+class RelayLocked(RuntimeError):
+    """No e2e key: no passphrase, a wrong one, or an unreadable header."""
+
+
+class SealerLike(Protocol):
+    """`relay.e2e.Sealer`: paths are relative to the relay root."""
+
+    def seal_result(self, path: str, record: dict[str, Any]) -> dict[str, Any]:
+        """The result as stored at `path`."""
+        ...
+
+    def open(self, path: str, stored: object) -> object:
+        """The record opened; None when its blob does not open."""
+        ...
+
+
 class AssistLike(Protocol):
     """`assist.Assist`: the two things the phone may ask for."""
 
@@ -62,11 +81,18 @@ class Relay:
         assist: AssistLike,
         device: str,
         *,
+        unlock: Callable[[], SealerLike],
         clock: Callable[[], float] = time.time,
         workers: int = 2,
     ) -> None:
-        """Bind the database; nothing runs until `run()` or `scan()`."""
+        """Bind the database; nothing runs until `scan()`.
+
+        `unlock` yields the e2e sealer or raises `RelayLocked`; it is retried
+        on every beat and scan until it succeeds, then kept.
+        """
         self.db, self.assist, self.device = db, assist, device
+        self._unlock = unlock
+        self._sealer: SealerLike | None = None
         self.clock = clock
         self.skew_ms = 0
         self.started = int(clock() * 1000)
@@ -74,12 +100,20 @@ class Relay:
         self._lock = threading.Lock()
         self._busy: set[str] = set()
 
+    def sealer(self) -> SealerLike:
+        """The e2e sealer (unlocked once); raises `RelayLocked`."""
+        with self._lock:
+            if self._sealer is None:
+                self._sealer = self._unlock()
+            return self._sealer
+
     def server_now_ms(self) -> int:
         """RTDB server time as estimated from the last beat."""
         return int(self.clock() * 1000) + self.skew_ms
 
     def beat(self) -> None:
         """One heartbeat; measures the skew from the resolved server time."""
+        self.sealer()  # locked: no beat, so phones never ask a PC that can't answer
         sent = self.clock()
         stored = self.db.put(
             f"presence/{self.device}",
@@ -101,6 +135,7 @@ class Relay:
 
     def scan(self) -> list[Future[None]]:
         """Submit every pending request not already in flight."""
+        self.sealer()
         pending = self.db.get("requests")
         if not isinstance(pending, dict):
             return []
@@ -116,7 +151,7 @@ class Relay:
     def _handle(self, rid: str, req: object) -> None:
         try:
             self.handle(rid, req)
-        except RtdbError as err:
+        except (RtdbError, RelayLocked) as err:
             _logger.warning("relay request %s failed: %s", rid, err)
         finally:
             with self._lock:
@@ -127,8 +162,15 @@ class Relay:
         ts = req.get("ts") if isinstance(req, dict) else None
         fresh = isinstance(ts, int) and self.server_now_ms() - ts <= MAX_AGE_MS
         if _RID.fullmatch(rid) and fresh and self.db.get(f"results/{rid}") is None:
-            result = {**self.serve(req), "at": SERVER_TIME}
-            self.db.put(f"results/{rid}", result)
+            sealer = self.sealer()
+            opened = sealer.open(f"requests/{rid}", req)
+            answer = (
+                self.serve(opened)
+                if opened is not None
+                else {"ok": False, "error": "request does not open (another key?)"}
+            )
+            path = f"results/{rid}"
+            self.db.put(path, sealer.seal_result(path, {**answer, "at": SERVER_TIME}))
         self.db.delete(f"requests/{rid}")
 
     def serve(self, req: object) -> dict[str, Any]:

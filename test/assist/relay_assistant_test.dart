@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:crdt_sync/crdt_sync.dart' show E2eCipher;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/assist/assist_error.dart';
 import 'package:sufler/assist/assist_payload.dart';
 import 'package:sufler/assist/pc_session.dart';
 import 'package:sufler/assist/relay_assistant.dart';
+import 'package:sufler/assist/relay_seal.dart';
 import 'package:sufler/assist/rtdb_client.dart';
 
 import '../rehearsal/fixture.dart';
@@ -29,12 +31,19 @@ class FakeSession implements PcSession {
 
 const dev = 'dev-1';
 
+/// The shared key in tests (the PC side seals with the same one).
+final sealer = RelaySealer(E2eCipher(List.filled(32, 7)));
+
 void main() {
   late FakeRtdb db;
   late FakeSession session;
   late RelayAssistant relay;
+  RelaySealer? key;
+  final written = <Object?>[]; // results as the PC stored them
 
   setUp(() {
+    key = sealer;
+    written.clear();
     db = FakeRtdb();
     session = FakeSession();
     relay = RelayAssistant(
@@ -45,23 +54,30 @@ void main() {
       ),
       deviceId: () async => dev,
       session: session,
+      sealer: () async => key,
       pollEvery: const Duration(milliseconds: 5),
       explainTimeout: const Duration(milliseconds: 300),
       renderTimeout: const Duration(milliseconds: 300),
     );
   });
 
-  /// Plays the PC: answers every request with [answer] after a few polls.
-  void pcAnswers(Map<String, Object?> Function(Map<String, Object?>) answer) {
+  /// Plays the PC: opens every request and answers it with [answer]
+  /// (sealed unless [seal] is false) after a few polls.
+  void pcAnswers(
+    Map<String, Object?> Function(Map<String, Object?>) answer, {
+    bool seal = true,
+  }) {
     db.onPut = (path, value) {
       final rid = RegExp(r'^sufler/requests/(.+)$').firstMatch(path)?[1];
       if (rid == null) return;
-      Timer(const Duration(milliseconds: 20), () {
+      Timer(const Duration(milliseconds: 20), () async {
+        final req = await sealer.open(path, value! as Map<String, Object?>);
+        final out = {...answer(req), 'at': db.serverMs};
+        final resultPath = 'sufler/results/$rid';
+        final stored = seal ? await sealer.sealResult(resultPath, out) : out;
+        written.add(stored);
         db
-          ..write('sufler/results/$rid', {
-            ...answer(value! as Map<String, Object?>),
-            'at': db.serverMs,
-          })
+          ..write(resultPath, stored)
           ..write(path, null);
       });
     };
@@ -92,6 +108,71 @@ void main() {
     },
   );
 
+  test('a published request carries no script text', () async {
+    final published = <String>[];
+    pcAnswers((_) => {'ok': true, 'text': 'ok'});
+    final pc = db.onPut!;
+    db.onPut = (path, value) {
+      published.add(jsonEncode(value));
+      pc(path, value);
+    };
+    await relay.explain(script: fixtureScript(), index: 1, selection: 'Wilku');
+    expect(published, hasLength(1));
+    for (final plain in ['Wilku', 'Dzień dobry', 'Krasnale testowe']) {
+      expect(published.single, isNot(contains(plain)));
+    }
+    final stored = jsonDecode(published.single) as Map<String, Object?>;
+    expect(stored.keys, unorderedEquals(['kind', 'deviceId', 'ts', '_e2e']));
+  });
+
+  test('a stored result carries no answer text or clip', () async {
+    pcAnswers((_) => {'ok': true, 'text': 'Znaczy: dzień dobry.'});
+    await relay.explain(script: fixtureScript(), index: 1, selection: 'x');
+    final result = written.single! as Map;
+    expect(result.keys, unorderedEquals(['ok', 'at', '_e2e']));
+    expect(jsonEncode(result), isNot(contains('dzień')));
+  });
+
+  test('locked: throws and sends nothing at all', () async {
+    key = null;
+    await expectLater(
+      relay.explain(script: fixtureScript(), index: 1, selection: 'x'),
+      throwsA(
+        isA<AssistantError>().having((e) => e.message, 'm', contains('kłódka')),
+      ),
+    );
+    expect(await relay.renderLine(script: fixtureScript(), index: 2), isNull);
+    expect(db.log, isEmpty);
+  });
+
+  test('an unsealed result (an older PC) is still read', () async {
+    pcAnswers((_) => {'ok': true, 'text': 'stary PC'}, seal: false);
+    expect(
+      await relay.explain(script: fixtureScript(), index: 1, selection: 'x'),
+      'stary PC',
+    );
+  });
+
+  test('a result that does not open is an error, never shown', () async {
+    // Sealed under another key: does not open with this phone's.
+    final other = RelaySealer(E2eCipher(List.filled(32, 9)));
+    db.onPut = (path, value) {
+      final rid = RegExp(r'^sufler/requests/(.+)$').firstMatch(path)![1];
+      final at = 'sufler/results/$rid';
+      unawaited(
+        other
+            .sealResult(at, {'ok': true, 'text': 'x'})
+            .then((r) => db.write(at, r)),
+      );
+    };
+    await expectLater(
+      relay.explain(script: fixtureScript(), index: 1, selection: 'x'),
+      throwsA(
+        isA<AssistantError>().having((e) => e.message, 'm', contains('nieczy')),
+      ),
+    );
+  });
+
   test('an error result throws its reason', () async {
     pcAnswers((_) => {'ok': false, 'error': 'claude timed out after 90 s'});
     await expectLater(
@@ -121,6 +202,7 @@ void main() {
         ),
         deviceId: () async => dev,
         session: session,
+        sealer: () async => sealer,
       );
       await expectLater(
         broken.explain(script: fixtureScript(), index: 1, selection: 'x'),

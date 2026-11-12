@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:sufler/assist/assistant.dart';
 import 'package:sufler/assist/pc_session.dart';
+import 'package:sufler/assist/relay_seal.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/transcribe_client.dart';
 import 'package:sufler/model/line_note.dart';
@@ -80,6 +81,7 @@ class Services {
     this.transcribe,
     this.openLink = openExternalLink,
     this.pcSession,
+    this.relayKey,
   });
 
   /// On-device persistence.
@@ -131,6 +133,9 @@ class Services {
 
   /// The phone's sign-in for the relay; null on desktop (no sign-in).
   final PcSession? pcSession;
+
+  /// The relay's e2e key (lock icon beside the sign-in); null on desktop.
+  final RelayKey? relayKey;
 }
 
 /// Makes [Services] available below it.

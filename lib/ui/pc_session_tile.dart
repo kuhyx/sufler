@@ -1,17 +1,25 @@
 import 'dart:async';
 
+import 'package:crdt_sync_flutter/crdt_sync_flutter.dart'
+    show E2ePassphraseButton;
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:sufler/assist/pc_session.dart';
+import 'package:sufler/assist/relay_seal.dart';
 
 /// "Połącz z PC": the one-time Google sign-in the phone needs before it can
-/// ask the PC (Claude, fresh voice clips) through Firebase.
+/// ask the PC (Claude, fresh voice clips) through Firebase. Once signed in,
+/// a lock icon shows whether the relay's e2e key is open; tapping it enters
+/// the shared crdt-sync passphrase (no text: crdt_sync_flutter's button).
 class PcSessionTile extends StatefulWidget {
-  /// Creates the tile for [session].
-  const new({required this.session, super.key});
+  /// Creates the tile for [session] (and [relayKey], when there is one).
+  const new({required this.session, this.relayKey, super.key});
 
   /// The phone's Firebase session.
   final PcSession session;
+
+  /// The relay's e2e key; null hides the lock.
+  final RelayKey? relayKey;
 
   @override
   State<PcSessionTile> createState() => _PcSessionTileState();
@@ -28,7 +36,17 @@ class _PcSessionTileState extends State<PcSessionTile> {
     unawaited(
       widget.session.signedIn().then((v) {
         if (mounted) setState(() => _signedIn = v);
+        if (v) _checkKey();
       }, onError: (_) {}),
+    );
+  }
+
+  /// Tries the key so the lock shows its state before the first request.
+  void _checkKey({bool again = false}) {
+    final key = widget.relayKey;
+    if (key == null) return;
+    unawaited(
+      (again ? key.retry() : key.sealer()).then((_) {}, onError: (_) {}),
     );
   }
 
@@ -46,6 +64,7 @@ class _PcSessionTileState extends State<PcSessionTile> {
       _signedIn = ok;
       _failed = !ok;
     });
+    if (ok) _checkKey();
   }
 
   @override
@@ -93,12 +112,20 @@ class _PcSessionTileState extends State<PcSessionTile> {
             alignment: AlignmentDirectional.centerStart,
             child: subtitle,
           ),
-          trailing: signedIn == false
-              ? FilledButton(
-                  onPressed: _busy ? null : _signIn,
-                  child: const Icon(Icons.link, semanticLabel: 'Połącz'),
-                )
-              : null,
+          trailing: switch ((signedIn, widget.relayKey)) {
+            (false, _) => FilledButton(
+              onPressed: _busy ? null : _signIn,
+              child: const Icon(Icons.link, semanticLabel: 'Połącz'),
+            ),
+            (true, final key?) => ValueListenableBuilder<bool>(
+              valueListenable: key.locked,
+              builder: (_, locked, _) => E2ePassphraseButton(
+                locked: locked,
+                onSaved: () => _checkKey(again: true),
+              ),
+            ),
+            _ => null,
+          },
         ),
       ],
     );

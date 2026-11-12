@@ -4,8 +4,10 @@
 /// `sufler/requests/{rid}` `{kind, payload, deviceId, ts}` and polls
 /// `sufler/results/{rid}` until the PC worker (`tts/sufler_tts/relay/`)
 /// answers `{ok, text | audioB64 | error}`, then deletes the result
-/// (DOCS-contract.md "Relay"). Polling, not a stream: one small GET a second
-/// for a request in flight is cheaper than porting tutor's SSE client.
+/// (DOCS-relay.md). Both are sealed with the shared e2e key
+/// (`relay_seal.dart`); without the key nothing is sent. Polling, not a
+/// stream: one small GET a second for a request in flight is cheaper than
+/// porting tutor's SSE client.
 library;
 
 import 'dart:async';
@@ -18,6 +20,7 @@ import 'package:sufler/assist/assist_payload.dart';
 import 'package:sufler/assist/assistant.dart';
 import 'package:sufler/assist/pc_session.dart';
 import 'package:sufler/assist/presence_poll.dart';
+import 'package:sufler/assist/relay_seal.dart';
 import 'package:sufler/assist/rtdb_client.dart';
 import 'package:sufler/model/json.dart';
 import 'package:sufler/model/script.dart';
@@ -45,6 +48,7 @@ class RelayAssistant implements Assistant {
     required this.rtdb,
     required this.deviceId,
     required this.session,
+    required this.sealer,
     this.pollEvery = const Duration(seconds: 1),
     this.explainTimeout = const Duration(seconds: 150),
     this.renderTimeout = const Duration(seconds: 180),
@@ -59,6 +63,9 @@ class RelayAssistant implements Assistant {
 
   /// The Firebase session; signed out means no relay.
   final PcSession session;
+
+  /// The e2e sealer; null while locked (then nothing is sent).
+  final Future<RelaySealer?> Function() sealer;
 
   /// How often a pending result is polled.
   final Duration pollEvery;
@@ -76,26 +83,39 @@ class RelayAssistant implements Assistant {
       await session.signedIn() || await session.signIn();
 
   /// Sends one request and waits for its result; null on timeout.
+  /// Throws [RelayLocked] without sending anything when there is no key.
   Future<Json?> _ask(String kind, Json payload, Duration timeout) async {
+    final seal = await sealer();
+    if (seal == null) throw const RelayLocked();
     final rid = newRequestId();
-    await rtdb.put('$relayRoot/requests/$rid', {
-      'kind': kind,
-      // A string: RTDB drops nulls and empty lists inside objects.
-      'payload': jsonEncode(payload),
-      'deviceId': await deviceId(),
-      'ts': serverTime,
-    });
+    final requestPath = '$relayRoot/requests/$rid';
+    final resultPath = '$relayRoot/results/$rid';
+    await rtdb.put(
+      requestPath,
+      await seal.sealRequest(requestPath, {
+        'kind': kind,
+        // A string: RTDB drops nulls and empty lists inside objects.
+        'payload': jsonEncode(payload),
+        'deviceId': await deviceId(),
+        'ts': serverTime,
+      }),
+    );
     final deadline = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(pollEvery);
-      final result = await rtdb.get('$relayRoot/results/$rid');
+      final result = await rtdb.get(resultPath);
       if (result is Map<String, Object?>) {
         try {
-          await rtdb.delete('$relayRoot/results/$rid');
+          await rtdb.delete(resultPath);
         } on RtdbError {
           // The PC's GC removes it after 24 h.
         }
-        return result;
+        try {
+          return await seal.open(resultPath, result);
+        } on FormatException {
+          // Tampered, or sealed with another key: never shown as is.
+          return const {'ok': false, 'error': 'nieczytelna odpowiedź'};
+        }
       }
     }
     // Withdrawn, so a PC that comes back later spends nothing on it.
@@ -124,6 +144,10 @@ class RelayAssistant implements Assistant {
         'explain',
         explainPayload(script, index, selection),
         explainTimeout,
+      );
+    } on RelayLocked {
+      throw const AssistantError(
+        'Szyfrowanie zablokowane: Ustawienia → Połącz z PC → kłódka.',
       );
     } on RtdbError catch (e) {
       throw AssistantError('Brak połączenia z bazą (${e.status ?? 'sieć'}).');
@@ -184,4 +208,10 @@ class RelayAssistant implements Assistant {
 
   @override
   Stream<bool> get pcOnline => _presence.stream;
+}
+
+/// No e2e key on this phone (no passphrase, a wrong one, or no header yet).
+class RelayLocked implements Exception {
+  /// Creates the error.
+  const new();
 }
