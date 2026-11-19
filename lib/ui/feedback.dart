@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Text-free snack bars and the delete confirmation (textgate): an icon and
 /// a colour on screen; the old sentence stays only as the spoken label.

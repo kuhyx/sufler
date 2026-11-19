@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sufler/rehearsal/run_take.dart';
 import 'package:sufler/rehearsal/timing_session.dart';
 import 'package:sufler/ui/spoken.dart';

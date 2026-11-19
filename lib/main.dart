@@ -1,6 +1,6 @@
 // coverage:ignore-file
 // Bootstrap only: wiring that cannot be exercised without a real app host.
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sufler/anki/export_apkg.dart';
 import 'package:sufler/assist/open_assistant.dart';
 import 'package:sufler/import/import_document.dart';

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:crdt_sync_flutter/crdt_sync_flutter.dart'
     show E2ePassphraseButton;
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sufler/assist/pc_session.dart';
 import 'package:sufler/assist/relay_seal.dart';
 

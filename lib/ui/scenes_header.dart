@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sufler/ui/learn_card.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
 import 'package:sufler/ui/script_tabs.dart';

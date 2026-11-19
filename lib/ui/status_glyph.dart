@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// An outcome as a tinted glyph instead of a sentence (textgate): a green
 /// check when [ok], else a red warning; [spoken] is read aloud only.

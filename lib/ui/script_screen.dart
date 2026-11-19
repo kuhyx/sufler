@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/audio/pack_check.dart';
 import 'package:sufler/model/script.dart';

@@ -6,17 +6,17 @@ requires-python = ">=3.14"
 dependencies = [
   "chatterbox-tts==0.1.7",
   # The relay's Firebase session, device id and e2e key (relay/), tutor's pin.
-  "crdt-sync @ git+https://github.com/kuhyx/utils@crdt-sync-v0.11.0#subdirectory=crdt-sync",
+  "crdt-sync @ git+https://github.com/kuhyx/utils@crdt-sync-v0.11.1#subdirectory=crdt-sync",
   "faster-whisper==1.2.1",
   "librosa==0.11.0",
-  "numpy==2.5.4",
+  "numpy==2.5.5",
   "nvidia-cublas-cu12==12.9.3.13",
   "torch==2.15.0",
   "torchaudio==2.11.1",
 ]
 
 [dependency-groups]
-dev = ["mypy==2.4.1", "pytest==9.2.0", "ruff==0.17.4"]
+dev = ["mypy==2.4.1", "pytest==9.2.0", "ruff==0.17.6"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

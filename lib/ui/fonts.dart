@@ -2,7 +2,7 @@
 /// never fetches one from a CDN.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The default text family. The web engine downloads "Roboto" at start-up
 /// unless a family of exactly this name is bundled.
