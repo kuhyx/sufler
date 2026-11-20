@@ -6,7 +6,7 @@ line is read aloud in Polish, then the app waits long enough for you to say
 yours. Export the same cue → line pairs as an Anki deck.
 
 Runs on Android and on the desktop (web build in a Chrome app window).
-Character voices are generated on the PC GPU with Chatterbox Multilingual
+Character voices are generated on the PC CPU with Chatterbox Multilingual
 (MIT); the phone falls back to the system Polish voice.
 
 Data contract: [DOCS-contract.md](DOCS-contract.md).
