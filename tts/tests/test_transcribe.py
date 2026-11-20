@@ -49,7 +49,7 @@ def stt() -> FakeTranscriber:
 @pytest.fixture
 def url(stt: FakeTranscriber, cache: ClipCache, tmp_path: Path) -> Iterator[str]:
     runner = JobRunner(FakeEngine(), cache, tmp_path / "packs")
-    server = make_server(runner, port=0, gpu=lambda: None, transcriber=stt)
+    server = make_server(runner, port=0, transcriber=stt)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     host, port = server.server_address[:2]
     yield f"http://{host!s}:{port}"
@@ -136,14 +136,16 @@ def test_model_failure_is_500(url: str, stt: FakeTranscriber, tmp_path: Path) ->
     assert "fake transcriber failure" in err["error"]
 
 
-def test_health_names_the_stt_model(url: str) -> None:
+def test_health_names_the_stt_model_and_each_device(url: str) -> None:
     with urllib.request.urlopen(f"{url}/health", timeout=5) as r:
-        assert json.loads(r.read())["stt"] == "fake-stt@1"
+        health = json.loads(r.read())
+    assert health["stt"] == "fake-stt@1"
+    assert health["devices"] == {"tts": "fake", "stt": "fake"}
 
 
 def test_without_transcriber_is_503(cache: ClipCache, tmp_path: Path) -> None:
     runner = JobRunner(FakeEngine(), cache, tmp_path / "packs")
-    server = make_server(runner, port=0, gpu=lambda: None)
+    server = make_server(runner, port=0)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     host, port = server.server_address[:2]
     try:
@@ -170,14 +172,14 @@ FAKE_STT = "sufler_tts.transcribe:FakeTranscriber"
 
 def test_process_transcriber_lazy_child_and_idle_unload(tmp_path: Path) -> None:
     stt = ProcessTranscriber(FAKE_STT, "fake-stt@1", idle_s=0.0, watch_every=None)
-    assert not stt.loaded
+    assert (stt.loaded, stt.device) == (False, None)
     audio = decode_audio(_clip(tmp_path, "wav"))
     result = stt.transcribe(audio, "pl")
-    assert stt.loaded
+    assert (stt.loaded, stt.device) == (True, "fake")
     assert result.text == "fake pl"
     assert result.speech_start == pytest.approx(0.5, abs=0.05)
     assert stt.reaper.check()
-    assert not stt.loaded
+    assert (stt.loaded, stt.device) == (False, "fake")  # last known device
     stt.transcribe(audio, "en")  # reloads
     assert stt.loaded
     stt.close()

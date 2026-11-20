@@ -36,6 +36,11 @@ class Engine(Protocol):
         """Output sample rate in Hz."""
         ...
 
+    @property
+    def device(self) -> str | None:
+        """Where the model runs (`cpu`, `vulkan:<GPU>`, ...); None if unknown."""
+        ...
+
     def synthesize(self, text: str, voice: Voice, seed: int) -> Audio:
         """Render one chunk of cleaned text."""
         ...
@@ -63,6 +68,11 @@ class FakeEngine:
     def sample_rate(self) -> int:
         """Same rate as Chatterbox."""
         return SAMPLE_RATE
+
+    @property
+    def device(self) -> str:
+        """Fixed fake device."""
+        return "fake"
 
     def synthesize(self, text: str, voice: Voice, seed: int) -> Audio:
         """Record the call and return a short sine."""

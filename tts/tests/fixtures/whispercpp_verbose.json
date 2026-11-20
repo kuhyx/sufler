@@ -1,0 +1,119 @@
+{
+  "task": "transcribe",
+  "language": "polish",
+  "duration": 3.799999952316284,
+  "text": " proszę otworzyć okno, ponieważ w tym pokoju jest bardzo dus\nzno.\n",
+  "segments": [
+    {
+      "id": 0,
+      "text": " proszę otworzyć okno, ponieważ w tym pokoju jest bardzo dus",
+      "start": 0.0,
+      "end": 3.5,
+      "words": [
+        {
+          "word": " proszę",
+          "start": 0.11,
+          "end": 0.49
+        },
+        {
+          "word": " ot",
+          "start": 0.49,
+          "end": 0.65
+        },
+        {
+          "word": "wor",
+          "start": 0.65,
+          "end": 0.86
+        },
+        {
+          "word": "zyć",
+          "start": 0.92,
+          "end": 1.12
+        },
+        {
+          "word": " ok",
+          "start": 1.12,
+          "end": 1.27
+        },
+        {
+          "word": "no",
+          "start": 1.48,
+          "end": 1.48
+        },
+        {
+          "word": ",",
+          "start": 1.58,
+          "end": 1.58
+        },
+        {
+          "word": " ponieważ",
+          "start": 1.58,
+          "end": 1.8800000000000001
+        },
+        {
+          "word": " w",
+          "start": 2.02,
+          "end": 2.05
+        },
+        {
+          "word": " tym",
+          "start": 2.05,
+          "end": 2.2
+        },
+        {
+          "word": " pok",
+          "start": 2.2,
+          "end": 2.35
+        },
+        {
+          "word": "o",
+          "start": 2.35,
+          "end": 2.39
+        },
+        {
+          "word": "ju",
+          "start": 2.39,
+          "end": 2.5
+        },
+        {
+          "word": " jest",
+          "start": 2.5,
+          "end": 2.79
+        },
+        {
+          "word": " bardzo",
+          "start": 2.79,
+          "end": 3.19
+        },
+        {
+          "word": " dus",
+          "start": 3.2,
+          "end": 3.4
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "text": "zno.",
+      "start": 3.5,
+      "end": 3.66,
+      "words": [
+        {
+          "word": "z",
+          "start": 3.5,
+          "end": 3.5
+        },
+        {
+          "word": "no",
+          "start": 3.66,
+          "end": 3.66
+        },
+        {
+          "word": ".",
+          "start": 3.66,
+          "end": 3.66
+        }
+      ]
+    }
+  ]
+}

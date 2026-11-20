@@ -25,7 +25,7 @@ from sufler_tts.server import make_server
 @pytest.fixture
 def base_url(engine: FakeEngine, cache: ClipCache, tmp_path: Path) -> Iterator[str]:
     runner = JobRunner(engine, cache, tmp_path / "packs")
-    server = make_server(runner, port=0, gpu=lambda: "Fake GPU")
+    server = make_server(runner, port=0)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     host, port = server.server_address[:2]
     yield f"http://{host!s}:{port}"
@@ -62,8 +62,8 @@ def test_health_and_voices(base_url: str) -> None:
     assert _get(f"{base_url}/health") == {
         "ok": True,
         "engine": "fake@1",
-        "gpu": "Fake GPU",
         "stt": None,
+        "devices": {"tts": "fake", "stt": None},
     }
     voices = _get(f"{base_url}/voices")
     assert {"id", "label", "gender"} <= set(voices[0])

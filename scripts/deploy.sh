@@ -27,7 +27,7 @@ readonly APP_ID="com.kuhy.sufler"
 readonly SERIAL="${ADB_SERIAL:-23181JEGR08034}"
 readonly CAPPED="$HOME/.claude/scripts/capped.sh"
 readonly PHONE_DEPLOY="$HOME/.claude/scripts/phone_deploy.sh"
-# Chatterbox + faster-whisper load onto the GPU before /health answers.
+# /health answers before any model loads; this covers a slow cold start.
 readonly TTS_WAIT_SECS=180
 
 log() { printf '[deploy] %s\n' "$*"; }
@@ -115,6 +115,9 @@ deploy_tts() {
     # unit runs from, or the relay stays off after the restart.
     log "tts: sync venv from uv.lock"
     uv sync --locked --directory "$LIVE/tts"
+    # The unit file is tracked (a symlink into the checkout): a pulled edit
+    # takes effect only after a reload.
+    systemctl --user daemon-reload
     log "tts: restart $UNIT"
     systemctl --user restart "$UNIT"
     local waited=0

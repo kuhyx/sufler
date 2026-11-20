@@ -7,7 +7,6 @@ dependencies = [
   "chatterbox-tts==0.1.7",
   # The relay's Firebase session, device id and e2e key (relay/), tutor's pin.
   "crdt-sync @ git+https://github.com/kuhyx/utils@crdt-sync-v0.11.1#subdirectory=crdt-sync",
-  "faster-whisper==1.2.1",
   "librosa==0.11.0",
   "numpy==2.5.5",
   "torch==2.15.0",

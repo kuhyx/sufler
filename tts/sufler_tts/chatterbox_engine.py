@@ -36,7 +36,7 @@ class ChatterboxEngine:
         install_pkg_resources_shim()  # must precede the chatterbox import
         # import_module: chatterbox ships no type information.
         mtl = importlib.import_module("chatterbox.mtl_tts")
-        self.device = device or default_device()
+        self.device: str = device or default_device()
         if not (WEIGHTS / "t3_mtl23ls_v2.safetensors").is_file():
             raise FileNotFoundError(f"no Chatterbox weights in {WEIGHTS}")
         # from_local, not from_pretrained: no Hugging Face hub lookup at runtime.

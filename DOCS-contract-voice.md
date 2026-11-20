@@ -17,14 +17,16 @@ language code, default `pl`.
  "segments": [{"start": 0.31, "end": 2.40, "text": "Piaskowe wilki nie jedzą krasnali."}],
  "words": [{"start": 0.31, "end": 0.78, "word": "Piaskowe"}, …],
  "speechStart": 0.31, "speechEnd": 2.40,
- "engine": "faster-whisper@1.2.1/large-v3-turbo"}
+ "engine": "whisper.cpp@1.9.5-dev/large-v3-turbo"}
 ```
 
 - Times are seconds from the start of the uploaded clip. `speechStart` /
   `speechEnd` are the first word's start and the last word's end (tighter than
-  the segment times); VAD drops leading and trailing silence first.
-- `words`: every recognised word with its own times (Whisper's word
-  timestamps; the word trimmed, punctuation kept). The app cuts a whole
+  the segment times). Silero VAD (500 ms min silence, 150 ms pad) finds
+  the speech spans first; each span is transcribed on its own and its times
+  shifted back onto the clip, so silence never reaches the model.
+- `words`: every recognised word with its own times (whisper.cpp token
+  times, word pieces joined into words; the word trimmed, punctuation kept). The app cuts a whole
   sung or spoken run into its lines by them; no key (older service) means
   no word times.
 - No speech found: `200` with `"text": ""`, `"segments": []`, `"words": []`,
@@ -42,12 +44,14 @@ language code, default `pl`.
 | 500 | `{"error": "<reason>"}` | model failed to load or run |
 | 503 | `{"error": "no STT"}` | service started without a transcriber |
 
-`GET /health` also reports `"stt": "<engine>"`. The model (faster-whisper
-`large-v3-turbo`, CTranslate2 fp16, MIT) loads on the first request in its own
-child process and exits after 10 min idle, independently of Chatterbox.
-Measured on the RTX 3090 with a ~4 s Polish clip: ~0.2 s warm, ~1.5 s cold
-(model load), WER 0.00 on three synthesised sentences, 7.0 GiB of VRAM with
-Chatterbox loaded as well.
+`GET /health` also reports `"stt": "<engine>"` and `"devices": {"tts": ..., "stt": ...}`:
+the device each model runs on (`cpu`, `vulkan:NVIDIA GeForce RTX 3090`),
+`null` until that model has loaded once since the service started. The model
+(whisper.cpp `ggml-large-v3-turbo`, fp16, MIT; Arch `whisper-cpp` +
+`ggml-vulkan`) loads on the first request: a child process runs
+`whisper-server` on 127.0.0.1:8792 and both exit after 10 min idle,
+independently of Chatterbox. A missing `whisper-server`, model file or Vulkan
+GPU is a 500 naming it.
 
 App side (`lib/audio/transcribe_client.dart`): the desktop build posts each
 "Nagraj czasy" / listening take as WAV to `/api/tts/transcribe?lang=pl` and

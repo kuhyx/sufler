@@ -12,9 +12,9 @@ FAKE = "sufler_tts.engine:FakeEngine"
 
 def test_child_starts_lazily_and_exits_on_close() -> None:
     engine = ProcessEngine(FAKE, "fake@1", watch_every=None)
-    assert not engine.loaded
+    assert (engine.loaded, engine.device) == (False, None)
     audio = engine.synthesize("Dzień dobry.", get_voice("f1"), 7)
-    assert engine.loaded
+    assert (engine.loaded, engine.device) == (True, "fake")  # the child's report
     assert audio.dtype.name == "float32"
     assert audio.shape == (1200,)
     engine.close()

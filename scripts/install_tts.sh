@@ -2,13 +2,15 @@
 
 # ============================================================================
 # Install the sufler voice service (tts/): Python 3.14 venv from uv.lock,
-# Chatterbox Multilingual weights, Polish Piper voices and the synthetic voice
-# prompts built from them, then links systemd/sufler-tts.service into the
+# whisper.cpp with its Vulkan backend (speech-to-text on the GPU, no CUDA),
+# Chatterbox Multilingual weights, the whisper.cpp model, Polish Piper voices
+# and the synthetic voice prompts built from them, then links systemd/sufler-tts.service into the
 # systemd --user unit dir and reloads it. Idempotent: re-running only fills
 # what is missing; downloads resume and are sha256-verified. User-level only.
 # Does NOT enable/start the unit:
 #   systemctl --user enable --now sufler-tts.service
-# Needs: uv, ffmpeg (libopus + rubberband), piper; installs the missing ones.
+# Needs: uv, ffmpeg (libopus + rubberband), piper, whisper-cpp + ggml-vulkan;
+# installs the missing ones.
 # ============================================================================
 
 set -euo pipefail
@@ -44,6 +46,15 @@ ensure_ffmpeg() {
     grep -q rubberband <<<"$filters" || die "ffmpeg lacks the rubberband filter"
 }
 
+ensure_whisper_cpp() {
+    # Arch extra/ (MIT); ggml-vulkan is whisper.cpp's GPU backend.
+    pacman -Q whisper-cpp ggml-vulkan >/dev/null 2>&1 && return
+    log "installing whisper-cpp + ggml-vulkan"
+    sudo -n pacman -S --needed --noconfirm whisper-cpp ggml-vulkan ||
+        die "run: sudo pacman -S --needed whisper-cpp ggml-vulkan"
+    have whisper-server || die "whisper-server still missing after install"
+}
+
 ensure_piper() {
     have piper && return
     log "installing piper-tts"
@@ -69,11 +80,12 @@ main() {
     ensure_uv
     ensure_ffmpeg
     ensure_piper
+    ensure_whisper_cpp
     log "syncing venv from uv.lock"
     uv sync --locked --directory "$TTS"
     log "fetching Chatterbox weights (~3.2 GB on first run; resumes)"
     python_step sufler_tts.fetch_assets weights
-    log "fetching faster-whisper large-v3-turbo (~1.6 GB on first run)"
+    log "fetching whisper.cpp large-v3-turbo + VAD (~1.6 GB on first run)"
     python_step sufler_tts.fetch_assets whisper
     log "fetching Polish Piper voices"
     python_step sufler_tts.fetch_assets piper

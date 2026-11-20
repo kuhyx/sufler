@@ -37,7 +37,7 @@ def serve(conn: Connection, factory: str) -> None:
     except Exception as exc:
         conn.send(("err", f"{type(exc).__name__}: {exc}"))
         return
-    conn.send(("ok", b""))
+    conn.send(("ok", engine.device))
     while (request := conn.recv()) is not None:
         text, voice, seed = request
         try:
@@ -64,6 +64,7 @@ class ProcessEngine:
         self._lock = threading.Lock()
         self._proc: BaseProcess | None = None
         self._conn: Connection | None = None
+        self._device: str | None = None
         self.reaper = IdleReaper(idle_s, self.close)
         self._stop = threading.Event()
         if watch_every is not None:
@@ -82,6 +83,11 @@ class ProcessEngine:
         return SAMPLE_RATE
 
     @property
+    def device(self) -> str | None:
+        """The loaded model's device, kept after an idle unload; None before."""
+        return self._device
+
+    @property
     def loaded(self) -> bool:
         """Whether a child (and so the model) is alive."""
         return self._proc is not None and self._proc.is_alive()
@@ -97,6 +103,7 @@ class ProcessEngine:
             proc.join(10)
             raise RuntimeError(f"engine failed to load: {payload!s}")
         self._proc, self._conn = proc, parent
+        self._device = payload if isinstance(payload, str) else None
         return parent
 
     def synthesize(self, text: str, voice: Voice, seed: int) -> Audio:

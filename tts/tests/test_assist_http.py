@@ -47,7 +47,7 @@ def base_url(
 ) -> Iterator[str]:
     runner = JobRunner(engine, cache, tmp_path / "packs")
     assist = Assist(engine, cache, tmp_path / "packs", explainer)
-    server = make_server(runner, port=0, gpu=lambda: None, assist=assist)
+    server = make_server(runner, port=0, assist=assist)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     host, port = server.server_address[:2]
     yield f"http://{host!s}:{port}"

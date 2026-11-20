@@ -36,7 +36,7 @@ def serve(conn: Connection, factory: str) -> None:
     except Exception as exc:
         conn.send(("err", f"{type(exc).__name__}: {exc}"))
         return
-    conn.send(("ok", None))
+    conn.send(("ok", transcriber.device))
     while (request := conn.recv()) is not None:
         raw, language = request
         try:
@@ -63,6 +63,7 @@ class ProcessTranscriber:
         self._lock = threading.Lock()
         self._proc: BaseProcess | None = None
         self._conn: Connection | None = None
+        self._device: str | None = None
         self.reaper = IdleReaper(idle_s, self.close)
         self._stop = threading.Event()
         if watch_every is not None:
@@ -74,6 +75,11 @@ class ProcessTranscriber:
     def name(self) -> str:
         """Model id, known without starting the child."""
         return self._name
+
+    @property
+    def device(self) -> str | None:
+        """The loaded model's device, kept after an idle unload; None before."""
+        return self._device
 
     @property
     def loaded(self) -> bool:
@@ -91,6 +97,7 @@ class ProcessTranscriber:
             proc.join(10)
             raise RuntimeError(f"transcriber failed to load: {payload!s}")
         self._proc, self._conn = proc, parent
+        self._device = payload if isinstance(payload, str) else None
         return parent
 
     def transcribe(self, audio: Audio, language: str) -> Transcript:

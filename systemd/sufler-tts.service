@@ -1,9 +1,10 @@
-# sufler voice service: Chatterbox Multilingual TTS on 127.0.0.1:8791.
+# sufler voice service: Chatterbox Multilingual TTS + whisper.cpp STT on
+# 127.0.0.1:8791 (whisper.cpp's own server is on 127.0.0.1:8792).
 # Install: scripts/install_tts.sh (deps, weights, prompts; links this unit into
 #          ~/.config/systemd/user and reloads; it does not enable it).
 # Enable:  systemctl --user enable --now sufler-tts.service
 [Unit]
-Description=sufler voice service (Chatterbox TTS, loopback :8791)
+Description=sufler voice service (Chatterbox TTS, whisper.cpp STT, loopback :8791)
 After=network.target
 
 [Service]
@@ -14,6 +15,8 @@ ExecStart=%h/src/sufler/tts/.venv/bin/python -m sufler_tts
 # the hub stays offline so nothing in chatterbox reaches the network at runtime.
 Environment=HF_HUB_OFFLINE=1
 Environment=PYTHONUNBUFFERED=1
+# CPU renders yield to the desktop and games.
+Nice=10
 Restart=on-failure
 RestartSec=5
 # The model lives in a child process that exits after 10 min idle; stopping

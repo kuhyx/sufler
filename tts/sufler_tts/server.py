@@ -1,6 +1,6 @@
 """Loopback-only HTTP API (stdlib: no web framework to pin and keep fresh).
 
-GET  /health            {ok, engine, gpu, stt}
+GET  /health            {ok, engine, stt, devices: {tts, stt}}
 GET  /voices            [{id, label, gender}]
 POST /render[?voices=c:v,...]  bare Script JSON -> {jobId}
 GET  /jobs/<id>         {done, total, state[, error]}
@@ -15,9 +15,6 @@ from __future__ import annotations
 import json
 import re
 import shutil
-import subprocess
-from collections.abc import Callable
-from functools import cache
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
@@ -34,21 +31,6 @@ MAX_BODY = 32 * 1024 * 1024
 _JOB = re.compile(r"/jobs/([0-9a-f]{32})")
 _PACK = re.compile(r"/packs/([^/]+)\.zip")
 _LANG = re.compile(r"[a-z]{2,3}")
-
-
-@cache
-def gpu_name() -> str | None:
-    """The GPU model per nvidia-smi (no torch in the server process)."""
-    if shutil.which("nvidia-smi") is None:
-        return None
-    out = subprocess.run(
-        ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=10,
-    )
-    return out.stdout.strip().splitlines()[0] if out.returncode == 0 else None
 
 
 def parse_render_request(body: object, query: str) -> tuple[object, object]:
@@ -84,7 +66,6 @@ def parse_language(query: str) -> str:
 
 def _handler(
     runner: JobRunner,
-    gpu: Callable[[], str | None],
     transcriber: Transcriber | None,
     assist: Assist,
 ) -> type[BaseHTTPRequestHandler]:
@@ -106,11 +87,16 @@ def _handler(
         def do_GET(self) -> None:
             path = self.path.split("?", 1)[0]
             if path == "/health":
+                # Each model's own device (null until it first loads): TTS
+                # and STT need not share one, so no single "gpu" field.
                 body = {
                     "ok": True,
                     "engine": runner.engine.name,
-                    "gpu": gpu(),
                     "stt": transcriber.name if transcriber else None,
+                    "devices": {
+                        "tts": runner.engine.device,
+                        "stt": transcriber.device if transcriber else None,
+                    },
                 }
                 self._json(HTTPStatus.OK, body)
             elif path == "/voices":
@@ -197,7 +183,6 @@ def _handler(
 def make_server(
     runner: JobRunner,
     port: int = PORT,
-    gpu: Callable[[], str | None] = gpu_name,
     transcriber: Transcriber | None = None,
     assist: Assist | None = None,
 ) -> ThreadingHTTPServer:
@@ -207,7 +192,7 @@ def make_server(
     /explain answers 503 (no explainer).
     """
     assist = assist or Assist(runner.engine, runner.cache, runner.packs, None)
-    handler = _handler(runner, gpu, transcriber, assist)
+    handler = _handler(runner, transcriber, assist)
     server = ThreadingHTTPServer((HOST, port), handler)
     server.daemon_threads = True
     return server

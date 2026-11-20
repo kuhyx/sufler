@@ -1,14 +1,14 @@
 """The transcriber seam: what POST /transcribe needs from a speech-to-text model.
 
-The real model lives in `whisper_engine.py` (imports ctranslate2) and is reached
+The real model lives in `whispercpp_engine.py` (whisper.cpp) and is reached
 through `process_stt.py`; tests use `FakeTranscriber` and never import it.
 """
 
 from __future__ import annotations
 
+import ctypes
 import subprocess
 from dataclasses import dataclass, field
-from importlib.metadata import version
 from typing import Any, Protocol
 
 import numpy as np
@@ -21,8 +21,17 @@ MODEL = "large-v3-turbo"
 
 
 def whisper_name() -> str:
-    """`faster-whisper@<ver>/<model>` from package metadata (no model import)."""
-    return f"faster-whisper@{version('faster-whisper')}/{MODEL}"
+    """`whisper.cpp@<ver>/<model>`, the version from libwhisper (no model load).
+
+    `missing` when libwhisper is not installed: the service still starts (TTS
+    works) and /transcribe reports the load error.
+    """
+    try:
+        lib = ctypes.CDLL("libwhisper.so.1")
+    except OSError:
+        return f"whisper.cpp@missing/{MODEL}"
+    lib.whisper_version.restype = ctypes.c_char_p
+    return f"whisper.cpp@{lib.whisper_version().decode()}/{MODEL}"
 
 
 @dataclass(frozen=True)
@@ -75,7 +84,12 @@ class Transcriber(Protocol):
 
     @property
     def name(self) -> str:
-        """`faster-whisper@<ver>/<model>`; goes into every response."""
+        """`whisper.cpp@<ver>/<model>`; goes into every response."""
+        ...
+
+    @property
+    def device(self) -> str | None:
+        """Where the model runs (`cpu`, `vulkan:<GPU>`, ...); None if unknown."""
         ...
 
     def transcribe(self, audio: Audio, language: str) -> Transcript:
@@ -123,6 +137,11 @@ class FakeTranscriber:
     def name(self) -> str:
         """Fixed fake id."""
         return "fake-stt@1"
+
+    @property
+    def device(self) -> str:
+        """Fixed fake device."""
+        return "fake"
 
     def transcribe(self, audio: Audio, language: str) -> Transcript:
         """Record the call; 'speech' is the span where the signal is loud."""

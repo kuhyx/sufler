@@ -21,7 +21,7 @@ from sufler_tts.server import PORT, make_server
 from sufler_tts.transcribe import whisper_name
 
 ENGINE_FACTORY = "sufler_tts.chatterbox_engine:ChatterboxEngine"
-STT_FACTORY = "sufler_tts.whisper_engine:WhisperTranscriber"
+STT_FACTORY = "sufler_tts.whispercpp_engine:WhisperCppTranscriber"
 
 
 def _exit(signum: int, frame: FrameType | None) -> None:

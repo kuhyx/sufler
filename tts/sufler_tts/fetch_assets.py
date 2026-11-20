@@ -26,9 +26,7 @@ from sufler_tts.assets import (
     PIPER_MODELS,
     PIPER_PREFIX,
     PROMPTS,
-    WHISPER_DIR,
-    WHISPER_REPO,
-    WHISPER_REVISION,
+    WHISPERCPP_DIR,
     prompt_path,
 )
 from sufler_tts.assets import WEIGHTS as WEIGHTS_DIR
@@ -50,18 +48,15 @@ WEIGHTS = {
         "7073fd9de919443ae88e0bd2449917a65fe54898a4413ed1edcc4b67f28bce8c"
     ),
 }
-# faster-whisper large-v3-turbo files at WHISPER_REVISION (sha256 of the bytes).
+# whisper.cpp files: name -> (repo@revision, sha256 of the bytes). 1.6 GB.
 WHISPER = {
-    "model.bin": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
-    "config.json": "b0253ea6c0d3bea6b1e19e91a02acfd3b53f4467362efcb5a3e6b16c9b3a9b7e",
-    "preprocessor_config.json": (
-        "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711"
+    "ggml-large-v3-turbo.bin": (
+        "ggerganov/whisper.cpp@5359861c739e955e79d9a303bcbc70fb988958b1",
+        "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69",
     ),
-    "tokenizer.json": (
-        "297b13372ac43916285644fb9687add3cc62ee2a1adb60da3dc25cc94c1871fd"
-    ),
-    "vocabulary.json": (
-        "c69260f2ab26d659b7c398f9a2b2b48ed0df16c3b47d7326782fd9cba71690c1"
+    "ggml-silero-v5.1.2.bin": (
+        "ggml-org/whisper-vad@9ffd54a1e1ee413ddf265af9913beaf518d1639b",
+        "29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf",
     ),
 }
 PIPER_REVISION = "5041a7a49ae5b3a0f30e6837769eb03fdbb231bd"
@@ -105,11 +100,12 @@ def fetch_weights(files: list[str]) -> None:
 
 
 def fetch_whisper(files: list[str]) -> None:
-    """Download the Whisper large-v3-turbo CT2 model into `assets.WHISPER_DIR`."""
-    base = f"{HF}/{WHISPER_REPO}/resolve/{WHISPER_REVISION}"
+    """Download the whisper.cpp model + VAD into `assets.WHISPERCPP_DIR`."""
     for name in files or list(WHISPER):
-        dest = WHISPER_DIR / name
-        if download.fetch(f"{base}/{name}", dest, WHISPER[name]):
+        repo, _, revision = WHISPER[name][0].partition("@")
+        dest = WHISPERCPP_DIR / name
+        url = f"{HF}/{repo}/resolve/{revision}/{name}"
+        if download.fetch(url, dest, WHISPER[name][1]):
             print(dest)
 
 
@@ -152,8 +148,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("what", choices=["weights", "whisper", "piper", "prompts"])
     parser.add_argument("names", nargs="*")
     args = parser.parse_args(argv)
-    sets = {"weights": WEIGHTS, "whisper": WHISPER, "piper": PIPER_QUALITY}
-    known = sets.get(args.what, {})
+    sets: dict[str, set[str]] = {
+        "weights": set(WEIGHTS),
+        "whisper": set(WHISPER),
+        "piper": set(PIPER_QUALITY),
+    }
+    known = sets.get(args.what, set())
     if unknown := [n for n in args.names if n not in known]:
         parser.error(f"unknown {args.what}: {', '.join(unknown)}")
     if args.what == "weights":
