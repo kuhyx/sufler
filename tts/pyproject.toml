@@ -10,9 +10,8 @@ dependencies = [
   "librosa==0.11.0",
   "numpy==2.5.5",
   "torch==2.15.0",
-  # 2.11.0: the CPU index has no 2.11.1+cpu, and the PyPI 2.11.1 wheel links
-  # libtorch_cuda.so / libcudart.so.13 (see dependency-freshness.allowlist.yaml).
-  "torchaudio==2.11.0",
+  # From the CPU index only: the PyPI wheel links libtorch_cuda.so/libcudart.
+  "torchaudio==2.11.1",
 ]
 
 # CPU-only torch: the PyPI wheels pull ~3 GB of proprietary nvidia-*/cuda-*
