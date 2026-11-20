@@ -53,6 +53,10 @@ the device each model runs on (`cpu`, `vulkan:NVIDIA GeForce RTX 3090`),
 `whisper-server` on a free loopback port and both exit after 10 min idle,
 independently of Chatterbox. A missing `whisper-server`, model file or Vulkan
 GPU is a 500 naming it.
+Measured 2026-11-20 on the RTX 3090 through the live `/transcribe` (5.5 s
+Ogg clip, sttcheck sentence 0): 0.46 s warm (p50 of 5, 0.46-0.47 s), 1.2-3.6 s
+cold (child + model load, 4 restarts); faster-whisper on CPU int8 took 3.9 s
+warm and 6.7 s cold. WER 0.00 on all three sttcheck sentences.
 
 App side (`lib/audio/transcribe_client.dart`): the desktop build posts each
 "Nagraj czasy" / listening take as WAV to `/api/tts/transcribe?lang=pl` and
