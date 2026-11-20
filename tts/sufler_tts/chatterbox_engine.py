@@ -1,4 +1,4 @@
-"""Chatterbox Multilingual on CUDA. Imported only inside the engine child."""
+"""Chatterbox Multilingual (CPU torch build; CUDA when present). Engine child only."""
 
 from __future__ import annotations
 
@@ -23,19 +23,24 @@ _RETRY_PREFIX = "\u2013 "
 log = logging.getLogger(__name__)
 
 
+def default_device() -> str:
+    """Pick `cuda` only when this torch build can use a GPU (the pinned one: cpu)."""
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
+
 class ChatterboxEngine:
     """Loads the model on construction; one set of conditionals per voice base."""
 
-    def __init__(self, device: str = "cuda") -> None:
+    def __init__(self, device: str | None = None) -> None:
         """Load the pinned weights directory (fetched by install_tts.sh)."""
         install_pkg_resources_shim()  # must precede the chatterbox import
         # import_module: chatterbox ships no type information.
         mtl = importlib.import_module("chatterbox.mtl_tts")
-        self.device = device
+        self.device = device or default_device()
         if not (WEIGHTS / "t3_mtl23ls_v2.safetensors").is_file():
             raise FileNotFoundError(f"no Chatterbox weights in {WEIGHTS}")
         # from_local, not from_pretrained: no Hugging Face hub lookup at runtime.
-        self.model = mtl.ChatterboxMultilingualTTS.from_local(WEIGHTS, device)
+        self.model = mtl.ChatterboxMultilingualTTS.from_local(WEIGHTS, self.device)
         self._conds: dict[str, object] = {"default": self.model.conds}
 
     @property
@@ -91,7 +96,8 @@ class ChatterboxEngine:
         return np.asarray(emb[0], dtype=np.float32)
 
     def close(self) -> None:
-        """Drop the model; the process exit then frees the CUDA context."""
+        """Drop the model; the process exit then frees any CUDA context."""
         self._conds.clear()
         del self.model
-        torch.cuda.empty_cache()
+        if self.device == "cuda":
+            torch.cuda.empty_cache()

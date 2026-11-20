@@ -21,3 +21,15 @@ exceptions:
       venv must be CPython 3.14 (tts/.python-version); uv otherwise picks 3.15
       and `uv sync --locked` fails on torch.
     blocked_by: "transitive:torch@2.15.0"
+  - ecosystem: pypi
+    package: torchaudio
+    pinned: "2.11.0"
+    latest_known: "2.11.1"
+    reason: >-
+      tts/ takes torch and torchaudio from the PyTorch CPU index (no proprietary
+      nvidia-*/cuda-* wheels, FOSS audit). That index stops at 2.11.0+cpu; the
+      PyPI 2.11.1 wheel links libtorch_cuda.so and libcudart.so.13, so it cannot
+      load against torch 2.15.0+cpu. Bump the day 2.11.1+cpu (or newer) appears
+      on https://download.pytorch.org/whl/cpu/torchaudio/.
+    blocked_by: "index:download.pytorch.org/whl/cpu"
+    expires: "2027-02-17"

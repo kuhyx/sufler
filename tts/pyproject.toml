@@ -10,10 +10,22 @@ dependencies = [
   "faster-whisper==1.2.1",
   "librosa==0.11.0",
   "numpy==2.5.5",
-  "nvidia-cublas-cu12==12.9.3.13",
   "torch==2.15.0",
-  "torchaudio==2.11.1",
+  # 2.11.0: the CPU index has no 2.11.1+cpu, and the PyPI 2.11.1 wheel links
+  # libtorch_cuda.so / libcudart.so.13 (see dependency-freshness.allowlist.yaml).
+  "torchaudio==2.11.0",
 ]
+
+# CPU-only torch: the PyPI wheels pull ~3 GB of proprietary nvidia-*/cuda-*
+# wheels (FOSS audit). Renders are batched and cached, so CPU speed is enough.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
 
 [dependency-groups]
 dev = ["mypy==2.4.1", "pytest==9.2.0", "ruff==0.17.6"]

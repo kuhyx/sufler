@@ -1,4 +1,4 @@
-"""GPU checks: voice samples + distinctness, and real-time factor / VRAM.
+"""Model checks: voice samples + distinctness, and real-time factor (+ VRAM on CUDA).
 
     python -m sufler_tts.voicecheck render f1 f2 ...   # samples + measurements
     python -m sufler_tts.voicecheck report             # exit 1 if not distinct
@@ -84,7 +84,9 @@ def rtf(engine: ChatterboxEngine) -> None:
     import torch  # noqa: PLC0415
 
     engine.synthesize("Rozgrzewka.", get_voice("m1"), 0)  # warm-up, not timed
-    torch.cuda.reset_peak_memory_stats()
+    cuda = engine.device == "cuda"  # the CPU torch build has no memory stats
+    if cuda:
+        torch.cuda.reset_peak_memory_stats()
     synth = audio_s = 0.0
     for vid, text in RTF_LINES:
         start = time.perf_counter()
@@ -92,11 +94,15 @@ def rtf(engine: ChatterboxEngine) -> None:
         synth += time.perf_counter() - start
         audio_s += len(audio) / engine.sample_rate
     gib = 2**30
+    vram = (
+        f" vram_peak_allocated={torch.cuda.max_memory_allocated() / gib:.2f}GiB"
+        f" vram_peak_reserved={torch.cuda.max_memory_reserved() / gib:.2f}GiB"
+        if cuda
+        else ""
+    )
     print(
         f"lines={len(RTF_LINES)} audio={audio_s:.1f}s synth={synth:.1f}s "
-        f"RTF={synth / audio_s:.2f} "
-        f"vram_peak_allocated={torch.cuda.max_memory_allocated() / gib:.2f}GiB "
-        f"vram_peak_reserved={torch.cuda.max_memory_reserved() / gib:.2f}GiB"
+        f"RTF={synth / audio_s:.2f} device={engine.device}{vram}"
     )
 
 

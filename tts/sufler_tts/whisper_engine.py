@@ -1,4 +1,4 @@
-"""faster-whisper large-v3-turbo on CUDA. Imported only inside the STT child."""
+"""faster-whisper large-v3-turbo (CPU int8; CUDA 12 when present). STT child only."""
 
 from __future__ import annotations
 
@@ -18,31 +18,55 @@ BEAM_SIZE = 2
 VAD = {"min_silence_duration_ms": 500, "speech_pad_ms": 150}
 
 
-def preload_cublas12() -> None:
-    """Make libcublas.so.12 loadable: ctranslate2 wheels are built for CUDA 12.
+def preload_cublas12() -> bool:
+    """Make libcublas.so.12 loadable; True when it is.
 
-    torch (Chatterbox) brings CUDA 13 and Arch's /opt/cuda is 13 too, so the
-    cu12 runtime comes from the pinned `nvidia-cublas-cu12` wheel. Loading it
-    by absolute path first lets ctranslate2's own dlopen("libcublas.so.12")
-    find the already-mapped library, with no LD_LIBRARY_PATH in the unit.
+    ctranslate2 wheels are built for CUDA 12, and the project ships no nvidia
+    wheels (FOSS: torch is the CPU build). A cu12 cuBLAS comes from an
+    `nvidia-cublas-cu12` wheel installed by hand (loaded by absolute path, so
+    ctranslate2's own dlopen finds it already mapped) or a system CUDA 12.
     """
-    spec = importlib.util.find_spec("nvidia.cublas")
-    if spec is None or not spec.submodule_search_locations:
-        return  # CPU-only box or a system CUDA 12: let ctranslate2 try
-    lib = Path(next(iter(spec.submodule_search_locations))) / "lib"
-    for name in ("libcublasLt.so.12", "libcublas.so.12"):
-        ctypes.CDLL(str(lib / name), mode=ctypes.RTLD_GLOBAL)
+    names = ("libcublasLt.so.12", "libcublas.so.12")
+    try:
+        spec = importlib.util.find_spec("nvidia.cublas")
+    except ModuleNotFoundError:  # no `nvidia` namespace package at all
+        spec = None
+    if spec is not None and spec.submodule_search_locations:
+        lib = Path(next(iter(spec.submodule_search_locations))) / "lib"
+        paths = [str(lib / name) for name in names]
+    else:
+        paths = list(names)
+    try:
+        for path in paths:
+            ctypes.CDLL(path, mode=ctypes.RTLD_GLOBAL)
+    except OSError:
+        return False
+    return True
+
+
+def default_device() -> str:
+    """Pick `cuda` only with a cu12 cuBLAS AND a visible GPU, else `cpu`.
+
+    ctranslate2 counts GPUs through the driver even when cuBLAS 12 is
+    missing, so the count alone would pick a device that fails on first use.
+    """
+    if not preload_cublas12():
+        return "cpu"
+    ct2 = importlib.import_module("ctranslate2")
+    return "cuda" if ct2.get_cuda_device_count() > 0 else "cpu"
 
 
 class WhisperTranscriber:
     """Loads the pinned CT2 weights on construction (fetched by fetch_assets)."""
 
-    def __init__(self, device: str = "cuda") -> None:
-        """Load fp16 weights from `assets.WHISPER_DIR`; no hub lookup."""
+    def __init__(self, device: str | None = None) -> None:
+        """Load the weights from `assets.WHISPER_DIR` (fp16 on GPU, int8 on CPU)."""
         if not (WHISPER_DIR / "model.bin").is_file():
             raise FileNotFoundError(f"no Whisper weights in {WHISPER_DIR}")
+        device = device or default_device()
         compute = "float16" if device == "cuda" else "int8"
-        preload_cublas12()
+        if device == "cuda":
+            preload_cublas12()  # an explicit "cuda" skipped default_device()
         # import_module: faster-whisper ships no type information.
         whisper = importlib.import_module("faster_whisper")
         self.model = whisper.WhisperModel(
@@ -97,5 +121,5 @@ class WhisperTranscriber:
         return Transcript(text, out, start, end, self.name, words)
 
     def close(self) -> None:
-        """Drop the model; the process exit then frees the CUDA context."""
+        """Drop the model; the process exit then frees any CUDA context."""
         del self.model
