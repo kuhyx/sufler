@@ -116,9 +116,12 @@ def test_transcribes_with_words_on_the_original_timeline(
     # "dus" + "zno." came back as two segments: one segment, one word.
     assert [(s.start, s.end, s.text) for s in result.segments] == [(1.5, 5.16, TEXT)]
     assert [w.word for w in result.words] == TEXT.split()
-    assert (result.words[0].start, result.words[0].end) == (1.61, 1.99)
-    assert (result.words[2].word, result.words[2].start) == ("okno,", 2.62)
-    assert (result.speech_start, result.speech_end) == (1.61, 5.16)
+    # Starts: the first piece's token time, then the DTW end of the piece
+    # before; ends: DTW of the last non-punctuation piece ("duszno.": "no").
+    assert (result.words[0].start, result.words[0].end) == (1.61, 1.82)
+    assert (result.words[2].word, result.words[2].start) == ("okno,", 2.34)
+    assert (result.words[3].word, result.words[3].start) == ("ponieważ", 3.0)
+    assert (result.speech_start, result.speech_end) == (1.61, 4.86)
     sent = [json.loads(line) for line in log.read_text().splitlines()]
     assert [(r["language"], r["response_format"], r["riff"]) for r in sent] == [
         ("pl", "verbose_json", True)

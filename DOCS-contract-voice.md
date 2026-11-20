@@ -25,8 +25,9 @@ language code, default `pl`.
   the segment times). Silero VAD (500 ms min silence, 150 ms pad) finds
   the speech spans first; each span is transcribed on its own and its times
   shifted back onto the clip, so silence never reaches the model.
-- `words`: every recognised word with its own times (whisper.cpp token
-  times, word pieces joined into words; the word trimmed, punctuation kept). The app cuts a whole
+- `words`: every recognised word with its own times (whisper.cpp pieces
+  joined into words, timed by its DTW alignment; the word trimmed,
+  punctuation kept). The app cuts a whole
   sung or spoken run into its lines by them; no key (older service) means
   no word times.
 - No speech found: `200` with `"text": ""`, `"segments": []`, `"words": []`,

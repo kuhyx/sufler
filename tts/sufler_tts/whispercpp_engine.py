@@ -12,7 +12,6 @@ transcribed on its own, and every time is shifted by its span start.
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import re
@@ -21,16 +20,13 @@ import subprocess
 import tempfile
 import time
 import urllib.request
-import uuid
-import wave
 from pathlib import Path
 from typing import Any
-
-import numpy as np
 
 from sufler_tts.assets import WHISPERCPP_DIR
 from sufler_tts.engine import Audio
 from sufler_tts.transcribe import STT_RATE, Segment, Transcript, Word, whisper_name
+from sufler_tts.whispercpp_io import multipart, parse, wav_bytes
 
 SERVER = "whisper-server"
 VAD = "whisper-vad-speech-segments"
@@ -39,6 +35,9 @@ MODEL_FILE = "ggml-large-v3-turbo.bin"
 VAD_FILE = "ggml-silero-v5.1.2.bin"
 PORT = 8792  # loopback; the service itself is on 8791
 BEAM_SIZE = 2
+# DTW word times (whispercpp_io._words) need flash attention off: ~0.1 s more
+# per request on the 3090.
+DTW_ARGS = ["-dtw", "large.v3.turbo", "-nfa"]
 # Lines are separated by short pauses: split at 500 ms of silence, pad 150 ms.
 VAD_ARGS = ["-vsd", "500", "-vp", "150"]
 LOAD_TIMEOUT_S = 60.0
@@ -75,62 +74,6 @@ def _tools() -> dict[str, str]:
     return {name: path for name, path in found.items() if path}
 
 
-def _wav(audio: Audio) -> bytes:
-    pcm = (np.clip(audio, -1.0, 1.0) * 32767).astype("<i2")
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(STT_RATE)
-        w.writeframes(pcm.tobytes())
-    return buf.getvalue()
-
-
-def _multipart(fields: dict[str, str], wav: bytes) -> tuple[bytes, str]:
-    boundary = uuid.uuid4().hex
-    parts = [
-        f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'
-        for k, v in fields.items()
-    ]
-    head = (
-        f"--{boundary}\r\nContent-Disposition: form-data; "
-        'name="file"; filename="clip.wav"\r\nContent-Type: audio/wav\r\n\r\n'
-    )
-    body = "".join(parts).encode() + head.encode() + wav
-    return body + f"\r\n--{boundary}--\r\n".encode(), boundary
-
-
-def parse(body: dict[str, Any], offset: float) -> tuple[list[Segment], list[Word]]:
-    """verbose_json -> segments and whole words, shifted by `offset` seconds.
-
-    whisper.cpp's `words` are BPE pieces: one with a leading space starts a
-    word, the rest (punctuation too) extend it, as faster-whisper's words did.
-    A segment that starts mid-word ("dus" | "zno.") is merged into the last.
-    """
-    segs: list[list[Any]] = []
-    pieces: list[list[Any]] = []
-    for seg in body.get("segments", []):
-        text = seg["text"]
-        if segs and text[:1] not in {" ", ""}:
-            segs[-1][1], segs[-1][2] = seg["end"], segs[-1][2] + text
-        else:
-            segs.append([seg["start"], seg["end"], text])
-        for w in seg.get("words", []):
-            if w["word"].startswith("[_"):
-                continue  # special tokens ([_BEG_], [_TT_n])
-            if pieces and not w["word"].startswith(" "):
-                pieces[-1][1], pieces[-1][2] = w["end"], pieces[-1][2] + w["word"]
-            else:
-                pieces.append([w["start"], w["end"], w["word"]])
-
-    def at(t: float) -> float:
-        return round(t + offset, 2)
-
-    segments = [Segment(at(a), at(b), t.strip()) for a, b, t in segs if t.strip()]
-    words = [Word(at(a), at(b), t.strip()) for a, b, t in pieces if t.strip()]
-    return segments, words
-
-
 class WhisperCppTranscriber:
     """Starts `whisper-server` with the model on construction; `close` ends it."""
 
@@ -154,7 +97,7 @@ class WhisperCppTranscriber:
             "--port",
             str(port),
         ]
-        cmd += ["-m", str(model), "-bs", str(BEAM_SIZE), "-mc", "0"]
+        cmd += ["-m", str(model), "-bs", str(BEAM_SIZE), "-mc", "0", *DTW_ARGS]
         with self._log.open("wb") as log:
             self.server = subprocess.Popen(
                 cmd,
@@ -200,7 +143,7 @@ class WhisperCppTranscriber:
 
     def _spans(self, audio: Audio) -> list[tuple[float, float]]:
         clip = self._tmp / "clip.wav"
-        clip.write_bytes(_wav(audio))
+        clip.write_bytes(wav_bytes(audio))
         cmd = [self._vad_bin, "-np", "-vm", str(self._vad_model), *VAD_ARGS]
         out = subprocess.run(
             [*cmd, "-f", str(clip)],
@@ -214,7 +157,7 @@ class WhisperCppTranscriber:
 
     def _decode(self, audio: Audio, language: str) -> dict[str, Any]:
         fields = {"language": language, "response_format": "verbose_json"}
-        body, boundary = _multipart(fields, _wav(audio))
+        body, boundary = multipart(fields, wav_bytes(audio))
         request = urllib.request.Request(f"{self._url}/inference", body)
         request.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
         with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as r:

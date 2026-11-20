@@ -13,82 +13,98 @@
         {
           "word": " proszę",
           "start": 0.11,
-          "end": 0.49
+          "end": 0.49,
+          "t_dtw": 32
         },
         {
           "word": " ot",
           "start": 0.49,
-          "end": 0.65
+          "end": 0.65,
+          "t_dtw": 56
         },
         {
           "word": "wor",
           "start": 0.65,
-          "end": 0.86
+          "end": 0.86,
+          "t_dtw": 72
         },
         {
           "word": "zyć",
           "start": 0.92,
-          "end": 1.12
+          "end": 1.12,
+          "t_dtw": 84
         },
         {
           "word": " ok",
           "start": 1.12,
-          "end": 1.27
+          "end": 1.27,
+          "t_dtw": 108
         },
         {
           "word": "no",
           "start": 1.48,
-          "end": 1.48
+          "end": 1.48,
+          "t_dtw": 122
         },
         {
           "word": ",",
           "start": 1.58,
-          "end": 1.58
+          "end": 1.58,
+          "t_dtw": 150
         },
         {
           "word": " ponieważ",
           "start": 1.58,
-          "end": 1.8800000000000001
+          "end": 1.8800000000000001,
+          "t_dtw": 182
         },
         {
           "word": " w",
           "start": 2.02,
-          "end": 2.05
+          "end": 2.06,
+          "t_dtw": 198
         },
         {
           "word": " tym",
-          "start": 2.05,
-          "end": 2.2
+          "start": 2.06,
+          "end": 2.24,
+          "t_dtw": 210
         },
         {
           "word": " pok",
-          "start": 2.2,
-          "end": 2.35
+          "start": 2.33,
+          "end": 2.44,
+          "t_dtw": 232
         },
         {
           "word": "o",
-          "start": 2.35,
-          "end": 2.39
+          "start": 2.44,
+          "end": 2.5,
+          "t_dtw": 244
         },
         {
           "word": "ju",
-          "start": 2.39,
-          "end": 2.5
+          "start": 2.5,
+          "end": 2.58,
+          "t_dtw": 248
         },
         {
           "word": " jest",
-          "start": 2.5,
-          "end": 2.79
+          "start": 2.64,
+          "end": 2.84,
+          "t_dtw": 264
         },
         {
           "word": " bardzo",
-          "start": 2.79,
-          "end": 3.19
+          "start": 2.87,
+          "end": 3.19,
+          "t_dtw": 294
         },
         {
           "word": " dus",
-          "start": 3.2,
-          "end": 3.4
+          "start": 3.24,
+          "end": 3.41,
+          "t_dtw": 314
         }
       ]
     },
@@ -101,17 +117,20 @@
         {
           "word": "z",
           "start": 3.5,
-          "end": 3.5
+          "end": 3.5,
+          "t_dtw": 324
         },
         {
           "word": "no",
           "start": 3.66,
-          "end": 3.66
+          "end": 3.66,
+          "t_dtw": 336
         },
         {
           "word": ".",
           "start": 3.66,
-          "end": 3.66
+          "end": 3.66,
+          "t_dtw": 364
         }
       ]
     }
