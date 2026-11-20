@@ -13,6 +13,7 @@ import importlib
 import importlib.util
 import types
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 import torch
@@ -23,7 +24,7 @@ from sufler_tts import chatterbox_engine, whisper_engine
 class FakeTTS:
     """Stands in for `ChatterboxMultilingualTTS`; records the load device."""
 
-    devices: list[str] = []  # noqa: RUF012 - class-level call log
+    devices: ClassVar[list[str]] = []  # class-level call log
 
     def __init__(self) -> None:
         self.conds = object()
