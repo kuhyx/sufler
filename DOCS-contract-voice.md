@@ -50,7 +50,7 @@ the device each model runs on (`cpu`, `vulkan:NVIDIA GeForce RTX 3090`),
 `null` until that model has loaded once since the service started. The model
 (whisper.cpp `ggml-large-v3-turbo`, fp16, MIT; Arch `whisper-cpp` +
 `ggml-vulkan`) loads on the first request: a child process runs
-`whisper-server` on 127.0.0.1:8792 and both exit after 10 min idle,
+`whisper-server` on a free loopback port and both exit after 10 min idle,
 independently of Chatterbox. A missing `whisper-server`, model file or Vulkan
 GPU is a 500 naming it.
 

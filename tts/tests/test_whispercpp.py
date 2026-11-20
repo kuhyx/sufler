@@ -175,7 +175,7 @@ def test_server_without_a_gpu_or_model_fails_visibly(
 
 @pytest.mark.usefixtures("models", "log")
 def test_close_stops_the_server() -> None:
-    stt = WhisperCppTranscriber(port=_free_port())
+    stt = WhisperCppTranscriber()  # picks a free port itself
     proc = stt.server
     stt.close()
     assert proc.poll() is not None

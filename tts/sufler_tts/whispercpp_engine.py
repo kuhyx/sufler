@@ -16,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import tempfile
 import time
@@ -33,7 +34,6 @@ VAD = "whisper-vad-speech-segments"
 MODEL_DIR = WHISPERCPP_DIR
 MODEL_FILE = "ggml-large-v3-turbo.bin"
 VAD_FILE = "ggml-silero-v5.1.2.bin"
-PORT = 8792  # loopback; the service itself is on 8791
 BEAM_SIZE = 2
 # DTW word times (whispercpp_io._words) need flash attention off: ~0.1 s more
 # per request on the 3090.
@@ -63,6 +63,14 @@ def _tied_to_parent() -> list[str]:
     return [setpriv, "--pdeathsig", "TERM"] if setpriv else []
 
 
+def _free_port() -> int:
+    """A loopback port nothing listens on now (fixed ones collided: e2e)."""
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port: int = s.getsockname()[1]
+    return port
+
+
 def _tools() -> dict[str, str]:
     found = {name: shutil.which(name) for name in (SERVER, VAD)}
     missing = [name for name, path in found.items() if path is None]
@@ -77,7 +85,7 @@ def _tools() -> dict[str, str]:
 class WhisperCppTranscriber:
     """Starts `whisper-server` with the model on construction; `close` ends it."""
 
-    def __init__(self, port: int = PORT) -> None:
+    def __init__(self, port: int | None = None) -> None:
         """Check tools and model files, start the server, wait for its model."""
         tools = _tools()
         self._vad_bin = tools[VAD]
@@ -86,6 +94,7 @@ class WhisperCppTranscriber:
             if not path.is_file():
                 raise FileNotFoundError(f"no {path}: run scripts/install_tts.sh")
         self._vad_model = vad
+        port = port or _free_port()
         self._url = f"http://127.0.0.1:{port}"
         self._tmp = Path(tempfile.mkdtemp(prefix="sufler-stt-"))
         self._log = self._tmp / "whisper-server.log"

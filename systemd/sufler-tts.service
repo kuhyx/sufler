@@ -1,5 +1,5 @@
 # sufler voice service: Chatterbox Multilingual TTS + whisper.cpp STT on
-# 127.0.0.1:8791 (whisper.cpp's own server is on 127.0.0.1:8792).
+# 127.0.0.1:8791 (whisper.cpp's own server: a free loopback port).
 # Install: scripts/install_tts.sh (deps, weights, prompts; links this unit into
 #          ~/.config/systemd/user and reloads; it does not enable it).
 # Enable:  systemctl --user enable --now sufler-tts.service
