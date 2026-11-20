@@ -2,7 +2,7 @@
 
 Same reasoning as `process_engine.py`: only ending the process hands the whole
 GPU back to games. A separate child (not the Chatterbox one) lets each model
-load and unload on its own clock, and keeps the server free of ctranslate2.
+load and unload on its own clock, and keeps whisper-server out of the server process.
 """
 
 from __future__ import annotations
