@@ -21,6 +21,16 @@ readonly DEFAULT_STAGES=(prep dart kotlin assemble)
 
 die() { printf '[build_apk] FAIL: %s\n' "$*" >&2; exit 1; }
 
+# Exit 75: build queue full; a rerun keeps its place in the queue.
+run_stage() {
+    local rc
+    while :; do
+        rc=0
+        "$STAGE_TOOL" "$REPO" "$1" || rc=$?
+        ((rc == 75)) || return "$rc"
+    done
+}
+
 main() {
     local stages=("$@") stage start apk
     ((${#stages[@]})) || stages=("${DEFAULT_STAGES[@]}")
@@ -40,7 +50,7 @@ main() {
         if [[ $stage == assemble && -d $REPO/build/app/outputs ]]; then
             find "$REPO/build/app/outputs" -name '*.apk' -delete
         fi
-        "$STAGE_TOOL" "$REPO" "$stage" || die "stage $stage exit $?"
+        run_stage "$stage" || die "stage $stage exit $?"
         printf '[build_apk] %s %ds\n' "$stage" "$((SECONDS - start))"
     done
     # Single-stage calls (one tool call per stage) only print the APK at the end.

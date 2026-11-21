@@ -130,16 +130,15 @@ deploy_tts() {
     check_tts
 }
 
-# The project's org.gradle.jvmargs as a -D system property for gradlew.
-# ~/.gradle/gradle.properties (-Xmx5120m on kuhy's PC) outranks the project
-# file, so without this the Gradle JVM grew to 3.8 GiB and the 4 GiB capped
-# scope OOM-killed the release build (2026-11-21). A system property outranks
-# both. gradlew evals GRADLE_OPTS, so the inner quotes keep the spaces.
-gradle_opts_with_project_jvmargs() {
-    local args
-    args="$(sed -n 's/^org\.gradle\.jvmargs=//p' "$LIVE/android/gradle.properties")"
-    [[ -n $args ]] || die "phone: no org.gradle.jvmargs in android/gradle.properties"
-    printf '%s -Dorg.gradle.jvmargs="%s"' "${GRADLE_OPTS:-}" "$args"
+# Runs one phone_deploy stage; exit 75 means the build queue is full and a
+# rerun keeps its place, so rerun until it is admitted.
+phone_stage() {
+    local rc
+    while :; do
+        rc=0
+        "$PHONE_DEPLOY" "$LIVE" --release --stage "$1" || rc=$?
+        ((rc == 75)) || return "$rc"
+    done
 }
 
 deploy_phone() {
@@ -150,13 +149,13 @@ deploy_phone() {
     # One call per stage: a one-shot release build holds a build slot ~73 s;
     # each stage reuses the warm gradle daemon and stays under 60 s. Not
     # wrapped in capped(): each gradle client caps itself, and an outer scope
-    # would kill the warm daemon when the stage ends.
-    local stage gradle_opts
-    gradle_opts="$(gradle_opts_with_project_jvmargs)"
+    # would kill the warm daemon when the stage ends. The daemon pins its own
+    # heap (-Dorg.gradle.jvmargs in lib/phone_deploy_daemon.sh), which outranks
+    # ~/.gradle/gradle.properties' -Xmx5120m that OOM-killed the one-shot build.
+    local stage
     for stage in prep dart kotlin assemble install; do
         log "phone: stage $stage"
-        GRADLE_OPTS="$gradle_opts" "$PHONE_DEPLOY" "$LIVE" --release --stage "$stage" \
-            || die "phone: phone_deploy.sh --stage $stage exit $?"
+        phone_stage "$stage" || die "phone: phone_deploy.sh --stage $stage exit $?"
     done
     after="$(phone_version_code)"
     if [[ -z $after ]] || ((after <= ${before:-0})); then
