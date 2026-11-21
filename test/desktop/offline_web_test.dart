@@ -73,4 +73,36 @@ void main() {
     expect(covered, containsAll('Żółć♪'.runes));
     expect(missing, isEmpty);
   });
+
+  test('no local script runs a one-shot release APK build', () {
+    final dirs = [Directory('scripts'), Directory('packaging')];
+    for (final dir in dirs) {
+      if (!dir.existsSync()) continue;
+      for (final f in dir.listSync(recursive: true).whereType<File>()) {
+        // Skip binary files (images, etc.)
+        try {
+          final lines = f.readAsLinesSync();
+          for (final line in lines) {
+            final trimmed = line.trimLeft();
+            if (trimmed.startsWith('#')) continue;
+            if (line.contains('echo')) continue;
+            expect(
+              line,
+              isNot(contains('flutter build apk')),
+              reason: '${f.path} must not contain a one-shot release build',
+            );
+          }
+        } on FileSystemException {
+          // Not a text file (e.g. PNG icon) — ignore.
+        }
+      }
+    }
+    final buildApkScript = File('scripts/build_apk.sh');
+    expect(
+      buildApkScript.existsSync(),
+      isTrue,
+      reason: 'staged build script missing',
+    );
+    expect(buildApkScript.readAsStringSync(), contains('ci_apk_stage.sh'));
+  });
 }
