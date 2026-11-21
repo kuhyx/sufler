@@ -34,6 +34,12 @@ main() {
     fi
     for stage in "${stages[@]}"; do
         start=$SECONDS
+        # With no source change gradle leaves the old APK untouched and
+        # ci_apk_stage's "APK newer than prep" guard fails; drop it so
+        # assemble repackages (or restores it from the build cache).
+        if [[ $stage == assemble && -d $REPO/build/app/outputs ]]; then
+            find "$REPO/build/app/outputs" -name '*.apk' -delete
+        fi
         "$STAGE_TOOL" "$REPO" "$stage" || die "stage $stage exit $?"
         printf '[build_apk] %s %ds\n' "$stage" "$((SECONDS - start))"
     done
