@@ -6,6 +6,7 @@
 - lint: `flutter analyze`
 - coverage: `flutter test -j 4 --reporter=compact --coverage`
 - coverage-gaps: `coverage-gaps coverage/lcov.info`
+- build-apk: `scripts/build_apk.sh prep`, then `dart`, `kotlin`, `assemble` (one call each)
 - deploy: `scripts/deploy.sh`
 
 `-j 4`: each widget-test process (test/ui) peaks ~300 MB; default -j (=cores)
@@ -15,6 +16,10 @@ exceeds the 2 GiB `capped.sh` ceiling and a flutter_tester is OOM-killed
 `deploy` pulls ~/src/sufler (the TTS unit runs from it), installs the desktop
 package, restarts `sufler-tts` and installs the release APK on the Pixel
 (`install -r` only); `--health` runs just the checks.
+
+Never run a one-shot `flutter build apk --release`: it holds a build slot
+~73 s (over the 60 s cap). `scripts/build_apk.sh` and `deploy` build in
+warm-daemon stages, each under 60 s.
 
 ## Project rules
 

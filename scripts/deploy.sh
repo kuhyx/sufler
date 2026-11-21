@@ -7,7 +7,8 @@
 #   2. desktop: packaging/install_arch.sh (web build + wrapper -> pacman pkg).
 #   3. tts: link the unit if missing, uv sync the venv, restart it, wait
 #      for /health ok.
-#   4. phone: release build + `adb install -r` via phone_deploy.sh (never
+#   4. phone: staged release build (prep, dart, kotlin, assemble) +
+#      `adb install -r` via phone_deploy.sh --stage (never
 #      uninstall, never pm clear), then check the new versionCode landed.
 # Exits non-zero unless every health check passes. Idempotent.
 #
@@ -146,8 +147,17 @@ deploy_phone() {
     adb -s "$SERIAL" get-state >/dev/null 2>&1 || die "phone: $SERIAL unreachable"
     before="$(phone_version_code)"
     log "phone: release build + install -r (installed versionCode ${before:-none})"
-    GRADLE_OPTS="$(gradle_opts_with_project_jvmargs)" \
-        capped "$PHONE_DEPLOY" "$LIVE" --release || die "phone: phone_deploy.sh exit $?"
+    # One call per stage: a one-shot release build holds a build slot ~73 s;
+    # each stage reuses the warm gradle daemon and stays under 60 s. Not
+    # wrapped in capped(): each gradle client caps itself, and an outer scope
+    # would kill the warm daemon when the stage ends.
+    local stage gradle_opts
+    gradle_opts="$(gradle_opts_with_project_jvmargs)"
+    for stage in prep dart kotlin assemble install; do
+        log "phone: stage $stage"
+        GRADLE_OPTS="$gradle_opts" "$PHONE_DEPLOY" "$LIVE" --release --stage "$stage" \
+            || die "phone: phone_deploy.sh --stage $stage exit $?"
+    done
     after="$(phone_version_code)"
     if [[ -z $after ]] || ((after <= ${before:-0})); then
         die "phone: versionCode ${after:-none} did not move past ${before:-none}"
