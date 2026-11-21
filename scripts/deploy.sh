@@ -130,14 +130,22 @@ deploy_tts() {
     check_tts
 }
 
-# Runs one phone_deploy stage; exit 75 means the build queue is full and a
-# rerun keeps its place, so rerun until it is admitted.
+# Runs one phone_deploy stage. Exit 75: build queue full, a rerun keeps its
+# place. Exit 48: machine overloaded (loadavg), retry once it drops; bounded
+# so a stuck load fails the deploy instead of hanging it.
+readonly OVERLOAD_RETRIES=15 OVERLOAD_WAIT_SECS=20
 phone_stage() {
-    local rc
+    local rc overloads=0
     while :; do
         rc=0
         "$PHONE_DEPLOY" "$LIVE" --release --stage "$1" || rc=$?
-        ((rc == 75)) || return "$rc"
+        case "$rc" in
+            75) ;;
+            48)
+                ((++overloads <= OVERLOAD_RETRIES)) || return "$rc"
+                sleep "$OVERLOAD_WAIT_SECS" ;;
+            *) return "$rc" ;;
+        esac
     done
 }
 
