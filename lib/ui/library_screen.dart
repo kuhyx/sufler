@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
+import 'package:kuhy_credit/kuhy_credit.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/ui/feedback.dart';
@@ -139,6 +140,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
               icon: const Icon(Icons.add, semanticLabel: 'Importuj'),
               onPressed: _busy ? null : _openImport,
             ),
+          // kuhy's credit; the panel opens below, the bar is at the top.
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: KuhyCredit(size: 36, below: true),
+          ),
         ],
       ),
       body: Center(
