@@ -129,12 +129,25 @@ deploy_tts() {
     check_tts
 }
 
+# The project's org.gradle.jvmargs as a -D system property for gradlew.
+# ~/.gradle/gradle.properties (-Xmx5120m on kuhy's PC) outranks the project
+# file, so without this the Gradle JVM grew to 3.8 GiB and the 4 GiB capped
+# scope OOM-killed the release build (2026-11-21). A system property outranks
+# both. gradlew evals GRADLE_OPTS, so the inner quotes keep the spaces.
+gradle_opts_with_project_jvmargs() {
+    local args
+    args="$(sed -n 's/^org\.gradle\.jvmargs=//p' "$LIVE/android/gradle.properties")"
+    [[ -n $args ]] || die "phone: no org.gradle.jvmargs in android/gradle.properties"
+    printf '%s -Dorg.gradle.jvmargs="%s"' "${GRADLE_OPTS:-}" "$args"
+}
+
 deploy_phone() {
     local before after
     adb -s "$SERIAL" get-state >/dev/null 2>&1 || die "phone: $SERIAL unreachable"
     before="$(phone_version_code)"
     log "phone: release build + install -r (installed versionCode ${before:-none})"
-    capped "$PHONE_DEPLOY" "$LIVE" --release || die "phone: phone_deploy.sh exit $?"
+    GRADLE_OPTS="$(gradle_opts_with_project_jvmargs)" \
+        capped "$PHONE_DEPLOY" "$LIVE" --release || die "phone: phone_deploy.sh exit $?"
     after="$(phone_version_code)"
     if [[ -z $after ]] || ((after <= ${before:-0})); then
         die "phone: versionCode ${after:-none} did not move past ${before:-none}"
