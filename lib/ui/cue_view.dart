@@ -6,6 +6,7 @@ import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/session.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/grade_view.dart';
+import 'package:sufler/ui/icon_tip.dart';
 import 'package:sufler/ui/line_tools.dart';
 import 'package:sufler/ui/lookup_text.dart';
 import 'package:sufler/ui/mine_view.dart';
@@ -170,9 +171,12 @@ class CueView extends StatelessWidget {
     );
   }
 
-  Widget _playButton(Cue cue) => IconButton(
-    icon: const Icon(Icons.hearing, semanticLabel: 'Odtwórz moje nagranie'),
-    onPressed: () => onPlayRecording(cue.line.index),
+  Widget _playButton(Cue cue) => IconTip(
+    'Nagranie',
+    child: IconButton(
+      icon: const Icon(Icons.hearing, semanticLabel: 'Odtwórz moje nagranie'),
+      onPressed: () => onPlayRecording(cue.line.index),
+    ),
   );
 
   /// Visible text of [cue]: a long-pressed word opens the lookup sheet.

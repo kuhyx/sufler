@@ -17,12 +17,17 @@ class SuflerApp extends StatelessWidget {
     services: services,
     child: MaterialApp(
       title: 'Sufler',
-      theme: _quiet(withBundledFonts(buildLightTheme())),
-      darkTheme: _quiet(withBundledFonts(buildDarkTheme())),
+      theme: appTheme(),
+      darkTheme: appTheme(dark: true),
       home: const LibraryScreen(),
     ),
   );
 }
+
+/// The app's theme: `design_system` on bundled fonts, framework tooltips
+/// silenced.
+ThemeData appTheme({bool dark = false}) =>
+    _quiet(withBundledFonts(dark ? buildDarkTheme() : buildLightTheme()));
 
 /// Framework tooltips ("Back" on hover, long-press labels) are painted words
 /// (textgate). They never trigger: no tap or long-press, and a hover delay

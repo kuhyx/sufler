@@ -9,6 +9,7 @@ import 'package:sufler/storage/migrate.dart';
 import 'package:sufler/storage/reparse.dart';
 import 'package:sufler/ui/correction_dialogs.dart';
 import 'package:sufler/ui/feedback.dart';
+import 'package:sufler/ui/icon_tip.dart';
 import 'package:sufler/ui/services.dart';
 import 'package:sufler/ui/who.dart';
 
@@ -91,9 +92,15 @@ class _CorrectionScreenState extends State<CorrectionScreen> {
       appBar: AppBar(
         title: const Icon(Icons.edit_note, semanticLabel: 'Popraw tekst'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.merge_type, semanticLabel: 'Scal postacie'),
-            onPressed: s == null || s.characters.length < 2 ? null : _merge,
+          IconTip(
+            'Scal',
+            child: IconButton(
+              icon: const Icon(
+                Icons.merge_type,
+                semanticLabel: 'Scal postacie',
+              ),
+              onPressed: s == null || s.characters.length < 2 ? null : _merge,
+            ),
           ),
         ],
       ),

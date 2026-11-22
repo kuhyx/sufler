@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sufler/audio/audio_pack.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/prefs.dart';
+import 'package:sufler/ui/icon_tip.dart';
 import 'package:sufler/ui/labels.dart';
 import 'package:sufler/ui/line_picker_screen.dart';
 import 'package:sufler/ui/practice_tab.dart';
@@ -139,9 +140,12 @@ class _ScriptTabsState extends State<ScriptTabs> {
     final appBar = AppBar(
       title: Text(widget.script.title),
       actions: [
-        IconButton(
-          onPressed: widget.onRoles,
-          icon: const Icon(Icons.person_outline, semanticLabel: 'Moje role'),
+        IconTip(
+          'Role',
+          child: IconButton(
+            onPressed: widget.onRoles,
+            icon: const Icon(Icons.person_outline, semanticLabel: 'Moje role'),
+          ),
         ),
       ],
     );

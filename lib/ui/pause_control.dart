@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sufler/ui/icon_tip.dart';
 import 'package:sufler/ui/labels.dart';
 
 /// Step of the per-line pause buttons.
@@ -37,17 +38,23 @@ class PauseControl extends StatelessWidget {
   Widget _buttons() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      IconButton(
-        icon: const Icon(Icons.remove, semanticLabel: 'Krótsza pauza'),
-        onPressed: length > pauseStep ? () => onAdjust(-pauseStep) : null,
+      IconTip(
+        'Pauza',
+        child: IconButton(
+          icon: const Icon(Icons.remove, semanticLabel: 'Krótsza pauza'),
+          onPressed: length > pauseStep ? () => onAdjust(-pauseStep) : null,
+        ),
       ),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         child: Text(seconds(length), key: const Key('pause')),
       ),
-      IconButton(
-        icon: const Icon(Icons.add, semanticLabel: 'Dłuższa pauza'),
-        onPressed: () => onAdjust(pauseStep),
+      IconTip(
+        'Pauza',
+        child: IconButton(
+          icon: const Icon(Icons.add, semanticLabel: 'Dłuższa pauza'),
+          onPressed: () => onAdjust(pauseStep),
+        ),
       ),
     ],
   );

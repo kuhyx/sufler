@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sufler/assist/line_voices.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/rehearsal/cues.dart';
+import 'package:sufler/ui/icon_tip.dart';
 import 'package:sufler/ui/notes_view.dart';
 import 'package:sufler/ui/rehearsal_assist.dart';
 
@@ -58,12 +59,15 @@ class LineTools extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: AppSpacing.sm,
       children: [
-        IconButton(
-          icon: const Icon(
-            Icons.edit_outlined,
-            semanticLabel: 'Popraw kwestię',
+        IconTip(
+          'Popraw',
+          child: IconButton(
+            icon: const Icon(
+              Icons.edit_outlined,
+              semanticLabel: 'Popraw kwestię',
+            ),
+            onPressed: () => unawaited(_edit(context)),
           ),
-          onPressed: () => unawaited(_edit(context)),
         ),
         if (count > 0)
           Semantics(

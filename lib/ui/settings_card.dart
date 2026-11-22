@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sufler/rehearsal/timing.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/icon_header.dart';
+import 'package:sufler/ui/icon_tip.dart';
 import 'package:sufler/ui/option_tiles.dart';
 
 /// Which half of the settings a [SettingsCard] shows.
@@ -143,20 +144,30 @@ class SettingsCard extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(
-                  Icons.remove,
-                  semanticLabel: 'Mniej przebiegów',
+              IconTip(
+                'Przebiegi',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.remove,
+                    semanticLabel: 'Mniej przebiegów',
+                  ),
+                  onPressed: s.cleanTarget > 1
+                      ? () => onSettings(
+                          s.copyWith(cleanTarget: s.cleanTarget - 1),
+                        )
+                      : null,
                 ),
-                onPressed: s.cleanTarget > 1
-                    ? () =>
-                          onSettings(s.copyWith(cleanTarget: s.cleanTarget - 1))
-                    : null,
               ),
-              IconButton(
-                icon: const Icon(Icons.add, semanticLabel: 'Więcej przebiegów'),
-                onPressed: () =>
-                    onSettings(s.copyWith(cleanTarget: s.cleanTarget + 1)),
+              IconTip(
+                'Przebiegi',
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.add,
+                    semanticLabel: 'Więcej przebiegów',
+                  ),
+                  onPressed: () =>
+                      onSettings(s.copyWith(cleanTarget: s.cleanTarget + 1)),
+                ),
               ),
             ],
           ),
