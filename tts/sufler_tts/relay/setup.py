@@ -169,7 +169,7 @@ def start(
     try:
         db = connect()
         relay = Relay(db, assist, device_id(), unlock=unlocker(db), clock=time.time)
-    except RelaySetupError as err:
+    except (RelaySetupError, OSError) as err:  # OSError: done-log unreadable
         _logger.warning("relay off: %s (HTTP only)", err)
         return None
     return RelayHandle(relay, db)

@@ -9,6 +9,7 @@ import pytest
 
 from sufler_tts.cache import ClipCache
 from sufler_tts.engine import FakeEngine
+from sufler_tts.relay import done
 
 
 def _line(
@@ -41,6 +42,12 @@ def script_json() -> dict[str, Any]:
             _line(6, ["blystek"], "(Śmieje się)"),
         ],
     }
+
+
+@pytest.fixture(autouse=True)
+def _no_real_done_log(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """No test reads or appends the live relay done-log in the data dir."""
+    monkeypatch.setattr(done, "DONE_FILE", tmp_path / "relay-done.jsonl")
 
 
 @pytest.fixture(autouse=True)

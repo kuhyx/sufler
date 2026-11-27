@@ -82,11 +82,17 @@ sufler/e2e              "<e2e header JSON>"     (salt, Argon2id cost, check MAC)
   of `requests` is only a doorbell (any `put`/`patch` rescans the node, as
   does a 60 s timer, so a dropped stream loses nothing); requests run on two
   threads, so an explanation never waits behind a clip. A rid that already
-  has a result is never re-run. A request whose `ts` is over 10 min old
-  (server time, skew measured by the beat) or whose rid is malformed is
-  deleted unanswered: no Claude call for an ask the phone gave up on.
+  has a result is never re-run. Offline-first: each sealed result is
+  appended and fsynced to `~/.local/share/sufler/relay-done.jsonl`
+  (`relay/done.py`) before its PUT, and a request is deleted only after
+  that PUT. A failed PUT or a restart re-PUTs the saved result on the next
+  scan, however old the request is, without a second Claude/TTS run. A
+  request whose `ts` is over 10 min old (server time, skew measured by the
+  beat) gets `{ok: false, error: "expired"}`: no Claude call for an ask the
+  phone gave up on. A malformed rid is deleted unanswered.
   Beat every 30 s; the beat is deleted on a clean stop (SIGTERM).
-  Results and requests older than 24 h are deleted every 10 min.
+  Every 10 min: results older than 24 h are deleted, and the done-log is
+  rewritten without settled rows (request deleted) and rows over 48 h old.
 - Errors never carry the URL (`?auth=<idToken>` is in it), only method,
   path and status.
 

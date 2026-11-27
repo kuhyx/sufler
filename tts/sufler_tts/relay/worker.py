@@ -7,9 +7,12 @@ into RTDB and polls for the result (DOCS-contract.md "Relay"). This worker:
   and so does a timer every 60 s (a dropped stream loses nothing);
 * answers each rid once, on a small thread pool (an explanation never
   waits behind a clip), with the same `Assist` the HTTP endpoints use;
-* never re-runs a rid that already has a result, drops requests older than
-  10 min of server time unanswered (the phone gave up; no Claude call is
-  spent on it), and GCs results and requests older than 24 h;
+* never re-runs a rid that already has a result: each answer is fsynced to
+  the done-log (`relay/done.py`) before its PUT, so a failed PUT or a
+  restart re-PUTs the saved answer, however old the request is by then;
+* answers a request older than 10 min of server time with an `expired`
+  error and no Claude call (the phone gave up), and deletes a request only
+  after its answer is saved and PUT; GCs results older than 24 h;
 * beats `presence/{device}` with a server timestamp every 30 s; the beat
   also measures this PC's clock skew, so "10 min old" is server time;
 * opens each request and seals each result with the shared e2e key
@@ -32,6 +35,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, Final, Protocol
 
 from sufler_tts.assist_error import AssistError
+from sufler_tts.relay import done as done_log
 from sufler_tts.relay.rtdb import SERVER_TIME, Db, RtdbError
 
 MAX_AGE_MS: Final = 10 * 60 * 1000
@@ -84,11 +88,13 @@ class Relay:
         unlock: Callable[[], SealerLike],
         clock: Callable[[], float] = time.time,
         workers: int = 2,
+        done: done_log.DoneLog | None = None,
     ) -> None:
         """Bind the database; nothing runs until `scan()`.
 
         `unlock` yields the e2e sealer or raises `RelayLocked`; it is retried
-        on every beat and scan until it succeeds, then kept.
+        on every beat and scan until it succeeds, then kept. `done` defaults
+        to the log at `done.DONE_FILE` (read now, so tests can redirect it).
         """
         self.db, self.assist, self.device = db, assist, device
         self._unlock = unlock
@@ -96,6 +102,7 @@ class Relay:
         self.clock = clock
         self.skew_ms = 0
         self.started = int(clock() * 1000)
+        self.done = done or done_log.DoneLog(done_log.DONE_FILE, self.started)
         self._pool = ThreadPoolExecutor(workers, thread_name_prefix="relay")
         self._lock = threading.Lock()
         self._busy: set[str] = set()
@@ -151,27 +158,41 @@ class Relay:
     def _handle(self, rid: str, req: object) -> None:
         try:
             self.handle(rid, req)
-        except (RtdbError, RelayLocked) as err:
+        except (RtdbError, RelayLocked, OSError) as err:
             _logger.warning("relay request %s failed: %s", rid, err)
         finally:
             with self._lock:
                 self._busy.discard(rid)
 
     def handle(self, rid: str, req: object) -> None:
-        """Answer one request (once), then delete it."""
-        ts = req.get("ts") if isinstance(req, dict) else None
-        fresh = isinstance(ts, int) and self.server_now_ms() - ts <= MAX_AGE_MS
-        if _RID.fullmatch(rid) and fresh and self.db.get(f"results/{rid}") is None:
-            sealer = self.sealer()
-            opened = sealer.open(f"requests/{rid}", req)
-            answer = (
-                self.serve(opened)
-                if opened is not None
-                else {"ok": False, "error": "request does not open (another key?)"}
-            )
+        """Answer one request (once, saved before its PUT), then delete it.
+
+        A raised `RtdbError` leaves the request in place: the next scan PUTs
+        the saved answer instead of running it again.
+        """
+        if _RID.fullmatch(rid):
             path = f"results/{rid}"
-            self.db.put(path, sealer.seal_result(path, {**answer, "at": SERVER_TIME}))
+            saved = self.done.get(rid)
+            if self.db.get(path) is None:
+                if saved is None:
+                    now = int(self.clock() * 1000)
+                    saved = self.done.add(rid, self._answer(rid, req), now)
+                self.db.put(path, saved)
         self.db.delete(f"requests/{rid}")
+        self.done.settle(rid)
+
+    def _answer(self, rid: str, req: object) -> dict[str, Any]:
+        """The sealed result for one request: served, refused or `expired`."""
+        sealer = self.sealer()
+        ts = req.get("ts") if isinstance(req, dict) else None
+        if not isinstance(ts, int) or self.server_now_ms() - ts > MAX_AGE_MS:
+            answer: dict[str, Any] = {"ok": False, "error": "expired"}
+        elif (opened := sealer.open(f"requests/{rid}", req)) is None:
+            answer = {"ok": False, "error": "request does not open (another key?)"}
+        else:
+            answer = self.serve(opened)
+        path = f"results/{rid}"
+        return sealer.seal_result(path, {**answer, "at": SERVER_TIME})
 
     def serve(self, req: object) -> dict[str, Any]:
         """`{ok, text | audioB64}` or `{ok: false, error}` for one request."""
@@ -194,14 +215,21 @@ class Relay:
             return {"ok": False, "error": exc.message}
 
     def gc(self) -> None:
-        """Delete results and requests older than 24 h (server time)."""
+        """Compact the done-log; delete results older than 24 h (server time).
+
+        Requests are left to `scan()`: one is deleted only once it is answered
+        (`expired` at worst), so an outage over 24 h still drops nothing.
+        """
+        try:
+            self.done.compact(int(self.clock() * 1000))
+        except OSError as err:
+            _logger.warning("relay done-log compaction failed: %s", err)
         cutoff = self.server_now_ms() - GC_AGE_MS
-        for node, stamp in (("results", "at"), ("requests", "ts")):
-            keys = self.db.get(node, shallow=True)
-            for key in keys if isinstance(keys, dict) else {}:
-                at = self.db.get(f"{node}/{key}/{stamp}")
-                if not isinstance(at, int) or at < cutoff:
-                    self.db.delete(f"{node}/{key}")
+        keys = self.db.get("results", shallow=True)
+        for key in keys if isinstance(keys, dict) else {}:
+            at = self.db.get(f"results/{key}/at")
+            if not isinstance(at, int) or at < cutoff:
+                self.db.delete(f"results/{key}")
 
     def on_events(self, events: Iterator[tuple[str, object]]) -> str:
         """Ring the doorbell per put/patch; "reconnect" on a revoked token."""
