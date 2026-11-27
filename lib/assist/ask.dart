@@ -5,6 +5,7 @@ import 'package:sufler/assist/pc_link.dart';
 import 'package:sufler/model/script.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/storage/line_edits.dart';
+import 'package:sufler/storage/pending_asks.dart';
 import 'package:sufler/storage/prefs.dart';
 
 /// Shown while a question waits for the PC.
@@ -16,8 +17,10 @@ const int askAttempts = 5;
 /// One "Zapytaj Claude" request about [selection] in line [index]. It runs
 /// on its own, not tied to the sheet that started it: while the PC is
 /// offline it waits for [PcLink.back], and the answer is saved as a note on
-/// the line whenever it arrives ([onSaved] gets the prefs then). Pending
-/// questions live in memory only: an app restart drops them.
+/// the line whenever it arrives ([onSaved] gets the prefs then). A question
+/// is stored under `asks/<id>` the moment it is asked and dropped once
+/// answered or refused by the PC, so an app restart never loses it
+/// (`RehearsalAssist.load` asks the stored ones again).
 class Ask extends ChangeNotifier {
   /// Sends the question at once.
   new({
@@ -27,6 +30,7 @@ class Ask extends ChangeNotifier {
     required this.index,
     required this.selection,
     this.onSaved,
+    this.saved = false,
   }) {
     unawaited(_run());
   }
@@ -45,6 +49,9 @@ class Ask extends ChangeNotifier {
 
   /// The words asked about.
   final String selection;
+
+  /// Already stored under `asks/<id>` (asked again after a restart).
+  final bool saved;
 
   /// Called with the prefs once the note is saved.
   final ValueChanged<RehearsalPrefs>? onSaved;
@@ -65,6 +72,17 @@ class Ask extends ChangeNotifier {
   }
 
   Future<void> _run() async {
+    final pending = (index: index, selection: selection);
+    final inFlight = library.asksInFlight(script.id)..add(pending);
+    try {
+      await _send(pending);
+    } finally {
+      inFlight.remove(pending);
+    }
+  }
+
+  Future<void> _send(PendingAsk pending) async {
+    if (!saved) await library.savePendingAsk(script.id, pending);
     for (var i = 0; i < askAttempts; i++) {
       if (link.online == false) {
         _state(offline: true);
@@ -79,13 +97,17 @@ class Ask extends ChangeNotifier {
         );
         final note = LineNote(about: selection, text: text);
         final prefs = await library.addNote(script.id, index, note);
+        await library.dropPendingAsk(script.id, pending);
         answer = text;
         _state();
         onSaved?.call(prefs);
         return;
       } on Object catch (e) {
         // Online and still failing: the PC's own error, not a lost link.
-        if (link.online ?? false) return _state(error: '$e');
+        if (link.online ?? false) {
+          await library.dropPendingAsk(script.id, pending);
+          return _state(error: '$e');
+        }
         link.lost();
       }
     }

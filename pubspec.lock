@@ -149,20 +149,20 @@ packages:
     dependency: "direct main"
     description:
       path: crdt_sync_dart
-      ref: "crdt_sync_dart-v0.14.1"
-      resolved-ref: edd0f7a7882cb1d3904932ba94faa282d08165df
+      ref: "crdt_sync_dart-v0.14.2"
+      resolved-ref: "171a7f8ae34cec78df17a680e42878ca0b97c137"
       url: "https://github.com/kuhyx/utils"
     source: git
-    version: "0.14.1"
+    version: "0.14.2"
   crdt_sync_flutter:
     dependency: "direct main"
     description:
       path: crdt_sync_flutter
-      ref: "crdt_sync_flutter-v0.9.1"
-      resolved-ref: "48dc28ad97b97c787aba4479c3ce51aade6e86b5"
+      ref: "crdt_sync_flutter-v0.9.2"
+      resolved-ref: "41af57870207f80a5bf571f15544a08fddcbe7bf"
       url: "https://github.com/kuhyx/utils"
     source: git
-    version: "0.9.1"
+    version: "0.9.2"
   cross_file:
     dependency: transitive
     description:
@@ -891,10 +891,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3
-      sha256: "8765980411f9b6733534efe9d014fad0750fa649590598772c04692deb34886b"
+      sha256: "1ae2e821614e7b69628ecb64273e8bc5401b14ab166ee7ea0035c35bb136cbd7"
       url: "https://pub.dev"
     source: hosted
-    version: "3.9.1"
+    version: "3.9.2"
   stack_trace:
     dependency: transitive
     description:

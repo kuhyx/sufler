@@ -67,7 +67,9 @@ imported document's bytes), `meta/<id>` (`{"parserVersion": n,
 "parseFingerprint": "<fingerprint of the raw parse>"}`) and `edits/<id>` (the
 manual corrections: `{"op": "line", "index", "speakers"?, "kind"?,
 "text"?, "was"?}` and `{"op": "merge", "from", "into"}`, in order). A text
-correction carries the text it replaced in `was`.
+correction carries the text it replaced in `was`. `asks/<id>` holds the
+"Zapytaj Claude" questions not answered yet (`{"asks": [{"index",
+"selection"}]}`), asked again when the PC is back, also after a restart.
 
 When a stored script's `parserVersion` is older (on open, from `source/`) or
 the same document is imported again with a different raw fingerprint, the new
@@ -76,7 +78,7 @@ subsequence of normalised texts, then similar lines inside each gap; text
 corrections are undone through their `was`, newest first, before aligning, so
 a reworded line still meets its parsed self);
 `lineSeconds`, `tapSeconds`, `recordings` (re-keyed to `rec/<id>/<new index>`), `knowledge`,
-`notes` and the `resume` range move to the new indices; corrections are replayed (for
+`notes`, the questions in `asks/<id>` and the `resume` range move to the new indices; corrections are replayed (for
 scripts stored before the log: merges inferred from aliases); data of lines
 that no longer exist is dropped from prefs but kept, with the old script and
 prefs, under `backup/<id>/…`. A voice pack stamped for the old parse keeps

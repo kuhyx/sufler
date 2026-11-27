@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sufler/model/role.dart';
 import 'package:sufler/storage/migrate.dart';
+import 'package:sufler/storage/pending_asks.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/storage/reparse.dart';
 
@@ -17,12 +18,17 @@ const _cue = 'Dzień dobry, Wilku!';
 const _offline = 'PC offline — wyślę, gdy będzie dostępny';
 
 /// Partner text shown; Scena 1 started, its partner line 1 on screen.
-Future<TestRig> _rehearse(WidgetTester t, String db) async {
+Future<TestRig> _rehearse(
+  WidgetTester t,
+  String db, {
+  Future<void> Function(TestRig rig)? seed,
+}) async {
   final rig = await openHub(
     t,
     db,
     roles: _wolf,
     settings: const AppSettings(partnerText: true),
+    seed: seed,
   );
   // Long enough to look a word up while the partner line still plays.
   rig.speech.length = const Duration(seconds: 5);
@@ -141,6 +147,47 @@ void main() {
     await _settle(tester);
     expect(rig.assistant.explained, ['Wilku', 'Wilku']);
     expect(bySpoken('Notatki (1)'), findsOneWidget);
+    await _leave(tester);
+  });
+
+  testWidgets('a question stored before an app restart is asked again at '
+      'the next rehearsal and its note shows', (tester) async {
+    tester.usePhone();
+    final rig = await _rehearse(
+      tester,
+      'lookup-restart',
+      seed: (rig) =>
+          rig.library.savePendingAsk('abc123', (index: 1, selection: 'Wilku')),
+    );
+    await _settle(tester);
+    expect(rig.assistant.explained, ['Wilku']);
+    expect(bySpoken('Notatki (1)'), findsOneWidget);
+    expect(await tester.io(() => rig.library.pendingAsks('abc123')), isEmpty);
+    await _leave(tester);
+  });
+
+  testWidgets('a question still waiting is not sent twice when the '
+      'rehearsal is opened again', (tester) async {
+    tester.usePhone();
+    final rig = await _rehearse(tester, 'lookup-reopen');
+    rig.assistant.online = false;
+    await _longPressWord(tester, _cue, 'Wilku');
+    await tester.tap(bySpoken('Zapytaj Claude'));
+    await tester.pumpAndSettle();
+    await _close(tester);
+    await _leave(tester);
+    final scene = find.text('Scena 1');
+    await tester.ensureVisible(scene);
+    await tester.pumpAndSettle();
+    await tester.tap(scene);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    rig.assistant.setOnline(on: true);
+    await _settle(tester);
+    expect(rig.assistant.explained, ['Wilku', 'Wilku']);
+    final prefs = await tester.io(() => rig.library.loadPrefs('abc123'));
+    expect(prefs.notes[1], hasLength(1));
     await _leave(tester);
   });
 

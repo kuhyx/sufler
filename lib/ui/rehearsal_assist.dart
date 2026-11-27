@@ -10,6 +10,7 @@ import 'package:sufler/rehearsal/controller.dart';
 import 'package:sufler/rehearsal/cues.dart';
 import 'package:sufler/rehearsal/partner_player.dart';
 import 'package:sufler/storage/line_edits.dart';
+import 'package:sufler/storage/pending_asks.dart';
 import 'package:sufler/storage/prefs.dart';
 import 'package:sufler/ui/line_text_dialog.dart';
 import 'package:sufler/ui/lookup_sheet.dart';
@@ -50,6 +51,9 @@ class RehearsalAssist extends ChangeNotifier {
 
   late final PcLink _link = PcLink.of(services.assistant);
   LineVoices? _voices;
+
+  /// Stored questions asked again after an app restart.
+  final List<Ask> _resumed = [];
   bool _disposed = false;
 
   /// Corrected lines still said by device TTS.
@@ -64,7 +68,12 @@ class RehearsalAssist extends ChangeNotifier {
     final lib = services.library;
     edited = await lib.editedLines(script.id);
     notes = (await lib.loadPrefs(script.id)).notes;
+    final stored = await lib.pendingAsks(script.id);
     if (_disposed) return;
+    final inFlight = lib.asksInFlight(script.id);
+    for (final a in stored.where((a) => !inFlight.contains(a))) {
+      _resumed.add(_ask(a.selection, a.index, saved: true));
+    }
     _voices = LineVoices(
       link: _link,
       library: lib,
@@ -124,20 +133,25 @@ class RehearsalAssist extends ChangeNotifier {
     return cue.lines.last;
   }
 
+  /// A "Zapytaj Claude" question about [selection] in line [index]; its
+  /// note shows up here once saved.
+  Ask _ask(String selection, int index, {bool saved = false}) => Ask(
+    link: _link,
+    library: services.library,
+    script: script,
+    index: index,
+    selection: selection,
+    saved: saved,
+    onSaved: (p) {
+      notes = p.notes;
+      _changed();
+    },
+  );
+
   /// A long-pressed word of [cue]: the lookup sheet.
   void lookup(BuildContext context, Cue cue, LookupPick pick) {
     final line = lineAt(cue, pick.offset);
-    Ask ask(String selection) => Ask(
-      link: _link,
-      library: services.library,
-      script: script,
-      index: line.index,
-      selection: selection,
-      onSaved: (p) {
-        notes = p.notes;
-        _changed();
-      },
-    );
+    Ask ask(String selection) => _ask(selection, line.index);
     unawaited(
       _paused(
         () => showModalBottomSheet<void>(

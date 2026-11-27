@@ -50,7 +50,7 @@ class ScriptLibrary {
         await store.delete(key);
       }
     }
-    for (final key in ['source/$id', 'meta/$id', 'edits/$id']) {
+    for (final key in ['source/$id', 'meta/$id', 'edits/$id', 'asks/$id']) {
       await store.delete(key);
     }
   }

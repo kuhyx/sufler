@@ -7,6 +7,7 @@ import 'package:sufler/storage/align.dart';
 import 'package:sufler/storage/library.dart';
 import 'package:sufler/storage/migrate.dart';
 import 'package:sufler/storage/pack_zip.dart';
+import 'package:sufler/storage/pending_asks.dart';
 
 /// Parse bookkeeping of a stored script: [parserVersion] that made it (0:
 /// before versions) and the fingerprint of that raw parse (before manual
@@ -120,6 +121,7 @@ extension ParseStore on ScriptLibrary {
     await saveScript(replay.script);
     await savePrefs(id, move.prefs.copyWith(recordings: keys));
     await store.writeJson('edits/$id', {'edits': replay.log});
+    await movePendingAsks(id, map);
     await saveMeta(fresh);
     return (
       moved: move.moved.length,
