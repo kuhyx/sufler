@@ -3,9 +3,9 @@
 - run: `flutter run`
 - test: `flutter test -j 4 --reporter=compact`
 - test-changed: `scripts/test_changed.sh`
-- lint: `flutter analyze`
-- coverage: `flutter test -j 4 --reporter=compact --coverage`
-- coverage-gaps: `coverage-gaps coverage/lcov.info`
+- lint: n/a: dropped (kuhy, 2026-11-27)
+- coverage: n/a: dropped (kuhy, 2026-11-27)
+- coverage-gaps: n/a: dropped (kuhy, 2026-11-27)
 - build-apk: `scripts/build_apk.sh prep`, then `dart`, `kotlin`, `assemble` (one call each)
 - deploy: `scripts/deploy.sh`
 
